@@ -11,8 +11,8 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('login',[AuthController::class, 'login']);
-Route::post('logout',[AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::apiResource('op-tasks',OpTaskController::class);
-Route::get('op-tasks/{opTask}',[OpTaskController::class, 'show'])->middleware('auth:sanctum');
-Route::put('op-tasks/{opTask}',[OpTaskController::class, 'update'])->middleware('auth:sanctum');
-Route::delete('op-tasks/{opTask}',[OpTaskController::class, 'destroy'])->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->group(function(){
+    Route::post('logout',[AuthController::class, 'logout']);
+    Route::apiResource('op-tasks',OpTaskController::class);
+});
