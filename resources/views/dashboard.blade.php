@@ -9,13 +9,13 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
   :root {
-    --blue-950: #042C53;
-    --blue-900: #0C447C;
-    --blue-800: #185FA5;
-    --blue-600: #378ADD;
-    --blue-200: #85B7EB;
-    --blue-100: #B5D4F4;
-    --blue-50: #E6F1FB;
+    --blue-950: #0a3d7a;
+    --blue-900: #0d5aaa;
+    --blue-800: #166ac4;
+    --blue-600: #3d8fe0;
+    --blue-200: #90bfed;
+    --blue-100: #bcd6f5;
+    --blue-50: #e8f2fc;
     --gray-950: #0f172a;
     --gray-700: #334155;
     --gray-500: #64748b;
@@ -73,7 +73,7 @@
   /* ── SIDEBAR ── */
   .sidebar {
     width: var(--sidebar-w);
-    background: var(--blue-900);
+    background: #0d5aaa;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -96,7 +96,7 @@
   .brand-icon {
     width: 34px;
     height: 34px;
-    background: var(--blue-800);
+    background: #166ac4;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -198,7 +198,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--blue-800);
+    background: #166ac4;
     border: 1px solid rgba(255,255,255,0.2);
     display: flex;
     align-items: center;
@@ -314,7 +314,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: var(--blue-800);
+    background: #166ac4;
     color: #fff;
     border: none;
     padding: 0 14px;
@@ -326,7 +326,7 @@
     transition: background 0.12s;
     font-family: inherit;
   }
-  .btn-primary:hover { background: var(--blue-900); }
+  .btn-primary:hover { background: #0d5aaa; }
   .btn-primary i { font-size: 14px; }
 
   /* ── CONTENT ── */
@@ -395,7 +395,7 @@
   /* bottom grid */
   .bottom-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 380px;
     gap: 12px;
     flex: 1;
     min-height: 0;
@@ -494,7 +494,7 @@
     cursor: pointer;
     transition: all 0.12s;
   }
-  .kcard:hover { background: var(--white); border-color: var(--blue-200); box-shadow: 0 2px 6px rgba(56,138,221,0.1); }
+  .kcard:hover { background: var(--white); border-color: var(--blue-200); box-shadow: 0 2px 6px rgba(22,106,196,0.1); }
   .kcard.urgent { border-left: 3px solid var(--red); padding-left: 8px; }
   .kcard.late { border-left: 3px solid var(--amber); padding-left: 8px; }
 
@@ -536,7 +536,7 @@
     background: #1a2744;
     position: relative;
     overflow: hidden;
-    min-height: 180px;
+    min-height: 260px;
   }
 
   .map-grid {
@@ -602,11 +602,99 @@
   body, .sidebar, .main, .topbar, .metric-card, .card, .kcard, .icon-btn, .btn-primary {
     transition: background 0.2s, border-color 0.2s, color 0.2s;
   }
+
+  /* OVERLAY */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 40;
+  }
+  .sidebar-overlay.active { display: block; }
+
+  .hamburger {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--gray-500);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #166ac4;
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 50;
+    box-shadow: 0 4px 16px rgba(22,106,196,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .fab:active { transform: scale(0.94); }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      position: fixed;
+      left: -100%;
+      top: 0;
+      bottom: 0;
+      width: 280px;
+      z-index: 50;
+      transition: left 0.25s ease;
+    }
+    .sidebar.open { left: 0; }
+    .main { width: 100%; }
+    .topbar { padding: 0 16px; }
+    .status-pill { display: none; }
+    .hamburger { display: flex; }
+    .btn-primary { display: none; }
+    .content { padding: 14px 16px; }
+    .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .metric-value { font-size: 22px; }
+    .bottom-grid { grid-template-columns: 1fr; gap: 12px; }
+    .kanban-cols {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .kcol {
+      min-width: 260px;
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+    .kcol-body { max-height: 320px; }
+    .map-body { min-height: 180px; }
+    .fab { display: flex; }
+    .card { max-height: 480px; }
+  }
+
+  @media (max-width: 480px) {
+    .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .metric-card { padding: 12px; }
+    .metric-value { font-size: 20px; }
+    .kcol { min-width: 240px; }
+  }
 </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <div class="brand">
       <div class="brand-icon">FT</div>
@@ -665,6 +753,7 @@
 
 <div class="main">
   <div class="topbar">
+    <button class="hamburger" onclick="openSidebar()"><i class="ti ti-menu-2"></i></button>
     <div class="topbar-left">
       <div class="page-title">Dashboard</div>
       <div class="page-date" id="current-date"></div>
@@ -883,6 +972,8 @@
   </div>
 </div>
 
+<button class="fab" onclick="abrirNovaTarefa()"><i class="ti ti-plus"></i></button>
+
 <script>
   const days = ['dom.','seg.','ter.','qua.','qui.','sex.','sáb.'];
   const months = ['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'];
@@ -894,14 +985,26 @@
   updateDate();
   setInterval(updateDate, 60000);
 
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('active');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+  }
+  function abrirNovaTarefa() {
+    console.log('abrir modal nova tarefa');
+  }
   function toggleTheme() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
     document.getElementById('theme-icon').className = isDark ? 'ti ti-moon' : 'ti ti-sun';
   }
 </script>
+
 <script type="module">
-     import { listarTarefas } from '{{ asset("js/modules/opTask.js") }}';
+    import { listarTarefas } from '{{ asset("js/modules/opTask.js") }}';
 
     async function carregarDashboard() {
         const tarefas = await listarTarefas();
@@ -910,5 +1013,6 @@
 
     carregarDashboard();
 </script>
+
 </body>
 </html>
