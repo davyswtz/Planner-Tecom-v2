@@ -833,7 +833,7 @@
 </button>
     <button class="hamburger" onclick="openSidebar()"><i class="ti ti-menu-2"></i></button>
     <div class="topbar-left">
-      <div class="page-title">Dashboard</div>
+      <div class="page-title">Rompimento</div>
       <div class="page-date" id="current-date"></div>
     </div>
     <div class="topbar-right">
@@ -924,41 +924,6 @@
     <div class="kcol-body" id="col-finalizada"></div>
   </div>
 </div>
-</div>
-
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Mapa de calor</span>
-          <span class="card-action"><i class="ti ti-arrows-maximize" style="font-size:11px"></i> expandir</span>
-        </div>
-        <div class="map-body">
-           <div id="mapa-calor" style="width:100%;height:100%;min-height:260px;"></div>
-        </div>
-        <div class="region-list">
-          <div class="region-row">
-            <div class="region-name">Goval</div>
-            <div class="region-bar-wrap"><div class="region-bar" style="width:100%"></div></div>
-            <div class="region-n">126</div>
-          </div>
-          <div class="region-row">
-            <div class="region-name">Vale do Aço</div>
-            <div class="region-bar-wrap"><div class="region-bar" style="width:67%"></div></div>
-            <div class="region-n">84</div>
-          </div>
-          <div class="region-row">
-            <div class="region-name">Caratinga</div>
-            <div class="region-bar-wrap"><div class="region-bar" style="width:3%"></div></div>
-            <div class="region-n">4</div>
-          </div>
-          <div class="region-row">
-            <div class="region-name">N/D</div>
-            <div class="region-bar-wrap"><div class="region-bar" style="width:2%"></div></div>
-            <div class="region-n">3</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <button class="fab" onclick="abrirNovaTarefa()"><i class="ti ti-plus"></i></button>

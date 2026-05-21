@@ -13,3 +13,7 @@ Route::get('/login', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 });
+
+Route::get('/rompimento', function () {
+    return view('rompimento');
+});
