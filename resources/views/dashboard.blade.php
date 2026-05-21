@@ -815,119 +815,39 @@
           <span class="card-action">ver tudo <i class="ti ti-arrow-right" style="font-size:11px"></i></span>
         </div>
         <div class="kanban-cols">
-          <div class="kcol">
-            <div class="kcol-head">
-              <div class="kcol-name"><div class="dot d-blue"></div> Criada</div>
-              <span class="kcol-count">18</span>
-            </div>
-            <div class="kcol-body">
-              <div class="kcard urgent">
-                <div class="kcard-title">CTO Vila do Sol offline</div>
-                <div class="kcard-foot">
-                  <span class="badge b-alta">Alta</span>
-                  <span class="kcard-code">RMP-0412</span>
-                </div>
-                <div class="kcard-meta">
-                  <div class="kcard-avatar">MH</div>
-                  <span class="kcard-time">há 12min</span>
-                </div>
-              </div>
-              <div class="kcard">
-                <div class="kcard-title">Fibra partida Av. Brasil nº 340</div>
-                <div class="kcard-foot">
-                  <span class="badge b-media">Média</span>
-                  <span class="kcard-code">RMP-0413</span>
-                </div>
-                <div class="kcard-meta">
-                  <div class="kcard-avatar">LC</div>
-                  <span class="kcard-time">há 34min</span>
-                </div>
-              </div>
-              <div class="kcard">
-                <div class="kcard-title">Queda de sinal Bairro Altinópolis</div>
-                <div class="kcard-foot">
-                  <span class="badge b-baixa">Baixa</span>
-                  <span class="kcard-code">ATN-0414</span>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="kcol">
+    <div class="kcol-head">
+      <div class="kcol-name"><div class="dot d-blue"></div> Criada</div>
+      <span class="kcol-count" id="count-criada">0</span>
+    </div>
+    <div class="kcol-body" id="col-criada"></div>
+  </div>
 
-          <div class="kcol">
-            <div class="kcol-head">
-              <div class="kcol-name"><div class="dot d-amber"></div> Em andamento</div>
-              <span class="kcol-count">34</span>
-            </div>
-            <div class="kcol-body">
-              <div class="kcard late">
-                <div class="kcard-title">Troca de equip. Bairro Industrial</div>
-                <div class="kcard-foot">
-                  <span class="badge b-alta">Alta</span>
-                  <span class="kcard-code">ATN-0387</span>
-                </div>
-                <div class="kcard-meta">
-                  <div class="kcard-avatar">RK</div>
-                  <span class="kcard-time">2h 15min</span>
-                </div>
-              </div>
-              <div class="kcard">
-                <div class="kcard-title">Manutenção preventiva CTO-L0405</div>
-                <div class="kcard-foot">
-                  <span class="badge b-media">Média</span>
-                  <span class="kcard-code">MNT-0391</span>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="kcol">
+    <div class="kcol-head">
+      <div class="kcol-name"><div class="dot d-amber"></div> Em andamento</div>
+      <span class="kcol-count" id="count-andamento">0</span>
+    </div>
+    <div class="kcol-body" id="col-andamento"></div>
+  </div>
 
-          <div class="kcol">
-            <div class="kcol-head">
-              <div class="kcol-name"><div class="dot d-red"></div> Impedimento</div>
-              <span class="kcol-count">7</span>
-            </div>
-            <div class="kcol-body">
-              <div class="kcard urgent">
-                <div class="kcard-title">Aguardando peça — OLT Centro</div>
-                <div class="kcard-foot">
-                  <span class="badge b-alta">Alta</span>
-                  <span class="kcard-code">RMP-0398</span>
-                </div>
-                <div class="kcard-meta">
-                  <div class="kcard-avatar">GH</div>
-                  <span class="kcard-time">1 dia</span>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="kcol">
+    <div class="kcol-head">
+      <div class="kcol-name"><div class="dot d-red"></div> Impedimento</div>
+      <span class="kcol-count" id="count-impedimento">0</span>
+    </div>
+    <div class="kcol-body" id="col-impedimento"></div>
+  </div>
 
-          <div class="kcol">
-            <div class="kcol-head">
-              <div class="kcol-name"><div class="dot d-green"></div> Finalizada</div>
-              <span class="kcol-count">189</span>
-            </div>
-            <div class="kcol-body">
-              <div class="kcard">
-                <div class="kcard-title">Reparo cabo subterrâneo Setor Norte</div>
-                <div class="kcard-foot">
-                  <span class="badge b-baixa">Baixa</span>
-                  <span class="kcard-code">RMP-0401</span>
-                </div>
-                <div class="kcard-meta">
-                  <div class="kcard-avatar">AR</div>
-                  <span class="kcard-time">há 1h</span>
-                </div>
-              </div>
-              <div class="kcard">
-                <div class="kcard-title">Correção de sinal GVA1210</div>
-                <div class="kcard-foot">
-                  <span class="badge b-media">Média</span>
-                  <span class="kcard-code">COR-0405</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="kcol">
+    <div class="kcol-head">
+      <div class="kcol-name"><div class="dot d-green"></div> Finalizada</div>
+      <span class="kcol-count" id="count-finalizada">0</span>
+    </div>
+    <div class="kcol-body" id="col-finalizada"></div>
+  </div>
+</div>
+</div>
 
       <div class="card">
         <div class="card-header">
@@ -1006,10 +926,39 @@
 <script type="module">
     import { listarTarefas } from '{{ asset("js/modules/opTask.js") }}';
 
+    function filtrarPorStatus(tarefas, status) {
+    const resultado = tarefas.filter(t => t.status === status);
+    return resultado.slice(0, 10);
+}
+
     async function carregarDashboard() {
         const tarefas = await listarTarefas();
+        const criadas = filtrarPorStatus(tarefas, 'Criada');
+        const andamento = filtrarPorStatus(tarefas, 'Em andamento');
+        const impedimento = filtrarPorStatus(tarefas, 'Impedimento');
+        const finalizadas = filtrarPorStatus(tarefas, 'Finalizada');
+        document.getElementById('col-criada').innerHTML = criadas.map(renderCard).join('');
+        document.getElementById('col-andamento').innerHTML = andamento.map(renderCard).join('');
+        document.getElementById('col-impedimento').innerHTML = impedimento.map(renderCard).join('');
+        document.getElementById('col-finalizada').innerHTML = finalizadas.map(renderCard).join('');
+        document.getElementById('count-criada').textContent = criadas.length;
+        document.getElementById('count-andamento').textContent = andamento.length;
+        document.getElementById('count-impedimento').textContent = impedimento.length;
+        document.getElementById('count-finalizada').textContent = finalizadas.length;
         console.log('Tarefas:', tarefas);
     }
+
+   function renderCard(tarefa){
+    return `
+    <div class="kcard">
+      <div class="kcard-title">${tarefa.titulo}</div>
+      <div class="kcard-foot">
+        <span class="badge b-alta">${tarefa.prioridade}</span>
+        <span class="kcard-code">${tarefa.taskCode}</span>
+      </div>
+    </div>
+    `;
+   }
 
     carregarDashboard();
 </script>

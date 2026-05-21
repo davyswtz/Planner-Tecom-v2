@@ -16,4 +16,8 @@ async function deletarTarefa(id){
     return destroyUrl('op-tasks/' + id);
 }
 
-export { listarTarefas, criarTarefa, atualizarTarefa, deletarTarefa };
+async function listarTarefasRecentes(){
+    return geturl('op-tasks?sort=criadaEm&order=desc&limit=40');
+}
+
+export { listarTarefas, criarTarefa, atualizarTarefa, deletarTarefa, listarTarefasRecentes };

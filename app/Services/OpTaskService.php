@@ -3,15 +3,14 @@ namespace App\Services;
 use App\Models\OpTask;
 class OpTaskService
 {
-    public function getOpTasks()
+    public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc')
     {
-        $opTasks = OpTask::all();
-        return $opTasks;
+        return OpTask::orderBy($orderBy, $order)->limit($limit)->get();
     }
 
     public function createOpTask(array $dados){
         $opTask = OpTask::create($dados);
-        return $opTasks;
+        return $opTask;
     }
 
     public function showOpTask(OpTask $opTask){
