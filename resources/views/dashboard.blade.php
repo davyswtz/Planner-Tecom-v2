@@ -900,5 +900,15 @@
     document.getElementById('theme-icon').className = isDark ? 'ti ti-moon' : 'ti ti-sun';
   }
 </script>
+<script type="module">
+     import { listarTarefas } from '{{ asset("js/modules/opTask.js") }}';
+
+    async function carregarDashboard() {
+        const tarefas = await listarTarefas();
+        console.log('Tarefas:', tarefas);
+    }
+
+    carregarDashboard();
+</script>
 </body>
 </html>
