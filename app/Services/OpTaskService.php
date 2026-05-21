@@ -14,7 +14,7 @@ class OpTaskService
     }
 
     public function showOpTask(OpTask $opTask){
-        return $opTasks;
+        return $opTask;
     }
 
     public function updateOpTask(OpTask $opTask, array $dados){

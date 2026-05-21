@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\OpTaskController;
-use App\Http\Controllers\RompimentoController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\OpTaskController;
+use App\Http\Controllers\Api\RompimentoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class OpTaskController extends Controller
 {
-    public function __construct(private opTaskService $opTaskService)
+    public function __construct(private OpTaskService $opTaskService)
     {}
 
     /**
