@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <style>
   :root {
     --blue-950: #0a3d7a;
@@ -683,6 +686,45 @@
     .card { max-height: 480px; }
   }
 
+  .sidebar {
+    transition: width 0.25s ease;
+}
+.sidebar.collapsed {
+    width: 60px;
+}
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .search-box,
+.sidebar.collapsed .nav-section-label,
+.sidebar.collapsed .nav-badge,
+.sidebar.collapsed .user-info,
+.sidebar.collapsed .nav-left span{
+  display: none;
+},
+.sidebar.collapsed .theme-toggle {
+    display: none;
+}
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 8px;
+    overflow: hidden;
+}
+.sidebar.collapsed .nav-left {
+    gap: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.sidebar.collapsed .nav-left i {
+    flex-shrink: 0;
+}
+.sidebar.collapsed .user-card {
+    justify-content: center;
+}
+.sidebar.collapsed .brand {
+    justify-content: center;
+}
+.sidebar.collapsed .brand-icon {
+    margin: 0 auto;
+}
   @media (max-width: 480px) {
     .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .metric-card { padding: 12px; }
@@ -712,28 +754,28 @@
   <div class="sidebar-body">
     <div class="nav-section">
       <div class="nav-section-label">Principal</div>
-      <div class="nav-item active"><div class="nav-left"><i class="ti ti-layout-dashboard"></i> Dashboard</div></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-layout-kanban"></i> Kanban</div></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-map-pin"></i> Mapa de calor</div></div>
+      <div class="nav-item active"><div class="nav-left"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-layout-kanban"></i><span>Kanban</span></div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-map-pin"></i><span>Mapa de calor</span></div></div>
     </div>
 
     <div class="nav-section">
       <div class="nav-section-label">Categorias</div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-bolt"></i> Rompimentos</div><span class="nav-badge crit">2</span></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-tools"></i> Troca de poste</div><span class="nav-badge">2</span></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-wifi"></i> Otimização de rede</div><span class="nav-badge">4</span></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-headset"></i> Atendimento</div><span class="nav-badge">49</span></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i> Manutenção</div><span class="nav-badge">3</span></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-file-check"></i> Ordem de serviço</div></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-certificate"></i> Certificação</div><span class="nav-badge">5</span></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-wave-sine"></i> Correção de sinal</div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-bolt"></i><span>Rompimentos</span></div><span class="nav-badge crit">2</span></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-tools"></i><span>Troca de poste</span></div><span class="nav-badge">2</span></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-wifi"></i><span>Otimização de rede</span></div><span class="nav-badge">4</span></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-headset"></i><span>Atendimento</span></div><span class="nav-badge">49</span></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div><span class="nav-badge">3</span></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-file-check"></i><span>Ordem de serviço</span></div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-certificate"></i><span>Certificação</span></div><span class="nav-badge">5</span></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-wave-sine"></i><span>Correção de sinal</span></div></div>
     </div>
 
     <div class="nav-section">
       <div class="nav-section-label">Gestão</div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-users"></i> Usuários</div></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-activity"></i> Atividade</div></div>
-      <div class="nav-item"><div class="nav-left"><i class="ti ti-settings"></i> Configurações</div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-activity"></i><span>Atividade</span></div></div>
+      <div class="nav-item"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></div>
     </div>
   </div>
 
@@ -753,6 +795,9 @@
 
 <div class="main">
   <div class="topbar">
+  <button class="icon-btn" onclick="toggleSidebar()" id="btn-colapsar" title="Colapsar sidebar">
+    <i class="ti ti-layout-sidebar-left-collapse" id="icon-colapsar"></i>
+</button>
     <button class="hamburger" onclick="openSidebar()"><i class="ti ti-menu-2"></i></button>
     <div class="topbar-left">
       <div class="page-title">Dashboard</div>
@@ -855,15 +900,7 @@
           <span class="card-action"><i class="ti ti-arrows-maximize" style="font-size:11px"></i> expandir</span>
         </div>
         <div class="map-body">
-          <div class="map-grid"></div>
-          <div class="heat-point" style="width:56px;height:56px;background:#ef4444;top:42%;left:48%"></div>
-          <div class="heat-point" style="width:38px;height:38px;background:#f59e0b;top:58%;left:54%"></div>
-          <div class="heat-point" style="width:28px;height:28px;background:#3b82f6;top:32%;left:36%"></div>
-          <div class="heat-point" style="width:22px;height:22px;background:#3b82f6;top:65%;left:38%"></div>
-          <div class="heat-point" style="width:16px;height:16px;background:#22c55e;top:50%;left:64%"></div>
-          <div class="heat-point" style="width:14px;height:14px;background:#f59e0b;top:28%;left:58%"></div>
-          <button class="map-expand-btn"><i class="ti ti-arrows-maximize"></i> expandir</button>
-          <div class="map-label">Governador Valadares, MG</div>
+           <div id="mapa-calor" style="width:100%;height:100%;min-height:260px;"></div>
         </div>
         <div class="region-list">
           <div class="region-row">
@@ -921,6 +958,33 @@
     document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
     document.getElementById('theme-icon').className = isDark ? 'ti ti-moon' : 'ti ti-sun';
   }
+
+  function iniciarMapa() {
+    const mapa = L.map('mapa-calor', {
+        zoomControl: true,
+        scrollWheelZoom: true
+    }).setView([-18.8517, -41.9494], 11);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(mapa);
+
+    window.mapaLeaflet = mapa;
+}
+
+iniciarMapa();
+
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('icon-colapsar');
+    sidebar.classList.toggle('collapsed');
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    icon.className = isCollapsed 
+        ? 'ti ti-layout-sidebar-left-expand' 
+        : 'ti ti-layout-sidebar-left-collapse';
+}
+
 </script>
 
 <script type="module">
