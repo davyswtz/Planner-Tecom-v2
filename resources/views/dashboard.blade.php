@@ -367,7 +367,7 @@
   }
 
   .metric-label { font-size: 12px; color: var(--gray-500); font-weight: 500; }
-
+  
   .metric-icon {
     width: 30px;
     height: 30px;
@@ -523,9 +523,22 @@
     border-radius: 20px;
     white-space: nowrap;
   }
+  .b-cat-rom { background: #fef2f2; color: #991b1b; }
+.b-cat-ate { background: #eff6ff; color: #1d4ed8; }
+.b-cat-otm { background: #f0fdf4; color: #166534; }
+.b-cat-man { background: #fffbeb; color: #92400e; }
+.b-cat-tro { background: #f5f3ff; color: #6d28d9; }
+.b-cat-etq { background: #fdf4ff; color: #86198f; }
+.b-cat-cer { background: #fff7ed; color: #c2410c; }
+.b-cat-cor { background: #ecfdf5; color: #065f46; }
+.b-cat-qua { background: #f0f9ff; color: #0369a1; }
+.b-cat-gen { background: var(--gray-100); color: var(--gray-500); }
   .b-alta { background: var(--red-bg); color: var(--red-text); }
   .b-media { background: var(--amber-bg); color: var(--amber-text); }
   .b-baixa { background: var(--green-bg); color: var(--green-text); }
+  .b-regiao-gv { background: var(--blue-50); color: var(--blue-800); }
+.b-regiao-va { background: #f3e8ff; color: #7c3aed; }
+
 
   .kcard-code { font-size: 10px; color: var(--gray-400); font-family: 'Courier New', monospace; }
 
@@ -650,6 +663,13 @@
   .fab:active { transform: scale(0.94); }
 
   @media (max-width: 768px) {
+
+    .kcol { overflow: visible; }
+    .kcol-body { max-height: none; overflow-y: visible; }
+
+    .map-wrap, .card:has(.map-body) {
+      display: none;
+    }
     .sidebar {
       position: fixed;
       left: -100%;
@@ -683,7 +703,7 @@
     .kcol-body { max-height: 320px; }
     .map-body { min-height: 180px; }
     .fab { display: flex; }
-    .card { max-height: 480px; }
+    .card { max-height: none; }
   }
 
   .sidebar {
@@ -725,11 +745,24 @@
 .sidebar.collapsed .brand-icon {
     margin: 0 auto;
 }
+
+
+
+#mapa-calor {
+    z-index: 0;
+}
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 0 !important;
+}
+
   @media (max-width: 480px) {
     .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .metric-card { padding: 12px; }
     .metric-value { font-size: 20px; }
     .kcol { min-width: 240px; }
+    #btn-colapsar { display: none; }
   }
 </style>
 </head>
@@ -944,6 +977,8 @@
 
   function openSidebar() {
     document.getElementById('sidebar').classList.add('open');
+    sidebar.classList.remove('collapsed');
+    sidebar.classList.add('open');
     document.getElementById('sidebar-overlay').classList.add('active');
   }
   function closeSidebar() {
@@ -966,7 +1001,6 @@
     }).setView([-18.8517, -41.9494], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
     }).addTo(mapa);
 
     window.mapaLeaflet = mapa;
@@ -1012,17 +1046,41 @@ function toggleSidebar() {
         console.log('Tarefas:', tarefas);
     }
 
-   function renderCard(tarefa){
+    function renderCard(tarefa){
+    const regiaoClass = tarefa.regiao && tarefa.regiao.toLowerCase().includes('vale') 
+        ? 'b-regiao-va' 
+        : 'b-regiao-gv';
+
+    const categoriasClasses = {
+        'rompimentos':         'b-cat-rom',
+        'atendimento-cliente': 'b-cat-ate',
+        'otimizacao-rede':     'b-cat-otm',
+        'manutencao-corretiva':'b-cat-man',
+        'troca-poste':         'b-cat-tro',
+        'troca-etiqueta':      'b-cat-etq',
+        'certificacao-cemig':  'b-cat-cer',
+        'correcao-atenuacao':  'b-cat-cor',
+        'qualidade-potencia':  'b-cat-qua',
+    };
+
+    const categoriaClass = categoriasClasses[tarefa.categoria?.toLowerCase()] || 'b-cat-gen';
+
+    const prioridadeClass = tarefa.prioridade?.toLowerCase() === 'alta' ? 'b-alta' 
+        : tarefa.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' 
+        : 'b-media';
+
     return `
     <div class="kcard">
       <div class="kcard-title">${tarefa.titulo}</div>
       <div class="kcard-foot">
-        <span class="badge b-alta">${tarefa.prioridade}</span>
-        <span class="kcard-code">${tarefa.taskCode}</span>
+        <span class="badge ${prioridadeClass}">${tarefa.prioridade || 'Média'}</span>
+        <span class="badge ${categoriaClass}">${tarefa.categoria || 'Sem categoria'}</span>
+        <span class="badge ${regiaoClass}">${tarefa.regiao || 'Sem região'}</span>
+        <span class="kcard-code">${tarefa.taskCode || 'S/C'}</span>
       </div>
     </div>
     `;
-   }
+}
 
     carregarDashboard();
 </script>
