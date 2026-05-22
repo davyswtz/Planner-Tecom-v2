@@ -4,21 +4,131 @@
 @section('page-title', 'Rompimentos')
 @section('btn-label', 'Novo rompimento')
 
+@section('styles')
+  .kcard[draggable="true"] {
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+  .kcard[draggable="true"]:active { cursor: grabbing; }
+  @media (pointer: coarse) {
+    .kcard { cursor: pointer; }
+  }
+  .kcard-dragging {
+    opacity: 0.55;
+    cursor: grabbing;
+    transform: scale(1.02) rotate(1deg);
+    box-shadow: 0 10px 28px rgba(22,106,196,0.16);
+    transition: none;
+  }
+  .kcol-body {
+    transition: background 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                outline-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                outline-offset 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .kcol-body.drag-over {
+    background: var(--blue-50);
+    outline: 2px dashed var(--blue-600);
+    outline-offset: -4px;
+    border-radius: var(--radius-sm);
+  }
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0,0,0,0);
+    visibility: hidden;
+    pointer-events: none;
+    transition: background 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s;
+  }
+  .modal-overlay.open {
+    visibility: visible;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.45);
+  }
+  .modal-box {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    width: 100%;
+    max-width: 680px;
+    overflow: hidden;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: scale(0.96) translateY(14px);
+    transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+  }
+  .modal-overlay.open .modal-box {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  .modal-head { padding: 16px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+  .modal-foot { padding: 14px 24px; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+  .modal-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0; }
+  .modal-sub { font-size: 12px; color: var(--gray-500); margin: 0; }
+  .modal-close { background: transparent; border: none; cursor: pointer; color: var(--gray-500); font-size: 18px; display: flex; align-items: center; padding: 4px; transition: color 0.15s ease, transform 0.15s ease; }
+  .modal-close:hover { color: var(--gray-950); transform: scale(1.08); }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .detail-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-field { display: flex; flex-direction: column; gap: 5px; }
+  .detail-field.span-2 { grid-column: span 2; }
+  .detail-field.span-3 { grid-column: span 3; }
+  .detail-label { font-size: 12px; font-weight: 500; color: var(--gray-500); }
+  .detail-value { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 8px 10px; min-height: 38px; font-size: 13px; color: var(--gray-950); background: var(--gray-50); line-height: 1.4; word-break: break-word; }
+  .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 38px; }
+  .detail-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px 0; color: var(--gray-500); font-size: 13px; }
+  .detail-loading i { animation: spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+  .detail-error { padding: 16px; border-radius: var(--radius-sm); background: var(--red-bg); color: var(--red-text); font-size: 13px; }
+  .detail-enter { animation: conteudoEntrada 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .btn-modal { padding: 0 16px; height: 36px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; font-family: inherit; transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease; }
+  .btn-modal:active { transform: scale(0.97); }
+  .btn-modal-ghost { border: 1px solid var(--gray-200); background: transparent; color: var(--gray-500); }
+  .btn-modal-ghost:hover { background: var(--gray-50); border-color: var(--gray-400); }
+  .btn-modal-primary { border: none; background: #166ac4; color: #fff; font-weight: 500; }
+  .btn-modal-primary:hover { background: #0d5aaa; }
+  @keyframes conteudoEntrada {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (max-width: 768px) {
+    .detail-grid, .detail-grid-2 { grid-template-columns: 1fr; }
+    .detail-field.span-2, .detail-field.span-3 { grid-column: span 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kcard[draggable="true"], .kcol-body, .modal-overlay, .modal-box, .modal-close, .btn-modal { transition: none; }
+    .detail-enter, .detail-loading i { animation: none; }
+    .modal-overlay.open .modal-box { opacity: 1; transform: none; }
+  }
+@endsection
+
 @section('content')
 
-<!--MODAL-->
-<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-200);width:100%;max-width:680px;overflow:hidden">
+<!--MODAL CRIAR-->
+<div id="modal-overlay" class="modal-overlay">
+  <div class="modal-box">
 
-    <div style="padding:16px 24px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between">
+    <div class="modal-head">
       <div>
-        <p style="font-size:15px;font-weight:600;color:var(--gray-950);margin:0">Novo rompimento</p>
-        <p style="font-size:12px;color:var(--gray-500);margin:0">Preencha os dados do rompimento</p>
+        <p class="modal-title">Novo rompimento</p>
+        <p class="modal-sub">Preencha os dados do rompimento</p>
       </div>
-      <button onclick="fecharModal()" style="background:transparent;border:none;cursor:pointer;color:var(--gray-500);font-size:18px;display:flex;align-items:center;padding:4px"><i class="ti ti-x"></i></button>
+      <button onclick="fecharModal()" class="modal-close"><i class="ti ti-x"></i></button>
     </div>
 
-    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
         <div>
@@ -89,11 +199,32 @@
 
     </div>
 
-    <div style="padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px">
-      <button onclick="fecharModal()" style="padding:0 16px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);background:transparent;color:var(--gray-500);font-size:13px;cursor:pointer;font-family:inherit">Cancelar</button>
-      <button onclick="criarRompimento()" style="padding:0 16px;height:36px;border-radius:var(--radius-sm);border:none;background:#166ac4;color:#fff;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit">
+    <div class="modal-foot">
+      <button onclick="fecharModal()" class="btn-modal btn-modal-ghost">Cancelar</button>
+      <button onclick="criarRompimento()" class="btn-modal btn-modal-primary" style="display:flex;align-items:center;gap:6px">
         <i class="ti ti-bolt" style="font-size:14px"></i> Criar rompimento
       </button>
+    </div>
+
+  </div>
+</div>
+
+<!--MODAL DETALHE-->
+<div id="detalhe-overlay" class="modal-overlay">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <div>
+        <p class="modal-title" id="detalhe-titulo">Rompimento</p>
+        <p class="modal-sub" id="detalhe-subtitulo"></p>
+      </div>
+      <button onclick="fecharDetalhe()" class="modal-close"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="modal-body" id="detalhe-conteudo"></div>
+
+    <div class="modal-foot">
+      <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
     </div>
 
   </div>
@@ -110,28 +241,28 @@
                     <div class="kcol-name"><div class="dot d-blue"></div> Criada</div>
                     <span class="kcol-count" id="count-criada">0</span>
                 </div>
-                <div class="kcol-body" id="col-criada"></div>
+                <div class="kcol-body" id="col-criada" data-status="Criada"></div>
             </div>
             <div class="kcol">
                 <div class="kcol-head">
                     <div class="kcol-name"><div class="dot d-amber"></div> Em andamento</div>
                     <span class="kcol-count" id="count-andamento">0</span>
                 </div>
-                <div class="kcol-body" id="col-andamento"></div>
+                <div class="kcol-body" id="col-andamento" data-status="Em andamento"></div>
             </div>
             <div class="kcol">
                 <div class="kcol-head">
                     <div class="kcol-name"><div class="dot d-red"></div> Impedimento</div>
                     <span class="kcol-count" id="count-impedimento">0</span>
                 </div>
-                <div class="kcol-body" id="col-impedimento"></div>
+                <div class="kcol-body" id="col-impedimento" data-status="Impedimento"></div>
             </div>
             <div class="kcol">
                 <div class="kcol-head">
                     <div class="kcol-name"><div class="dot d-green"></div> Finalizada</div>
                     <span class="kcol-count" id="count-finalizada">0</span>
                 </div>
-                <div class="kcol-body" id="col-finalizada"></div>
+                <div class="kcol-body" id="col-finalizada" data-status="Finalizada"></div>
             </div>
         </div>
     </div>
@@ -204,13 +335,35 @@ document.addEventListener('click', function(e) {
 
     let prioridadeSelecionada = 'Média';
 
-function abrirNovoItem() {
-    document.getElementById('modal-overlay').style.display = 'flex';
+function fecharModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
 }
 
-function fecharModal() {
-    document.getElementById('modal-overlay').style.display = 'none';
+function abrirModal() {
+    document.getElementById('modal-overlay').classList.add('open');
 }
+
+function fecharDetalhe() {
+    document.getElementById('detalhe-overlay').classList.remove('open');
+}
+
+window.abrirModal = abrirModal;
+window.fecharDetalhe = fecharDetalhe;
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target.id === 'modal-overlay') fecharModal();
+});
+
+document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
+    if (e.target.id === 'detalhe-overlay') fecharDetalhe();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharDetalhe();
+        fecharModal();
+    }
+});
 
 function selecionarPrioridade(btn, nivel) {
     document.querySelectorAll('.btn-prioridade').forEach(b => {
@@ -282,9 +435,9 @@ async function criarRompimento() {
   const dados = {
     titulo: `Rompimento — ${document.getElementById('input-cto').value}`,
     cto: document.getElementById('input-cto').value,
-    tipo: document.getElementById('input-tipo').value,
+    descricao: document.getElementById('input-tipo').value,
     regiao: document.getElementById('input-regiao').value,
-    jstecnicos: tecnicosSelecionados.map(t => t.nome).join(', '),
+    responsavel: tecnicosSelecionados.map(t => t.nome).join(', '),
     clientesAfetados: document.getElementById('input-clientes').value,
     prioridade: prioridadeSelecionada,
     coordenadas: document.getElementById('input-coords').value,
@@ -311,15 +464,17 @@ async function criarRompimento() {
   }else{
     console.error('Erro ao criar rompimento:', resultado.message);
   }
-  
 }
 
-window.abrirModal = function() {
-  document.getElementById('modal-overlay').style.display = 'flex';
-}
 </script>
 
 <script type="module">
+
+    let draggedId = null;
+    let draggedStatus = null;
+    let wasDragged = false;
+
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
     async function carregarRompimentos() {
         const token = localStorage.getItem('planner_token');
@@ -347,7 +502,7 @@ window.abrirModal = function() {
         document.getElementById('count-finalizada').textContent = finalizadas.length;
         document.getElementById('total-rompimentos').textContent = rompimentos.length;
     }
-     window.carregarRompimentos = carregarRompimentos;
+    window.carregarRompimentos = carregarRompimentos;
 
     function renderCard(r) {
         const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
@@ -357,7 +512,7 @@ window.abrirModal = function() {
             ? 'b-regiao-va' : 'b-regiao-gv';
 
         return `
-        <div class="kcard" onclick="abrirDetalhe(${r.id})">
+        <div class="kcard"${isTouchDevice ? '' : ' draggable="true"'} data-id="${r.id}" data-status="${r.status}">
             <div class="kcard-title">${r.titulo}</div>
             <div class="kcard-foot">
                 <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
@@ -369,16 +524,238 @@ window.abrirModal = function() {
         </div>`;
     }
 
-    function abrirDetalhe(id) {
-        console.log('abrir detalhe rompimento:', id);
+    function atualizarContadores() {
+        ['criada', 'andamento', 'impedimento', 'finalizada'].forEach(col => {
+            const body = document.getElementById(`col-${col}`);
+            document.getElementById(`count-${col}`).textContent = body.querySelectorAll('.kcard').length;
+        });
     }
 
-    function abrirModal() {
-        console.log('abrir modal novo rompimento');
+    function limparDragOver() {
+        document.querySelectorAll('.kcol-body.drag-over').forEach(el => el.classList.remove('drag-over'));
     }
 
-    window.abrirModal = abrirModal;
+    async function moverRompimento(id, novoStatus, colDestino) {
+        const card = document.querySelector(`.kcard[data-id="${id}"]`);
+        const colOrigem = card?.closest('.kcol-body');
+        const statusAnterior = card?.dataset.status;
 
+        if (card) {
+            card.dataset.status = novoStatus;
+            colDestino.appendChild(card);
+            atualizarContadores();
+        }
+
+        const token = localStorage.getItem('planner_token');
+        const response = await fetch(`/api/rompimentos/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ status: novoStatus })
+        });
+
+        if (!response.ok) {
+            if (card && colOrigem && statusAnterior) {
+                card.dataset.status = statusAnterior;
+                colOrigem.appendChild(card);
+                atualizarContadores();
+            } else {
+                carregarRompimentos();
+            }
+        }
+    }
+
+    function esc(valor) {
+        if (valor == null || valor === '') return '—';
+        return String(valor)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function formatarData(valor) {
+        if (!valor) return '—';
+        const data = new Date(valor);
+        if (isNaN(data.getTime())) return esc(valor);
+        return data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    function badgePrioridade(prioridade) {
+        const nivel = prioridade?.toLowerCase();
+        const cls = nivel === 'alta' ? 'b-alta' : nivel === 'baixa' ? 'b-baixa' : 'b-media';
+        return `<span class="badge ${cls}">${esc(prioridade || 'Média')}</span>`;
+    }
+
+    function badgeStatus(status) {
+        const mapa = {
+            'Criada': 'd-blue',
+            'Em andamento': 'd-amber',
+            'Impedimento': 'd-red',
+            'Finalizada': 'd-green',
+        };
+        const dot = mapa[status] || 'd-blue';
+        return `<span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:var(--gray-100);color:var(--gray-700)"><span class="dot ${dot}"></span>${esc(status || '—')}</span>`;
+    }
+
+    function badgeRegiao(regiao) {
+        const cls = regiao && regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
+        return `<span class="badge ${cls}">${esc(regiao || 'Sem região')}</span>`;
+    }
+
+    function campoDetalhe(label, valor, span = 1) {
+        const spanClass = span === 3 ? ' span-3' : span === 2 ? ' span-2' : '';
+        return `
+        <div class="detail-field${spanClass}">
+            <span class="detail-label">${label}</span>
+            <div class="detail-value">${valor}</div>
+        </div>`;
+    }
+
+    function renderDetalhe(r) {
+        document.getElementById('detalhe-titulo').textContent = r.titulo || 'Rompimento';
+        document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
+
+        const tecnicos = r.responsavel || '—';
+
+        document.getElementById('detalhe-conteudo').innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
+                <div class="detail-badges">
+                    ${badgeStatus(r.status)}
+                    ${badgePrioridade(r.prioridade)}
+                    ${badgeRegiao(r.regiao)}
+                </div>
+                <div class="detail-grid">
+                    ${campoDetalhe('CTO / Elemento', esc(r.cto))}
+                    ${campoDetalhe('Tipo de rompimento', esc(r.descricao))}
+                    ${campoDetalhe('Região', esc(r.regiao))}
+                </div>
+                <div class="detail-grid-2">
+                    ${campoDetalhe('Técnico(s) responsável(is)', esc(tecnicos))}
+                    ${campoDetalhe('Clientes afetados', esc(r.clientesAfetados ?? '0'))}
+                </div>
+                <div class="detail-grid-2">
+                    ${campoDetalhe('Coordenadas', esc(r.coordenadas))}
+                    ${campoDetalhe('Código da tarefa', esc(r.taskCode))}
+                </div>
+                <div class="detail-grid">
+                    ${campoDetalhe('Endereço', esc(r.localizacao_texto), 3)}
+                </div>
+                <div class="detail-grid-2">
+                    ${campoDetalhe('Criado em', formatarData(r.criadaEm))}
+                    ${campoDetalhe('Atualizado em', formatarData(r.updated_at))}
+                </div>
+            </div>`;
+    }
+
+    function renderDetalheLoading() {
+        document.getElementById('detalhe-titulo').textContent = 'Carregando...';
+        document.getElementById('detalhe-subtitulo').textContent = '';
+        document.getElementById('detalhe-conteudo').innerHTML = `
+            <div class="detail-loading detail-enter">
+                <i class="ti ti-loader"></i>
+                Buscando informações...
+            </div>`;
+    }
+
+    function renderDetalheErro(mensagem) {
+        document.getElementById('detalhe-titulo').textContent = 'Erro ao carregar';
+        document.getElementById('detalhe-subtitulo').textContent = '';
+        document.getElementById('detalhe-conteudo').innerHTML = `
+            <div class="detail-error detail-enter">${esc(mensagem)}</div>`;
+    }
+
+    async function abrirDetalhe(id) {
+        document.getElementById('detalhe-overlay').classList.add('open');
+        renderDetalheLoading();
+
+        const token = localStorage.getItem('planner_token');
+        try {
+            const response = await fetch(`/api/rompimentos/${id}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                renderDetalheErro(data.message || 'Não foi possível carregar o rompimento.');
+                return;
+            }
+            renderDetalhe(data.rompimento || data);
+        } catch {
+            renderDetalheErro('Erro de conexão ao buscar o rompimento.');
+        }
+    }
+
+    window.abrirDetalhe = abrirDetalhe;
+
+    function initKanbanDragDrop() {
+        const kanban = document.querySelector('.kanban-cols');
+        if (!kanban || kanban.dataset.dragInit) return;
+        kanban.dataset.dragInit = '1';
+
+        kanban.addEventListener('click', (e) => {
+            if (wasDragged) {
+                wasDragged = false;
+                return;
+            }
+            const card = e.target.closest('.kcard');
+            if (card) abrirDetalhe(card.dataset.id);
+        });
+
+        if (isTouchDevice) return;
+
+        kanban.addEventListener('dragstart', (e) => {
+            const card = e.target.closest('.kcard');
+            if (!card) return;
+            draggedId = card.dataset.id;
+            draggedStatus = card.dataset.status;
+            wasDragged = false;
+            card.classList.add('kcard-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', draggedId);
+        });
+
+        kanban.addEventListener('drag', () => {
+            wasDragged = true;
+        });
+
+        kanban.addEventListener('dragend', (e) => {
+            const card = e.target.closest('.kcard');
+            if (card) card.classList.remove('kcard-dragging');
+            limparDragOver();
+            setTimeout(() => {
+                draggedId = null;
+                draggedStatus = null;
+            }, 0);
+        });
+
+        kanban.addEventListener('dragover', (e) => {
+            const col = e.target.closest('.kcol-body');
+            if (!col) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            document.querySelectorAll('.kcol-body').forEach(el => {
+                el.classList.toggle('drag-over', el === col);
+            });
+        });
+
+        kanban.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const col = e.target.closest('.kcol-body');
+            if (!col || !draggedId) return;
+            limparDragOver();
+            const novoStatus = col.dataset.status;
+            if (novoStatus === draggedStatus) return;
+            await moverRompimento(draggedId, novoStatus, col);
+        });
+    }
+
+    initKanbanDragDrop();
     carregarRompimentos();
 </script>
 @endsection
