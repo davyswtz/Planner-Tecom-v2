@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\RompimentoController;
@@ -16,4 +17,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::apiResource('op-tasks', OpTaskController::class);
     Route::apiResource('rompimentos', RompimentoController::class);
+    Route::apiResource('tecnicos', TecnicoController::class);
+    
 });

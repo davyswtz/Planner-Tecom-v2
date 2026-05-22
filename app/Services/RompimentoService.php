@@ -7,73 +7,34 @@ use App\Models\OpTask;
 
 class RompimentoService
 {
+public function __construct(private OpTaskService $opTaskService){}
+
     public function getRompimentos()
     {
-            return OpTask::whereIn('categoria', [
-                'rompimento',
-                'rompimentos'
-            ])->get();
+           return OpTask::whereIn('categoria', ['rompimento', 'rompimentos'])->orderBy('updated_at', 'desc')->get();
     }
 
     public function createRompimento(array $dados): OpTask
     {
-        $dados['categoria'] = $this->gerarTaskCode($dados);
+        $dados['categoria'] = 'rompimentos';
+        $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
         return OpTask::create($dados);
 
     }
 
-
-
-
-
-    private array $regioes = [
-        'Goval' => 'GV',
-        'goval' => 'GV',
-        'Vale do Aço' => 'VA',
-        'vale do aco' => 'VA',
-        'Caratinga' => 'CA',
-        'caratinga' => 'CA',
-    ];
-
-    private array $categorias = [
-        'rompimentos'           => 'ROM',
-        'troca-poste'           => 'TRO',
-        'troca de poste'        => 'TRO',
-        'otimizacao-rede'       => 'OTM',
-        'otimização de rede'    => 'OTM',
-        'certificacao-cemig'    => 'CER',
-        'certificação cemig'    => 'CER',
-        'atendimento-cliente'   => 'ATE',
-        'atendimento ao cliente'=> 'ATE',
-        'manutencao-corretiva'  => 'MAN',
-        'manutenção corretiva'  => 'MAN',
-        'correcao-atenuacao'    => 'COR',
-        'correção de atenuação' => 'COR',
-        'troca-etiqueta'        => 'ETQ',
-        'troca de etiqueta'     => 'ETQ',
-        'qualidade-potencia'    => 'QUA',
-        'qualidade de potencia' => 'QUA',
-        'sem-categoria'         => 'GEN',
-    ];
-
-
-
-    private function gerarTaskCode(array $dados): string
-{
-    $regiao = strtolower(trim($dados['regiao'] ?? ''));
-    $siglaRegiao = $this->regioes[$regiao] ?? 'XX';
-    $categoria = strtolower(trim($dados['categoria'] ?? ''));
-    $siglaCategoria = $this->categorias[$categoria] ?? 'GV';
-    $prefixo = $siglaRegiao . '-' . $siglaCategoria;
-    $ultimo = OpTask::where('taskCode', 'like', $prefixo . '-%')
-        ->orderBy('id', 'desc')
-        ->value('taskCode');
-    if ($ultimo) {
-        $numero = (int) substr($ultimo, strrpos($ultimo, '-') + 1);
-        $numero++;
-    } else {
-        $numero = 1;
+    public function showRompimento(OpTask $opTask): OpTask {
+        $dados['categoria'] = 'rompimentos';
+        return $opTask;
     }
-    return $prefixo . '-' . str_pad($numero, 3, '0', STR_PAD_LEFT);
-}
+
+    public function updateRompimento(OpTask $rompimento, array $dados): OpTask {
+        $rompimento->update($dados);
+        return $rompimento;
+    }
+
+    public function deleteRompimento(OpTask $rompimento): OpTask {
+        $rompimento->delete();
+        return $rompimento;
+    }
+
 }

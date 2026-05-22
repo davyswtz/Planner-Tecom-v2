@@ -58,7 +58,7 @@ class OpTaskService
 
 
 
-    private function gerarTaskCode(array $dados): string
+    public function gerarTaskCode(array $dados): string
 {
     $regiao = strtolower(trim($dados['regiao'] ?? ''));
     $siglaRegiao = $this->regioes[$regiao] ?? 'XX';
