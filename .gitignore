@@ -1,10 +1,32 @@
+# Laravel
 *.log
-.DS_Store
+/bootstrap/cache/*.php
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/logs/*
+/vendor
+
+# Ambiente e segredos
 .env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
+.env.*
+!.env.example
+
+# Docker sensível
+docker/mysql/init.sql
+
+# Dependências
+/node_modules
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs e editores
 /.codex
 /.cursor/
 /.idea
@@ -12,16 +34,14 @@
 /.phpunit.cache
 /.vscode
 /.zed
-/auth.json
-/node_modules
-/public/build
-/public/fonts-manifest.dev.json
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+.phpactor.json
 _ide_helper.php
+_ide_helper_models.php
+
+# PHP
+.phpunit.result.cache
+/auth.json
+
+# Laravel Homestead (legado)
 Homestead.json
 Homestead.yaml
-Thumbs.db
