@@ -224,8 +224,17 @@
     <div class="modal-body" id="detalhe-conteudo"></div>
 
     <div class="modal-foot">
-      <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
-    </div>
+    <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
+    <button onclick="ativarEdicao()" id="btn-editar" class="btn-modal btn-modal-primary">
+        <i class="ti ti-pencil"></i> Editar
+    </button>
+    <button onclick="salvarEdicao()" id="btn-salvar" class="btn-modal btn-modal-primary" style="display:none;align-items:center;gap:6px">
+        <i class="ti ti-check" style="font-size:14px"></i> Salvar
+    </button>
+    <button onclick="cancelarEdicao()" id="btn-cancelar" class="btn-modal btn-modal-ghost" style="display:none;align-items:center;gap:6px">
+        <i class="ti ti-x" style="font-size:14px"></i> Cancelar
+    </button>
+</div>
 
   </div>
 </div>
@@ -272,7 +281,123 @@
 
 <script>
 
+
+
+function ativarEdicao() {
+    document.getElementById('btn-editar').style.display = 'none';
+    document.getElementById('btn-salvar').style.display = 'flex';
+    document.getElementById('btn-cancelar').style.display = 'flex';
+
+    const campos = [
+        { id: 'campo-cto', tipo: 'text' },
+        {
+            id: 'campo-tipo', tipo: 'select',
+            opcoes: ['Fibra cortada', 'CTO offline', 'Queda de sinal', 'OLT offline', 'Cabo subterrâneo']
+        },
+        {
+            id: 'campo-regiao', tipo: 'select',
+            opcoes: ['Goval', 'Vale do Aço', 'Caratinga']
+        },
+        { id: 'campo-tecnicos', tipo: 'custom'},
+        { id: 'campo-clientes', tipo: 'number' },
+        { id: 'campo-coordenadas', tipo: 'text' },
+        { id: 'campo-endereco', tipo: 'text' },
+        {
+            id: 'campo-prioridade', tipo: 'select',
+            opcoes: ['Baixa', 'Média', 'Alta']
+        },
+        {
+            id: 'campo-status', tipo: 'select',
+            opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada']
+        },
+    ];
+
+    campos.forEach(({ id, tipo, opcoes }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const valorAtual = el.textContent.trim();
+        const valor = valorAtual === '—' ? '' : valorAtual;
+
+        if (id === 'campo-tecnicos') {
+            inicializarSeletorTecnicosEdicao(el, valor);
+            return;
+        }
+
+        if (id === 'campo-cto') {
+          el.innerHTML = `<input type="text" value="${valor}"
+        oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value, 'campo-coordenadas', 'campo-endereco')"
+        style="width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)"/>`;
+        return
+        }
+
+        if (tipo === 'select') {
+            const optionsHtml = opcoes.map(op =>
+                `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`
+            ).join('');
+            el.innerHTML = `<select style="width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">${optionsHtml}</select>`;
+        } else {
+            el.innerHTML = `<input type="${tipo}" value="${valor}"
+                style="width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)"/>`;
+        }
+    });
+}
+
+function fecharDetalhe() {
+    document.getElementById('detalhe-overlay').classList.remove('open');
+    document.getElementById('btn-editar').style.display = '';
+    document.getElementById('btn-salvar').style.display = 'none';
+    document.getElementById('btn-cancelar').style.display = 'none';
+    tecnicosSelecionadosEdicao = [];
+}
+
+function cancelarEdicao() {
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    tecnicosSelecionadosEdicao = [];
+    document.getElementById('btn-editar').style.display = '';
+    document.getElementById('btn-salvar').style.display = 'none';
+    document.getElementById('btn-cancelar').style.display = 'none';
+    if (id) abrirDetalhe(id);
+}
+
+async function salvarEdicao() {
+  const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+  if (!id) return;
+
+  const dados = {
+    cto:              document.querySelector('#campo-cto input')?.value ?? '',
+    titulo:           `Rompimento — ${document.querySelector('#campo-cto input')?.value ?? ''}`,
+    descricao:        document.querySelector('#campo-tipo select')?.value ?? '',
+    regiao:           document.querySelector('#campo-regiao select')?.value ?? '',
+    responsavel:      tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
+    clientesAfetados: document.querySelector('#campo-clientes input')?.value ?? '',
+    coordenadas:      document.querySelector('#campo-coordenadas input')?.value ?? '',
+    localizacao_texto:document.querySelector('#campo-endereco input')?.value ?? '',
+    prioridade:       document.querySelector('#campo-prioridade select')?.value ?? '',
+    status:           document.querySelector('#campo-status select')?.value ?? '',
+  }
+
+  const token = localStorage.getItem('planner_token');
+
+  const response = await fetch(`/api/rompimentos/${id}`,{
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(dados)
+  })
+
+  if (response.ok) {
+    fecharDetalhe();
+    carregarRompimentos();
+  }else{
+    console.error('Erro ao salvar edição:', response.statusText);
+  }
+}
+
 let tecnicosSelecionados = [];
+let tecnicosSelecionadosEdicao = [];
 
 async function carregarTecnicos(regiao) {
     if (!regiao) return;
@@ -331,7 +456,93 @@ document.addEventListener('click', function(e) {
     if (wrap && !wrap.contains(e.target)) {
         dropdown.style.display = 'none';
     }
+
+    const wrapEd = document.getElementById('edicao-tec-wrap');
+    const dropdownEd = document.getElementById('dropdown-tec-edicao');
+    if (wrapEd && dropdownEd && !wrapEd.contains(e.target)) {
+        dropdownEd.style.display = 'none';
+    }
 });
+
+async function inicializarSeletorTecnicosEdicao(el, valorAtual) {
+    tecnicosSelecionadosEdicao = [];
+
+    el.innerHTML = `
+        <div id="edicao-tec-wrap" style="position:relative">
+            <div id="edicao-tec-tags"
+                onclick="toggleDropdownTecnicosEdicao()"
+                style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;
+                       cursor:pointer;border:1px solid var(--gray-200);
+                       border-radius:var(--radius-sm);padding:4px 8px;background:var(--white)">
+                <span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px">Carregando...</span>
+            </div>
+            <div id="dropdown-tec-edicao"
+                style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;
+                       background:var(--white);border:1px solid var(--gray-200);
+                       border-radius:var(--radius-sm);z-index:200;max-height:180px;
+                       overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+            </div>
+        </div>`;
+
+    const token = localStorage.getItem('planner_token');
+    const res = await fetch('/api/tecnicos', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const tecnicos = await res.json();
+
+    if (valorAtual) {
+        valorAtual.split(',').map(n => n.trim()).filter(Boolean).forEach(nome => {
+            const tec = tecnicos.find(t => t.nome === nome);
+            if (tec) tecnicosSelecionadosEdicao.push({ id: tec.id, nome: tec.nome });
+        });
+    }
+
+    document.getElementById('dropdown-tec-edicao').innerHTML = tecnicos.map(t => `
+        <div onclick="adicionarTecnicoEdicao(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
+            style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
+            onmouseover="this.style.background='var(--gray-50)'"
+            onmouseout="this.style.background='transparent'">
+            ${t.nome}
+        </div>
+    `).join('');
+
+    renderizarTagsEdicao();
+}
+
+function toggleDropdownTecnicosEdicao() {
+    const dropdown = document.getElementById('dropdown-tec-edicao');
+    if (!dropdown) return;
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+function adicionarTecnicoEdicao(id, nome) {
+    if (tecnicosSelecionadosEdicao.find(t => t.id === id)) return;
+    tecnicosSelecionadosEdicao.push({ id, nome });
+    renderizarTagsEdicao();
+    document.getElementById('dropdown-tec-edicao').style.display = 'none';
+}
+
+function removerTecnicoEdicao(id) {
+    tecnicosSelecionadosEdicao = tecnicosSelecionadosEdicao.filter(t => t.id !== id);
+    renderizarTagsEdicao();
+}
+
+function renderizarTagsEdicao() {
+    const container = document.getElementById('edicao-tec-tags');
+    if (!container) return;
+    const vazio = tecnicosSelecionadosEdicao.length === 0;
+    container.innerHTML = tecnicosSelecionadosEdicao.map(t => `
+        <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;
+                     padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
+            ${t.nome}
+            <i class="ti ti-x" style="font-size:10px;cursor:pointer"
+                onclick="event.stopPropagation();removerTecnicoEdicao(${t.id})"></i>
+        </span>
+    `).join('') + `<span id="edicao-tec-placeholder"
+        style="color:var(--gray-400);font-size:13px;${vazio ? '' : 'display:none'}">
+        Selecionar técnico...
+    </span>`;
+}
 
     let prioridadeSelecionada = 'Média';
 
@@ -343,9 +554,6 @@ function abrirModal() {
     document.getElementById('modal-overlay').classList.add('open');
 }
 
-function fecharDetalhe() {
-    document.getElementById('detalhe-overlay').classList.remove('open');
-}
 
 window.abrirModal = abrirModal;
 window.fecharDetalhe = fecharDetalhe;
@@ -395,36 +603,46 @@ async function carregarCTOs() {
     console.log(`Total de CTOs carregadas: ${CTOs.length}`);
 }
 
-function buscarCTO(valor) {
+function setField(id, texto) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.value = texto;
+    } else {
+        el.textContent = texto;
+    }
+}
+
+function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box') {
     const termo = valor.trim().toUpperCase();
 
     if (termo.length < 3) {
-        document.getElementById('input-coords').value = '';
-        document.getElementById('endereco-box').textContent = 'Gerado pelas coordenadas...';
+        document.getElementById(campoCoords).value = '';
+        setField(campoEndereco, 'Gerado pelas coordenadas...');
         return;
     }
 
     const encontrada = CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo);
 
     if (encontrada) {
-        document.getElementById('input-coords').value = `${encontrada.lat}, ${encontrada.lng}`;
-        document.getElementById('endereco-box').textContent = 'Buscando endereço...';
-        buscarEndereco(encontrada.lat, encontrada.lng);
+        document.getElementById(campoCoords).value = `${encontrada.lat}, ${encontrada.lng}`;
+        setField(campoEndereco, 'Buscando endereço...');
+        buscarEndereco(encontrada.lat, encontrada.lng, campoEndereco);
     } else {
-        document.getElementById('input-coords').value = '';
-        document.getElementById('endereco-box').textContent = 'CTO não encontrada — preencha manualmente';
+        document.getElementById(campoCoords).value = '';
+        setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
     }
 }
 
-async function buscarEndereco(lat, lng) {
+async function buscarEndereco(lat, lng, campoEndereco = 'endereco-box') {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { 'Accept-Language': 'pt-BR' } }
     );
     const data = await res.json();
-    document.getElementById('endereco-box').textContent = data.display_name || 'Não encontrado';
+    setField(campoEndereco, data.display_name || 'Não encontrado');
   }catch(e){
-    document.getElementById('endereco-box').textContent = 'Erro ao buscar endereço';
+    setField(campoEndereco, 'Erro ao buscar endereço');
   }
 }
 
@@ -505,24 +723,25 @@ async function criarRompimento() {
     window.carregarRompimentos = carregarRompimentos;
 
     function renderCard(r) {
-        const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
-            : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa'
-            : 'b-media';
-        const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale')
-            ? 'b-regiao-va' : 'b-regiao-gv';
+    const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
+        : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa'
+        : 'b-media';
+    const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale')
+        ? 'b-regiao-va' : 'b-regiao-gv';
 
-        return `
-        <div class="kcard"${isTouchDevice ? '' : ' draggable="true"'} data-id="${r.id}" data-status="${r.status}">
-            <div class="kcard-title">${r.titulo}</div>
-            <div class="kcard-foot">
-                <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
-                <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
-                <span class="kcard-code">${r.taskCode || 'S/C'}</span>
-            </div>
-            ${r.cto ? `<div class="kcard-meta"><span style="font-size:10px;color:var(--gray-500)">CTO: ${r.cto}</span></div>` : ''}
-            ${r.clientesAfetados ? `<div class="kcard-meta"><span style="font-size:10px;color:var(--gray-500)">👥 ${r.clientesAfetados} clientes</span></div>` : ''}
-        </div>`;
-    }
+    return `
+    <div class="kcard" data-id="${r.id}" data-status="${r.status}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span class="kcard-code" style="font-size:11px">${r.taskCode || 'S/C'}</span>
+            <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
+        </div>
+        <div class="kcard-title">${r.cto || r.titulo}</div>
+        <div class="kcard-foot" style="margin-top:6px">
+            <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
+            ${r.clientesAfetados ? `<span style="font-size:10px;color:var(--gray-500);margin-left:auto">👥 ${r.clientesAfetados}</span>` : ''}
+        </div>
+    </div>`;
+}
 
     function atualizarContadores() {
         ['criada', 'andamento', 'impedimento', 'finalizada'].forEach(col => {
@@ -606,50 +825,57 @@ async function criarRompimento() {
         return `<span class="badge ${cls}">${esc(regiao || 'Sem região')}</span>`;
     }
 
-    function campoDetalhe(label, valor, span = 1) {
-        const spanClass = span === 3 ? ' span-3' : span === 2 ? ' span-2' : '';
-        return `
-        <div class="detail-field${spanClass}">
-            <span class="detail-label">${label}</span>
-            <div class="detail-value">${valor}</div>
-        </div>`;
-    }
+    function campoDetalhe(label, valor, span = 1, id = '') {
+    const spanClass = span === 3 ? ' span-3' : span === 2 ? ' span-2' : '';
+    const idAttr = id ? `id="${id}"` : '';
+    return `
+    <div class="detail-field${spanClass}">
+        <span class="detail-label">${label}</span>
+        <div class="detail-value" ${idAttr}>${valor || '—'}</div>
+    </div>`;
+}
 
     function renderDetalhe(r) {
-        document.getElementById('detalhe-titulo').textContent = r.titulo || 'Rompimento';
-        document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
+    document.getElementById('detalhe-titulo').textContent = r.titulo || 'Rompimento';
+    document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
 
-        const tecnicos = r.responsavel || '—';
+    const tecnicos = r.responsavel || '—';
 
-        document.getElementById('detalhe-conteudo').innerHTML = `
-            <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
-                <div class="detail-badges">
-                    ${badgeStatus(r.status)}
-                    ${badgePrioridade(r.prioridade)}
-                    ${badgeRegiao(r.regiao)}
-                </div>
-                <div class="detail-grid">
-                    ${campoDetalhe('CTO / Elemento', esc(r.cto))}
-                    ${campoDetalhe('Tipo de rompimento', esc(r.descricao))}
-                    ${campoDetalhe('Região', esc(r.regiao))}
-                </div>
-                <div class="detail-grid-2">
-                    ${campoDetalhe('Técnico(s) responsável(is)', esc(tecnicos))}
-                    ${campoDetalhe('Clientes afetados', esc(r.clientesAfetados ?? '0'))}
-                </div>
-                <div class="detail-grid-2">
-                    ${campoDetalhe('Coordenadas', esc(r.coordenadas))}
-                    ${campoDetalhe('Código da tarefa', esc(r.taskCode))}
-                </div>
-                <div class="detail-grid">
-                    ${campoDetalhe('Endereço', esc(r.localizacao_texto), 3)}
-                </div>
-                <div class="detail-grid-2">
-                    ${campoDetalhe('Criado em', formatarData(r.criadaEm))}
-                    ${campoDetalhe('Atualizado em', formatarData(r.updated_at))}
-                </div>
-            </div>`;
-    }
+    document.getElementById('detalhe-conteudo').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
+            <div class="detail-badges">
+                ${badgeStatus(r.status)}
+                ${badgePrioridade(r.prioridade)}
+                ${badgeRegiao(r.regiao)}
+            </div>
+            <div class="detail-grid">
+                ${campoDetalhe('CTO / Elemento', esc(r.cto), 1, 'campo-cto')}
+                ${campoDetalhe('Tipo de rompimento', esc(r.descricao), 1, 'campo-tipo')}
+                ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
+            </div>
+            <div class="detail-grid-2">
+                ${campoDetalhe('Técnico(s) responsável(is)', esc(tecnicos), 1, 'campo-tecnicos')}
+                ${campoDetalhe('Clientes afetados', esc(r.clientesAfetados ?? '0'), 1, 'campo-clientes')}
+            </div>
+           <div class="detail-grid-2">
+    ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
+    ${campoDetalhe('Código da tarefa', esc(r.taskCode), 1, '')}
+</div>
+<div class="detail-grid-2">
+    ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
+    ${campoDetalhe('Status', esc(r.status), 1, 'campo-status')}
+</div>
+            <div class="detail-grid">
+                ${campoDetalhe('Endereço', esc(r.localizacao_texto), 3, 'campo-endereco')}
+            </div>
+            <div class="detail-grid-2">
+                ${campoDetalhe('Criado em', formatarData(r.criadaEm), 1, '')}
+                ${campoDetalhe('Atualizado em', formatarData(r.updated_at), 1, '')}
+            </div>
+        </div>`;
+
+    document.getElementById('detalhe-conteudo').dataset.id = r.id;
+}
 
     function renderDetalheLoading() {
         document.getElementById('detalhe-titulo').textContent = 'Carregando...';
