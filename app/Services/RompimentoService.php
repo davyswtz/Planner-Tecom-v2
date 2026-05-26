@@ -1,13 +1,14 @@
 <?php
 
 namespace App\Services;
-
-
+use App\Services\GoogleChatService;
+use App\Services\OpTaskService;
 use App\Models\OpTask;
 
 class RompimentoService
 {
-public function __construct(private OpTaskService $opTaskService){}
+public function __construct(private OpTaskService $opTaskService
+, private GoogleChatService $googleChatService){}
 
     public function getRompimentos()
     {
@@ -28,13 +29,21 @@ public function __construct(private OpTaskService $opTaskService){}
     }
 
     public function updateRompimento(OpTask $rompimento, array $dados): OpTask {
+        $statusAnterior = $rompimento->status;
         $rompimento->update($dados);
-        return $rompimento;
+        if (isset($dados['status']) && $dados['status'] !== $statusAnterior){
+            $mensagem = $this->googleChatService->montarMensagemStatus(
+                $rompimento->toArray(),
+                $statusAnterior,
+                $dados['status']
+            );
+            $this->googleChatService->enviarNotificacao($rompimento, $mensagem);
+        }
+        return $rompimento->fresh();
     }
 
-    public function deleteRompimento(OpTask $rompimento): OpTask {
+    public function deleteRompimento(OpTask $rompimento): void {
         $rompimento->delete();
-        return $rompimento;
     }
 
 }
