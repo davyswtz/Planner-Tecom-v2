@@ -94,6 +94,54 @@
   .btn-modal-ghost:hover { background: var(--gray-50); border-color: var(--gray-400); }
   .btn-modal-primary { border: none; background: #166ac4; color: #fff; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
   .btn-modal-primary:hover { background: #0d5aaa; }
+  .modal-tabs { display: flex; border-bottom: 1px solid var(--gray-200); padding: 0 24px; flex-shrink: 0; gap: 0; }
+  .modal-tab { padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--gray-500); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; transition: color 0.15s, border-color 0.15s; }
+  .modal-tab i { font-size: 14px; }
+  .modal-tab:hover { color: var(--gray-700); }
+  .modal-tab.active { color: #166ac4; border-bottom-color: #166ac4; }
+  .os-tab-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--gray-200); }
+  .os-tab-title { font-size: 13px; font-weight: 600; color: var(--gray-700); display: inline-flex; align-items: center; gap: 7px; }
+  .os-count-pill { font-size: 11px; font-weight: 600; background: var(--gray-100); color: var(--gray-500); border-radius: 20px; padding: 1px 8px; }
+  .os-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 40px 0; color: var(--gray-400); }
+  .os-empty i { font-size: 32px; color: var(--gray-300); }
+  .os-empty span { font-size: 12px; }
+  .btn-nova-os { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border-radius: var(--radius-sm); border: none; background: #166ac4; color: #fff; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.15s, transform 0.15s; }
+  .btn-nova-os:hover { background: #0d5aaa; }
+  .btn-nova-os:active { transform: scale(0.97); }
+  .os-card { border: 1px solid var(--gray-200); border-left: 3px solid var(--gray-300); border-radius: var(--radius-sm); padding: 10px 12px 10px 13px; margin-bottom: 7px; background: var(--white); transition: box-shadow 0.15s; }
+  .os-card:last-child { margin-bottom: 0; }
+  .os-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .os-card-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+  .os-card-title { font-size: 13px; font-weight: 600; color: var(--gray-950); line-height: 1.45; }
+  .os-card-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .os-card-av { width: 20px; height: 20px; border-radius: 50%; background: var(--blue-50); color: var(--blue-800); font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .os-card-tecnico { font-size: 12px; color: var(--gray-500); }
+  .os-card-code { font-size: 11px; color: var(--gray-400); font-family: 'Courier New', monospace; margin-left: auto; }
+  .btn-edit-os { background: transparent; border: none; cursor: pointer; color: var(--gray-300); padding: 3px 4px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; flex-shrink: 0; line-height: 1; transition: color 0.15s, background 0.15s; }
+  .btn-edit-os:hover { color: #166ac4; background: #eff6ff; }
+  .os-status-wrap { display: inline-flex; align-items: center; }
+  .os-status-badge { cursor: pointer; border: none; background: transparent; padding: 0; display: inline-flex; align-items: center; gap: 3px; }
+  .os-status-badge .badge { pointer-events: none; transition: filter 0.15s; }
+  .os-status-badge:hover .badge { filter: brightness(0.88); }
+  .os-status-badge .drop-arrow { pointer-events: none; font-size: 8px; opacity: 0.55; }
+  .os-status-pills { display: none; align-items: center; gap: 4px; }
+  .os-status-pills.open { display: inline-flex; }
+  .os-status-pill { border: none; cursor: pointer; font-size: 10px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; opacity: 0.38; transition: opacity 0.15s, transform 0.12s; }
+  .os-status-pill:hover { opacity: 0.72; }
+  .os-status-pill.active { opacity: 1; box-shadow: 0 0 0 2px currentColor; }
+  .os-status-pill-aberta     { background: #dbeafe; color: #1d4ed8; }
+  .os-status-pill-andamento  { background: #fef3c7; color: #92400e; }
+  .os-status-pill-finalizada { background: #dcfce7; color: #166534; }
+  .os-status-close { border: none; background: transparent; cursor: pointer; color: var(--gray-400); font-size: 13px; padding: 2px 3px; line-height: 1; margin-left: 2px; border-radius: 4px; }
+  .os-status-close:hover { color: var(--gray-700); background: var(--gray-100, #f3f4f6); }
+  .modal-os-overlay { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0); visibility: hidden; pointer-events: none; transition: background 0.28s cubic-bezier(0.16,1,0.3,1), visibility 0.28s; }
+  .modal-os-overlay.open { visibility: visible; pointer-events: auto; background: rgba(0,0,0,0.55); }
+  .modal-os-box { background: var(--white); border-radius: var(--radius); border: 1px solid var(--gray-200); width: 100%; max-width: 560px; overflow: hidden; max-height: calc(100vh - 32px); display: flex; flex-direction: column; opacity: 0; transform: scale(0.96) translateY(14px); transition: transform 0.34s cubic-bezier(0.16,1,0.3,1), opacity 0.34s cubic-bezier(0.16,1,0.3,1); will-change: transform, opacity; }
+  .modal-os-overlay.open .modal-os-box { opacity: 1; transform: scale(1) translateY(0); }
+  .os-field { display: flex; flex-direction: column; gap: 5px; }
+  .os-label { font-size: 12px; font-weight: 500; color: var(--gray-500); }
+  .os-input { width: 100%; height: 38px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0 10px; font-size: 13px; font-family: inherit; outline: none; background: var(--white); color: var(--gray-950); transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box; }
+  .os-input:focus { border-color: #166ac4; box-shadow: 0 0 0 3px rgba(22,106,196,0.12); }
   @keyframes conteudoEntrada { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @media (max-width: 768px) {
@@ -111,127 +159,181 @@
 @section('content')
 
 <!-- MODAL CRIAR -->
-<div id="modal-overlay" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-head">
-      <div>
-        <p class="modal-title">Novo rompimento</p>
-        <p class="modal-sub">Preencha os dados do rompimento</p>
-      </div>
-      <button onclick="fecharModal()" class="modal-close"><i class="ti ti-x"></i></button>
+<x-modal id="modal-overlay" titulo="Novo rompimento" subtitulo="Preencha os dados do rompimento">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Elemento(s)</label>
+      <input type="text" id="input-cto" placeholder="Ex: GVA1210"
+        oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value)"
+        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"/>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:4px">Coordenadas preenchidas automaticamente</p>
     </div>
-
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Elemento(s)</label>
-          <input type="text" id="input-cto" placeholder="Ex: GVA1210"
-            oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value)"
-            style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"/>
-          <p style="font-size:11px;color:var(--gray-400);margin-top:4px">Coordenadas preenchidas automaticamente</p>
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Tipo de rompimento</label>
-          <select id="input-tipo" style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">
-            <option value="">Selecione...</option>
-            <option>Fibra cortada</option>
-            <option>CTO offline</option>
-            <option>Queda de sinal</option>
-            <option>OLT offline</option>
-            <option>Cabo subterrâneo</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Região</label>
-          <select id="input-regiao" onchange="carregarTecnicos(this.value)"
-            style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">
-            <option value="">Selecione...</option>
-            <option>Goval</option>
-            <option>Vale do Aço</option>
-            <option>Caratinga</option>
-            <option>Teste</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Técnico(s) responsável(is)</label>
-          <div id="tecnicos-wrap" style="position:relative;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;min-height:38px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text">
-            <span id="tecnicos-tags"></span>
-            <input id="input-tec" type="text" placeholder="Selecione uma região primeiro..." readonly
-              style="border:none;outline:none;font-size:12px;background:transparent;flex:1;min-width:80px;box-shadow:none;height:24px;font-family:inherit;cursor:pointer"
-              onclick="toggleDropdownTecnicos()"/>
-            <div id="dropdown-tecnicos" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
-          </div>
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Cliente(s) afetado(s)</label>
-          <input type="number" id="input-clientes" placeholder="0" min="0"
-            style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"/>
-        </div>
-      </div>
-
-      <div>
-        <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:8px">Prioridade</label>
-        <div style="display:flex;gap:8px">
-          <button onclick="selecionarPrioridade(this,'Baixa')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:1px solid #86efac;background:#f0fdf4;color:#166534;font-size:13px;font-weight:500;cursor:pointer">Baixa</button>
-          <button onclick="selecionarPrioridade(this,'Média')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:2px solid var(--amber);background:var(--amber-bg);color:var(--amber-text);font-size:13px;font-weight:500;cursor:pointer">Média ✓</button>
-          <button onclick="selecionarPrioridade(this,'Alta')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:1px solid #fca5a5;background:var(--red-bg);color:var(--red-text);font-size:13px;font-weight:500;cursor:pointer">Alta</button>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Coordenadas</label>
-          <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
-            style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gray-50);color:var(--gray-500)"/>
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Endereço</label>
-          <div id="endereco-box" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 10px;min-height:38px;font-size:13px;color:var(--gray-400);background:var(--gray-50)">
-            Gerado pelas coordenadas...
-          </div>
-        </div>
-      </div>
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Tipo de rompimento</label>
+      <select id="input-tipo" style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">
+        <option value="">Selecione...</option>
+        <option>Fibra cortada</option>
+        <option>CTO offline</option>
+        <option>Queda de sinal</option>
+        <option>OLT offline</option>
+        <option>Cabo subterrâneo</option>
+      </select>
     </div>
-
-    <div class="modal-foot">
-      <button onclick="fecharModal()" class="btn-modal btn-modal-ghost">Cancelar</button>
-      <button onclick="criarRompimento()" class="btn-modal btn-modal-primary">
-        <i class="ti ti-bolt" style="font-size:14px"></i> Criar rompimento
-      </button>
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Região</label>
+      <select id="input-regiao" onchange="carregarTecnicos(this.value)"
+        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">
+        <option value="">Selecione...</option>
+        <option>Goval</option>
+        <option>Vale do Aço</option>
+        <option>Caratinga</option>
+        <option>Teste</option>
+      </select>
     </div>
   </div>
-</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Técnico(s) responsável(is)</label>
+      <div id="tecnicos-wrap" style="position:relative;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;min-height:38px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text">
+        <span id="tecnicos-tags"></span>
+        <input id="input-tec" type="text" placeholder="Selecione uma região primeiro..." readonly
+          style="border:none;outline:none;font-size:12px;background:transparent;flex:1;min-width:80px;box-shadow:none;height:24px;font-family:inherit;cursor:pointer"
+          onclick="toggleDropdownTecnicos()"/>
+        <div id="dropdown-tecnicos" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Cliente(s) afetado(s)</label>
+      <input type="number" id="input-clientes" placeholder="0" min="0"
+        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"/>
+    </div>
+  </div>
+
+  <div>
+    <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:8px">Prioridade</label>
+    <div style="display:flex;gap:8px">
+      <button onclick="selecionarPrioridade(this,'Baixa')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:1px solid #86efac;background:#f0fdf4;color:#166534;font-size:13px;font-weight:500;cursor:pointer">Baixa</button>
+      <button onclick="selecionarPrioridade(this,'Média')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:2px solid var(--amber);background:var(--amber-bg);color:var(--amber-text);font-size:13px;font-weight:500;cursor:pointer">Média ✓</button>
+      <button onclick="selecionarPrioridade(this,'Alta')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:1px solid #fca5a5;background:var(--red-bg);color:var(--red-text);font-size:13px;font-weight:500;cursor:pointer">Alta</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Coordenadas</label>
+      <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
+        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gray-50);color:var(--gray-500)"/>
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Endereço</label>
+      <div id="endereco-box" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 10px;min-height:38px;font-size:13px;color:var(--gray-400);background:var(--gray-50)">
+        Gerado pelas coordenadas...
+      </div>
+    </div>
+  </div>
+
+  <x-slot name="footer">
+    <button onclick="fecharModal()" class="btn-modal btn-modal-ghost">Cancelar</button>
+    <button onclick="criarRompimento()" class="btn-modal btn-modal-primary">
+      <i class="ti ti-bolt" style="font-size:14px"></i> Criar rompimento
+    </button>
+  </x-slot>
+
+</x-modal>
 
 <!-- MODAL DETALHE -->
-<div id="detalhe-overlay" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-head">
-      <div>
-        <p class="modal-title" id="detalhe-titulo">Rompimento</p>
-        <p class="modal-sub" id="detalhe-subtitulo"></p>
-      </div>
-      <button onclick="fecharDetalhe()" class="modal-close"><i class="ti ti-x"></i></button>
+<x-modal
+  id="detalhe-overlay"
+  titulo-id="detalhe-titulo"
+  subtitulo-id="detalhe-subtitulo"
+  fechar="fecharDetalhe()">
+
+  <x-slot name="tabs">
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-btn-detalhes" onclick="trocarAba('detalhes')">
+        <i class="ti ti-info-circle"></i> Detalhes
+      </button>
+      <button class="modal-tab" id="tab-btn-os" onclick="trocarAba('os')">
+        <i class="ti ti-clipboard-list"></i> Ordens de Serviço
+      </button>
     </div>
+  </x-slot>
 
-    <div class="modal-body" id="detalhe-conteudo"></div>
+  <div id="detalhe-tab-detalhes">
+    <div id="detalhe-conteudo"></div>
+  </div>
 
-    <div class="modal-foot">
-      <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
-      <button onclick="ativarEdicao()" id="btn-editar" class="btn-modal btn-modal-primary">
-        <i class="ti ti-pencil"></i> Editar
+  <div id="detalhe-tab-os" style="display:none">
+    <div class="os-tab-head">
+      <span class="os-tab-title">Ordens de Serviço vinculadas</span>
+      <button class="btn-nova-os" onclick="abrirNovaOS()">
+        <i class="ti ti-plus" style="font-size:13px"></i> Nova OS
       </button>
-      <button onclick="salvarEdicao()" id="btn-salvar" class="btn-modal btn-modal-primary" style="display:none">
-        <i class="ti ti-check" style="font-size:14px"></i> Salvar
-      </button>
-      <button onclick="cancelarEdicao()" id="btn-cancelar" class="btn-modal btn-modal-ghost" style="display:none">
-        <i class="ti ti-x" style="font-size:14px"></i> Cancelar
-      </button>
+    </div>
+    <div class="os-empty">
+      <i class="ti ti-clipboard-off"></i>
+      <span>Nenhuma OS vinculada a este rompimento</span>
     </div>
   </div>
-</div>
+
+  <x-slot name="footer">
+    <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
+    <button onclick="ativarEdicao()" id="btn-editar" class="btn-modal btn-modal-primary">
+      <i class="ti ti-pencil"></i> Editar
+    </button>
+    <button onclick="salvarEdicao()" id="btn-salvar" class="btn-modal btn-modal-primary" style="display:none">
+      <i class="ti ti-check" style="font-size:14px"></i> Salvar
+    </button>
+    <button onclick="cancelarEdicao()" id="btn-cancelar" class="btn-modal btn-modal-ghost" style="display:none">
+      <i class="ti ti-x" style="font-size:14px"></i> Cancelar
+    </button>
+  </x-slot>
+
+</x-modal>
+
+<!-- MODAL NOVA OS -->
+<x-modal
+  id="modal-os-overlay"
+  titulo="Nova Ordem de Serviço"
+  titulo-id="os-modal-titulo"
+  subtitulo-id="os-modal-sub"
+  fechar="fecharNovaOS()">
+
+  <div class="os-field">
+    <label class="os-label">Tipo de serviço</label>
+    <input type="text" id="os-input-tipo" class="os-input"
+      placeholder="Ex: REPARO DE CABO"
+      oninput="this.value = this.value.toUpperCase()"/>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="os-field">
+      <label class="os-label">Técnico responsável</label>
+      <select id="os-input-tecnico" class="os-input">
+        <option value="">Selecione...</option>
+      </select>
+    </div>
+    <div class="os-field">
+      <label class="os-label">Status</label>
+      <select id="os-input-status" class="os-input">
+        <option value="aberta">Aberta</option>
+        <option value="em_andamento">Em andamento</option>
+        <option value="finalizada">Finalizada</option>
+      </select>
+    </div>
+  </div>
+
+  <x-slot name="footer">
+    <button onclick="fecharNovaOS()" class="btn-modal btn-modal-ghost">Cancelar</button>
+    <button class="btn-modal btn-modal-primary" id="os-btn-salvar" onclick="salvarOs()">
+      <i class="ti ti-clipboard-check" style="font-size:14px" id="os-btn-icon"></i>
+      <span id="os-btn-label">Criar OS</span>
+    </button>
+  </x-slot>
+
+</x-modal>
 
 <!-- KANBAN -->
 <div class="card" style="flex:1">
@@ -278,6 +380,8 @@
   let prioridadeSelecionada = 'Média';
   let tecnicosSelecionados = [];
   let tecnicosSelecionadosEdicao = [];
+  let osDataMap = {};
+  let osEditandoId = null;
 
   // ─── MODAIS ───
   window.abrirModal = function() {
@@ -290,8 +394,83 @@
     document.getElementById('modal-overlay').classList.remove('open');
   }
 
+  // ─── MODAL NOVA OS ───
+  function abrirNovaOS() {
+    osEditandoId = null;
+    document.getElementById('modal-os-overlay').classList.add('open');
+    const regiaoRompimento = document.getElementById('detalhe-conteudo').dataset.regiao || '';
+    carregarTecnicos(regiaoRompimento, 'os-input-tecnico');
+
+    carregarTecnicos(null, 'os-input-tecnico');
+    document.getElementById('os-modal-titulo').textContent = 'Nova Ordem de Serviço';
+    document.getElementById('os-btn-icon').className = 'ti ti-clipboard-check';
+    document.getElementById('os-btn-label').textContent = 'Criar OS';
+    document.getElementById('os-input-tipo').value = '';
+    document.getElementById('os-input-tecnico').value = '';
+    document.getElementById('os-input-status').value = 'aberta';
+    
+  }
+
+  function editarOs(id) {
+    const os = osDataMap[id];
+    if (!os) return;
+
+    osEditandoId = id;
+    document.getElementById('os-modal-titulo').textContent = 'Editar Ordem de Serviço';
+    document.getElementById('os-btn-icon').className = 'ti ti-check';
+    document.getElementById('os-btn-label').textContent = 'Salvar alterações';
+
+    const tipoValue = (os.titulo || '').replace(/^OS\s*[—\-]\s*/i, '');
+    document.getElementById('os-input-tipo').value = tipoValue;
+    document.getElementById('os-input-status').value = os.status || 'aberta';
+
+    const tecnicoSelect = document.getElementById('os-input-tecnico');
+    let encontrou = false;
+    Array.from(tecnicoSelect.options).forEach(opt => {
+      if (opt.value === os.responsavel || opt.text === os.responsavel) {
+        opt.selected = true;
+        encontrou = true;
+      }
+    });
+    if (!encontrou && os.responsavel) {
+      const opt = document.createElement('option');
+      opt.value = os.responsavel;
+      opt.text = os.responsavel;
+      opt.selected = true;
+      tecnicoSelect.appendChild(opt);
+    }
+
+    document.getElementById('modal-os-overlay').classList.add('open');
+  }
+
+  function fecharNovaOS() {
+    osEditandoId = null;
+    document.getElementById('modal-os-overlay').classList.remove('open');
+  }
+
+  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharNovaOS();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fecharNovaOS();
+  }, { capture: false });
+
+  function trocarAba(aba) {
+    document.getElementById('detalhe-tab-detalhes').style.display = aba === 'detalhes' ? 'block' : 'none';
+    document.getElementById('detalhe-tab-os').style.display = aba === 'os' ? 'block' : 'none';
+    document.getElementById('tab-btn-detalhes').classList.toggle('active', aba === 'detalhes');
+    document.getElementById('tab-btn-os').classList.toggle('active', aba === 'os');
+
+    if (aba === 'os') {
+        const id = document.getElementById('detalhe-conteudo').dataset.id;
+        carregarOS(id);
+    }
+}
+
   function fecharDetalhe() {
     document.getElementById('detalhe-overlay').classList.remove('open');
+    trocarAba('detalhes');
     document.getElementById('btn-editar').style.display = '';
     document.getElementById('btn-salvar').style.display = 'none';
     document.getElementById('btn-cancelar').style.display = 'none';
@@ -392,23 +571,33 @@
   }
 
   // ─── TÉCNICOS (MODAL CRIAR) ───
-  async function carregarTecnicos(regiao) {
+  async function carregarTecnicos(regiao, destino = 'dropdown-tecnicos') {
     if (!regiao) return;
-    document.getElementById('input-tec').placeholder = 'Carregando...';
+
     const token = localStorage.getItem('planner_token');
     const res = await fetch(`/api/tecnicos?regiao=${encodeURIComponent(regiao)}`, {
-      headers: { 'Authorization': 'Bearer ' + token }
+        headers: { 'Authorization': 'Bearer ' + token }
     });
     const tecnicos = await res.json();
-    document.getElementById('dropdown-tecnicos').innerHTML = tecnicos.length
-      ? tecnicos.map(t => `<div onclick="selecionarTecnico(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-            style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-            onmouseover="this.style.background='var(--gray-50)'"
-            onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('')
-      : '<div style="padding:8px 12px;font-size:13px;color:var(--gray-400)">Nenhum técnico nessa região</div>';
-    document.getElementById('input-tec').placeholder = tecnicos.length ? 'Selecionar técnico...' : 'Nenhum técnico';
-  }
 
+    const el = document.getElementById(destino);
+    if (!el) return;
+
+    if (el.tagName === 'SELECT') {
+        el.innerHTML = '<option value="">Selecione...</option>'
+            + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+        return;
+    }
+
+    el.innerHTML = tecnicos.length
+        ? tecnicos.map(t => `<div onclick="selecionarTecnico(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
+                style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
+                onmouseover="this.style.background='var(--gray-50)'"
+                onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('')
+        : '<div style="padding:8px 12px;font-size:13px;color:var(--gray-400)">Nenhum técnico nessa região</div>';
+
+    document.getElementById('input-tec').placeholder = tecnicos.length ? 'Selecionar técnico...' : 'Nenhum técnico';
+}
   function toggleDropdownTecnicos() {
     const d = document.getElementById('dropdown-tecnicos');
     d.style.display = d.style.display === 'none' ? 'block' : 'none';
@@ -603,7 +792,140 @@
     }
   }
 
-  // ─── CRIAR ROMPIMENTO ───
+  async function salvarOs() {
+    const rompimentoId = document.getElementById('detalhe-conteudo').dataset.id;
+    const tipo      = document.getElementById('os-input-tipo').value;
+    const tecnico   = document.getElementById('os-input-tecnico').value;
+    const status    = document.getElementById('os-input-status').value;
+    const token     = localStorage.getItem('planner_token');
+
+    const btn = document.getElementById('os-btn-salvar');
+    btn.disabled = true;
+
+    try {
+      if (osEditandoId) {
+        const dados = {
+          titulo:      `OS — ${tipo}`,
+          responsavel: tecnico,
+          status,
+        };
+        const response = await fetch(`/api/op-tasks/${osEditandoId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+        if (response.ok) {
+          fecharNovaOS();
+          carregarOS(rompimentoId);
+        } else {
+          const erro = await response.json();
+          console.error('Erro ao atualizar OS:', erro.message);
+        }
+      } else {
+        const dados = {
+          titulo:         `OS — ${tipo}`,
+          responsavel:    tecnico,
+          status,
+          categoria:      'ordem-servico',
+          parent_task_id: rompimentoId,
+        };
+        const response = await fetch('/api/op-tasks', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+        if (response.ok) {
+          fecharNovaOS();
+          carregarOS(rompimentoId);
+        } else {
+          const erro = await response.json();
+          console.error('Erro ao criar OS:', erro.message);
+        }
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+async function carregarOS(rompimentoId) {
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(`/api/rompimentos/${rompimentoId}/os`, {
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/json'
+        }
+    });
+
+    const data = await response.json();
+    const lista = data.os || [];
+
+    lista.forEach(os => { osDataMap[os.id] = os; });
+
+    const container = document.getElementById('detalhe-tab-os');
+
+    const statusBorder = { 'Finalizada': '#22c55e', 'Impedimento': '#ef4444', 'Em andamento': '#f59e0b', 'em_andamento': '#f59e0b', 'Aberta': '#166ac4' };
+    const statusBadge  = { 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta', 'Aberta': 'b-aberta', 'aberta': 'b-aberta' };
+    const statusDot    = { 'Aberta': '#166ac4', 'aberta': '#166ac4', 'Em andamento': '#f59e0b', 'em_andamento': '#f59e0b', 'Finalizada': '#22c55e', 'Impedimento': '#ef4444' };
+    const statusOpts   = [
+        { value: 'Aberta',       label: 'Aberta',       cls: 'aberta',     border: '#166ac4' },
+        { value: 'Em andamento', label: 'Em andamento', cls: 'andamento',  border: '#f59e0b' },
+        { value: 'Finalizada',   label: 'Finalizada',   cls: 'finalizada', border: '#22c55e' },
+    ];
+
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div class="os-tab-head">
+                <span class="os-tab-title">Ordens de Serviço <span class="os-count-pill">0</span></span>
+                <button class="btn-nova-os" onclick="abrirNovaOS()">
+                    <i class="ti ti-plus" style="font-size:12px"></i> Nova OS
+                </button>
+            </div>
+            <div class="os-empty">
+                <i class="ti ti-clipboard-off"></i>
+                <span>Nenhuma OS vinculada a este rompimento</span>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="os-tab-head">
+            <span class="os-tab-title">Ordens de Serviço <span class="os-count-pill">${lista.length}</span></span>
+            <button class="btn-nova-os" onclick="abrirNovaOS()">
+                <i class="ti ti-plus" style="font-size:12px"></i> Nova OS
+            </button>
+        </div>
+        ${lista.map(os => {
+            const border = statusBorder[os.status] || '#166ac4';
+            const badge  = statusBadge[os.status]  || 'b-media';
+            const av     = (os.responsavel || '?').trim().split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+            return `
+            <div class="os-card" style="border-left-color:${border}">
+                <div class="os-card-row">
+                    <span class="os-card-title">${os.titulo}</span>
+                    <button class="btn-edit-os" title="Editar OS" onclick="editarOs(${os.id})">
+                        <i class="ti ti-pencil" style="font-size:12px"></i>
+                    </button>
+                </div>
+                <div class="os-card-meta">
+                    <span class="os-card-av">${av}</span>
+                    <span class="os-card-tecnico">${os.responsavel || '—'}</span>
+                    <div class="os-status-wrap" id="sw-${os.id}">
+                        <button class="os-status-badge" onclick="abrirStatusPills(${os.id}, event)" title="Alterar status">
+                            <span class="badge ${badge}" id="sb-${os.id}">${os.status}</span>
+                            <span class="drop-arrow">✎</span>
+                        </button>
+                        <div class="os-status-pills" id="sp-${os.id}">
+                            ${statusOpts.map(opt => `<button class="os-status-pill os-status-pill-${opt.cls}${os.status === opt.value ? ' active' : ''}" onclick="selecionarStatusOS(${os.id}, '${opt.value}', event)">${opt.label}</button>`).join('')}
+                            <button class="os-status-close" onclick="fecharStatusPills(${os.id}, event)" title="Cancelar">✕</button>
+                        </div>
+                    </div>
+                    <span class="os-card-code">${os.taskCode || ''}</span>
+                </div>
+            </div>`;
+        }).join('')}`;
+}
+
+
   async function criarRompimento() {
     const dados = {
       titulo:            `Rompimento — ${document.getElementById('input-cto').value}`,
@@ -638,8 +960,71 @@
       console.error('Erro ao criar rompimento:', resultado.message);
     }
   }
-
+  window.trocarAba = trocarAba;
   carregarCTOs();
+
+  // ── Status pills inline das OS ────────────────────────────────────────
+  const statusBadgeMap  = { 'Aberta': 'b-aberta', 'aberta': 'b-aberta', 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta' };
+  const statusBorderMap = { 'Aberta': '#166ac4', 'aberta': '#166ac4', 'Finalizada': '#22c55e', 'Impedimento': '#ef4444', 'Em andamento': '#f59e0b' };
+
+  window.abrirStatusPills = function(osId, e) {
+    e.stopPropagation();
+    fecharTodasPills();
+    const wrap  = document.getElementById('sw-' + osId);
+    const pills = document.getElementById('sp-' + osId);
+    if (!wrap || !pills) return;
+    wrap.querySelector('.os-status-badge').style.display = 'none';
+    pills.classList.add('open');
+  };
+
+  window.fecharStatusPills = function(osId, e) {
+    if (e) e.stopPropagation();
+    const wrap  = document.getElementById('sw-' + osId);
+    const pills = document.getElementById('sp-' + osId);
+    if (!wrap || !pills) return;
+    pills.classList.remove('open');
+    wrap.querySelector('.os-status-badge').style.display = '';
+  };
+
+  function fecharTodasPills() {
+    document.querySelectorAll('.os-status-pills.open').forEach(p => {
+      const id = p.id.replace('sp-', '');
+      fecharStatusPills(id, null);
+    });
+  }
+
+  window.selecionarStatusOS = function(osId, novoStatus, e) {
+    e.stopPropagation();
+    const wrap  = document.getElementById('sw-' + osId);
+    const pills = document.getElementById('sp-' + osId);
+    if (!wrap || !pills) return;
+
+    // Atualiza badge
+    const badgeEl = document.getElementById('sb-' + osId);
+    if (badgeEl) {
+      badgeEl.className = 'badge ' + (statusBadgeMap[novoStatus] || 'b-media');
+      badgeEl.textContent = novoStatus;
+    }
+
+    // Atualiza borda esquerda do card
+    const card = wrap.closest('.os-card');
+    if (card) card.style.borderLeftColor = statusBorderMap[novoStatus] || '#166ac4';
+
+    // Marca pill ativa
+    pills.querySelectorAll('.os-status-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.textContent.trim() === novoStatus);
+    });
+
+    fecharStatusPills(osId, null);
+
+    // Chama o handler que você irá implementar
+    if (typeof window.alterarStatusOS === 'function') {
+      window.alterarStatusOS(osId, novoStatus);
+    }
+  };
+
+  // Fecha pills ao clicar fora
+  document.addEventListener('click', fecharTodasPills);
 </script>
 
 <script type="module">
@@ -740,6 +1125,7 @@
 
   // ─── RENDER DETALHE ───
   function renderDetalhe(r) {
+    document.getElementById('detalhe-conteudo').dataset.regiao = r.regiao || '';
     document.getElementById('detalhe-titulo').textContent = r.titulo || 'Rompimento';
     document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
 
@@ -825,6 +1211,7 @@
 
   async function abrirDetalhe(id) {
     document.getElementById('detalhe-overlay').classList.add('open');
+    trocarAba('detalhes');
     renderDetalheLoading();
     const token = localStorage.getItem('planner_token');
     try {

@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::apiResource('op-tasks', OpTaskController::class);
     Route::apiResource('rompimentos', RompimentoController::class);
+    Route::get('rompimentos/{id}/os', [RompimentoController::class, 'listarOS']);
     Route::apiResource('tecnicos', TecnicoController::class);
-    
+    Route::put('os/{id}', [OpTaskController::class, 'update']);
 });

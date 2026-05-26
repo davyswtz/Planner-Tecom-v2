@@ -3,6 +3,9 @@ namespace App\Services;
 use App\Models\OpTask;
 class OpTaskService
 {
+
+public function __construct(private GoogleChatService $googleChatService){}
+
     public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc')
     {
         return OpTask::orderBy($orderBy, $order)->limit($limit)->get();
@@ -10,7 +13,13 @@ class OpTaskService
 
     public function createOpTask(array $dados): OpTask{
         $dados['taskCode'] = $this->gerarTaskCode($dados);
-        return OpTask::create($dados);
+        $task = OpTask::create($dados);
+
+        if(!empty($dados['parent_task_id'])) {
+            OpTask::where('id', $dados['parent_task_id'])->update(['is_parent_task' => true]);
+
+        }
+        return $task;
     }
 
     public function showOpTask(OpTask $opTask){
@@ -18,6 +27,19 @@ class OpTaskService
     }
 
     public function updateOpTask(OpTask $opTask, array $dados){
+        $statusAnterior = $rompimento->status;
+        $rompimento->update($dados);
+        if (isset($dados['status']) && $dados['status'] !== $statusAnterior){
+            $mensagem = $this->googleChatService->montarMensagemStatus(
+                $rompimento->toArray(),
+                $statusAnterior,
+                $dados['status']
+            );
+            $this->googleChatService->enviarNotificacao($rompimento, $mensagem);
+        }
+        return $rompimento->fresh();
+
+
         return $opTask;
     }
 

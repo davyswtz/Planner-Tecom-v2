@@ -42,4 +42,19 @@ class RompimentoController extends Controller
         $resultado = $this->rompimentoService->deleteRompimento($rompimento);
         return response()->json(['message' => 'Rompimento deletado com sucesso'], 200);
     }
+
+    public function listarOS($id)
+{
+    $os = OpTask::where('parent_task_id', $id)
+        ->where('categoria', 'ordem-servico')
+        ->orderBy('criadaEm', 'desc')
+        ->get();
+
+    return response()->json(['os' => $os], 200);
+}
+
+public function updateOs(Request $request, OpTask $os){
+    $resultado = $this->opTaskService->updateOpTask($os, $request->all());
+    return response()->json(['message' => 'OS atualizada com sucesso', 'os' => $resultado], 200);
+}
 }
