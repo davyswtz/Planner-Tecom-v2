@@ -37,7 +37,8 @@ class OpTask extends Model
         'data_instalacao',
         'assinada_por',
         'assinada_em',
-        'cto'
+        'cto',
+        'numero_os'
         
     ];
 }

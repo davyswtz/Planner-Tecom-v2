@@ -1,6 +1,10 @@
 <?php
+
 namespace App\Services;
+
 use App\Models\OpTask;
+use App\Services\GoogleChatService;
+
 class OpTaskService
 {
 
@@ -26,22 +30,32 @@ public function __construct(private GoogleChatService $googleChatService){}
         return $opTask;
     }
 
-    public function updateOpTask(OpTask $opTask, array $dados){
-        $statusAnterior = $rompimento->status;
-        $rompimento->update($dados);
-        if (isset($dados['status']) && $dados['status'] !== $statusAnterior){
-            $mensagem = $this->googleChatService->montarMensagemStatus(
-                $rompimento->toArray(),
-                $statusAnterior,
-                $dados['status']
-            );
-            $this->googleChatService->enviarNotificacao($rompimento, $mensagem);
+    public function updateOpTask(OpTask $opTask, array $dados): OpTask
+{
+    $statusAnterior = $opTask->status;
+    $opTask->update($dados);
+
+    if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
+        $mensagem = $this->googleChatService->montarMensagemStatus(
+            $opTask->toArray(),
+            $statusAnterior,
+            $dados['status']
+        );
+
+        // tem pai? envia no tópico do pai
+        if (!empty($opTask->parent_task_id)) {
+            $pai = OpTask::find($opTask->parent_task_id);
+            if ($pai) {
+                $this->googleChatService->enviarNotificacao($pai, $mensagem);
+            }
+        } else {
+            // não tem pai — envia normalmente
+            $this->googleChatService->enviarNotificacao($opTask, $mensagem);
         }
-        return $rompimento->fresh();
-
-
-        return $opTask;
     }
+
+    return $opTask->fresh();
+}
 
     public function deleteOpTask(OpTask $opTask){
         $opTask->delete();

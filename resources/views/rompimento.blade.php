@@ -35,6 +35,11 @@
     outline-offset: -4px;
     border-radius: var(--radius-sm);
   }
+  .kcol-body.drag-bloqueado {
+    outline: 2px dashed #ef4444;
+    outline-offset: -4px;
+    background: #fef2f2;
+  }
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -220,6 +225,17 @@
     </div>
   </div>
 
+  <div>
+    <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Número da OS (Hubsoft)</label>
+    <input
+      type="text"
+      id="input-numero-hubsoft"
+      inputmode="numeric"
+      placeholder="Ex: 123456"
+      style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"
+    />
+  </div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div>
       <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Coordenadas</label>
@@ -400,8 +416,6 @@
     document.getElementById('modal-os-overlay').classList.add('open');
     const regiaoRompimento = document.getElementById('detalhe-conteudo').dataset.regiao || '';
     carregarTecnicos(regiaoRompimento, 'os-input-tecnico');
-
-    carregarTecnicos(null, 'os-input-tecnico');
     document.getElementById('os-modal-titulo').textContent = 'Nova Ordem de Serviço';
     document.getElementById('os-btn-icon').className = 'ti ti-clipboard-check';
     document.getElementById('os-btn-label').textContent = 'Criar OS';
@@ -441,6 +455,24 @@
     }
 
     document.getElementById('modal-os-overlay').classList.add('open');
+  }
+
+  window.alterarStatusOS = async function(osId, novoStatus) {
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(`/api/op-tasks/${osId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ status: novoStatus })
+    });
+
+    if(!response.ok) {
+      const erro = await response.json();
+      console.error("Erro ao atualizar o status da OS:", erro.message);
+    }
   }
 
   function fecharNovaOS() {
@@ -716,6 +748,7 @@
       { id: 'campo-endereco', tipo: 'text' },
       { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
       { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
+      { id: 'campo-numero-os', tipo: 'text' },
     ];
 
     const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
@@ -770,6 +803,7 @@
       localizacao_texto: document.querySelector('#campo-endereco input')?.value ?? document.getElementById('campo-endereco')?.textContent ?? '',
       prioridade:        getVal('#campo-prioridade select'),
       status:            getVal('#campo-status select'),
+      numero_os:         getVal('#campo-numero-os input'),
     };
 
     const token = localStorage.getItem('planner_token');
@@ -817,6 +851,7 @@
         if (response.ok) {
           fecharNovaOS();
           carregarOS(rompimentoId);
+          if (rompimentoId && window.carregarRompimentos) window.carregarRompimentos();
         } else {
           const erro = await response.json();
           console.error('Erro ao atualizar OS:', erro.message);
@@ -837,6 +872,7 @@
         if (response.ok) {
           fecharNovaOS();
           carregarOS(rompimentoId);
+          if (rompimentoId && window.carregarRompimentos) window.carregarRompimentos();
         } else {
           const erro = await response.json();
           console.error('Erro ao criar OS:', erro.message);
@@ -938,7 +974,8 @@ async function carregarOS(rompimentoId) {
       coordenadas:       document.getElementById('input-coords').value,
       localizacao_texto: document.getElementById('endereco-box').textContent,
       status:            'Criada',
-      categoria:         'rompimentos'
+      categoria:         'rompimentos',
+      numero_os:         document.getElementById('input-numero-hubsoft').value
     };
 
     const token = localStorage.getItem('planner_token');
@@ -1031,7 +1068,32 @@ async function carregarOS(rompimentoId) {
   let draggedId = null;
   let draggedStatus = null;
   let wasDragged = false;
+  const rompimentosMap = {};
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+  function rompimentoTemOsVinculada(r) {
+    if (!r) return false;
+    return r.is_parent_task === true || r.is_parent_task === 1 || r.is_parent_task === '1';
+  }
+
+  function rompimentoTemNumeroOs(r) {
+    return String(r?.numero_os ?? '').trim() !== '';
+  }
+
+  /** Só exige OS vinculada + número ao entrar em "Em andamento". */
+  function podeMoverParaStatus(id, novoStatus) {
+    if (novoStatus !== 'Em andamento') return true;
+    const r = rompimentosMap[id];
+    return rompimentoTemOsVinculada(r) && rompimentoTemNumeroOs(r);
+  }
+
+  function mensagemBloqueioEmAndamento(id) {
+    const r = rompimentosMap[id];
+    const faltas = [];
+    if (!rompimentoTemOsVinculada(r)) faltas.push('pelo menos uma OS vinculada');
+    if (!rompimentoTemNumeroOs(r)) faltas.push('número da OS (Hubsoft) no rompimento');
+    return 'Para mover para Em andamento: ' + faltas.join(' e ') + '.';
+  }
 
   // ─── HELPERS ───
   function esc(valor) {
@@ -1080,7 +1142,18 @@ async function carregarOS(rompimentoId) {
       headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
     const data = await response.json();
+    if (!response.ok) {
+      console.error('Erro ao carregar rompimentos:', data);
+      return;
+    }
     const rompimentos = data.rompimentos || data;
+    if (!Array.isArray(rompimentos)) {
+      console.error('Resposta inesperada da API de rompimentos:', data);
+      return;
+    }
+
+    Object.keys(rompimentosMap).forEach(k => delete rompimentosMap[k]);
+    rompimentos.forEach(r => { rompimentosMap[r.id] = r; });
 
     const criadas     = rompimentos.filter(r => r.status === 'Criada').slice(0, 10);
     const andamento   = rompimentos.filter(r => r.status === 'Em andamento').slice(0, 10);
@@ -1145,6 +1218,7 @@ async function carregarOS(rompimentoId) {
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Técnico(s) responsável(is)', esc(tecnicos), 1, 'campo-tecnicos')}
+          ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
           ${campoDetalhe('Clientes afetados', esc(r.clientesAfetados ?? '0'), 1, 'campo-clientes')}
         </div>
         <div class="detail-grid-2">
@@ -1236,7 +1310,9 @@ async function carregarOS(rompimentoId) {
   }
 
   function limparDragOver() {
-    document.querySelectorAll('.kcol-body.drag-over').forEach(el => el.classList.remove('drag-over'));
+    document.querySelectorAll('.kcol-body').forEach(el => {
+      el.classList.remove('drag-over', 'drag-bloqueado');
+    });
   }
 
   async function moverRompimento(id, novoStatus, colDestino) {
@@ -1244,29 +1320,25 @@ async function carregarOS(rompimentoId) {
     const colOrigem = card?.closest('.kcol-body');
     const statusAnterior = card?.dataset.status;
 
-    if (card) {
-      card.dataset.status = novoStatus;
-      colDestino.appendChild(card);
-      atualizarContadores();
-    }
-
     const token = localStorage.getItem('planner_token');
     const response = await fetch(`/api/rompimentos/${id}`, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ status: novoStatus })
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
     });
-
     if (!response.ok) {
-      if (card && colOrigem && statusAnterior) {
-        card.dataset.status = statusAnterior;
-        colOrigem.appendChild(card);
-        atualizarContadores();
-      } else {
-        carregarRompimentos();
-      }
+        const erro = await response.json();
+        if (response.status === 422) {
+            alert(erro.message || 'Finalize todas as OS antes de finalizar o rompimento.');
+        }
+        return;
     }
-  }
+    if (card) {
+        card.dataset.status = novoStatus;
+        colDestino.appendChild(card);
+        atualizarContadores();
+    }
+}
 
   function initKanbanDragDrop() {
     const kanban = document.querySelector('.kanban-cols');
@@ -1303,10 +1375,16 @@ async function carregarOS(rompimentoId) {
 
     kanban.addEventListener('dragover', (e) => {
       const col = e.target.closest('.kcol-body');
-      if (!col) return;
+      if (!col || !draggedId) return;
+      const novoStatus = col.dataset.status;
+      const permitido = podeMoverParaStatus(draggedId, novoStatus);
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      document.querySelectorAll('.kcol-body').forEach(el => el.classList.toggle('drag-over', el === col));
+      e.dataTransfer.dropEffect = permitido ? 'move' : 'none';
+      document.querySelectorAll('.kcol-body').forEach(el => {
+        const alvo = el === col;
+        el.classList.toggle('drag-over', alvo && permitido);
+        el.classList.toggle('drag-bloqueado', alvo && !permitido);
+      });
     });
 
     kanban.addEventListener('drop', async (e) => {
@@ -1316,6 +1394,10 @@ async function carregarOS(rompimentoId) {
       limparDragOver();
       const novoStatus = col.dataset.status;
       if (novoStatus === draggedStatus) return;
+      if (!podeMoverParaStatus(draggedId, novoStatus)) {
+        alert(mensagemBloqueioEmAndamento(draggedId));
+        return;
+      }
       await moverRompimento(draggedId, novoStatus, col);
     });
   }

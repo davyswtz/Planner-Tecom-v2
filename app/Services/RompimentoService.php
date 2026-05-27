@@ -30,8 +30,16 @@ public function __construct(private OpTaskService $opTaskService
 
     public function updateRompimento(OpTask $rompimento, array $dados): OpTask {
         $statusAnterior = $rompimento->status;
+        if (isset($dados['status']) && $dados['status'] === 'Finalizada') {
+            $osPendentes = OpTask::where('parent_task_id', $rompimento->id)
+                ->where('status', '!=', 'Finalizada')
+                ->count();
+            if ($osPendentes > 0) {
+                abort(422, 'Finalize todas as OS antes de finalizar o rompimento');
+            }
+        }
         $rompimento->update($dados);
-        if (isset($dados['status']) && $dados['status'] !== $statusAnterior){
+        if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
             $mensagem = $this->googleChatService->montarMensagemStatus(
                 $rompimento->toArray(),
                 $statusAnterior,
