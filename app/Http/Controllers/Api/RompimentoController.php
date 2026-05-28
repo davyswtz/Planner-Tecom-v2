@@ -18,8 +18,13 @@ class RompimentoController extends Controller
         $status = $request->query('status');
         $limit = (int) $request->query('limit', 10);
         $offset = (int) $request->query('offset', 0);
+        $regiao = $request->query('regiao');
+        $tecnico = $request->query('tecnico');
+        $taskCode = $request->query('taskCode');
+        $dataInicio = $request->query('dataInicio');
+        $dataFim = $request->query('dataFim');
 
-        $resultado = $this->rompimentoService->getRompimentos($status, $limit, $offset);
+        $resultado = $this->rompimentoService->getRompimentos($status, $limit, $offset, $regiao, $tecnico, $taskCode, $dataInicio, $dataFim);
         return response()->json(['message' => 'Rompimentos listados com sucesso', 'rompimentos' => $resultado], 200);
     }
  

@@ -153,10 +153,46 @@
     .detail-grid, .detail-grid-2 { grid-template-columns: 1fr; }
     .detail-field.span-2, .detail-field.span-3 { grid-column: span 1; }
   }
+  .btn-kcol-toggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-400);
+    font-size: 12px;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-kcol-toggle:hover { color: var(--gray-700); background: var(--gray-100); }
+  .btn-kcol-toggle i {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: block;
+  }
+  .kcol.collapsed .btn-kcol-toggle i { transform: rotate(-90deg); }
+  .kcol-content-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 3000px;
+    opacity: 1;
+    transition: max-height 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .kcol.collapsed .kcol-content-wrap {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
   @media (prefers-reduced-motion: reduce) {
     .kcard[draggable="true"], .kcol-body, .modal-overlay, .modal-box, .modal-close, .btn-modal { transition: none; }
     .detail-enter, .detail-loading i { animation: none; }
     .modal-overlay.open .modal-box { opacity: 1; transform: none; }
+    .btn-kcol-toggle i, .kcol-content-wrap { transition: none; }
   }
 </style>
 @endsection
@@ -351,6 +387,57 @@
 
 </x-modal>
 
+<!-- FILTROS -->
+<div class="card" style="margin-bottom:12px">
+  <div style="padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    
+    <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px">
+      <i class="ti ti-search" style="color:var(--gray-400);font-size:14px"></i>
+      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
+        oninput="aplicarFiltros()"
+        style=" text-transform:uppercase;border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;width:100%;color:var(--gray-950)"/>
+    </div>
+
+    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+
+    <select id="filtro-regiao" onchange="aplicarFiltros()"
+      style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer">
+      <option value="">Todas as regiões</option>
+      <option>Goval</option>
+      <option>Vale do Aço</option>
+      <option>Caratinga</option>
+      <option>Teste</option>
+    </select>
+
+    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+
+    <select id="filtro-tecnico" onchange="aplicarFiltros()"
+      style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer">
+      <option value="">Todos os técnicos</option>
+    </select>
+
+    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+
+    <div style="display:flex;align-items:center;gap:6px">
+      <label style="font-size:12px;color:var(--gray-500)">De</label>
+      <input type="date" id="filtro-data-inicio" onchange="aplicarFiltros()"
+        style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer"/>
+      <label style="font-size:12px;color:var(--gray-500)">Até</label>
+      <input type="date" id="filtro-data-fim" onchange="aplicarFiltros()"
+        style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer"/>
+    </div>
+
+    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+
+    <button onclick="limparFiltros()"
+      style="border:none;background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">
+      <i class="ti ti-x" style="font-size:12px"></i> Limpar
+    </button>
+
+  </div>
+</div>
+
+
 <!-- KANBAN -->
 <div class="card" style="flex:1">
   <div class="card-header">
@@ -361,53 +448,81 @@
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-blue"></div> Criada</div>
-        <span class="kcol-count" id="count-criada">0</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span class="kcol-count" id="count-criada">0</span>
+          <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
+            <i class="ti ti-chevron-down"></i>
+          </button>
+        </div>
       </div>
-      <div class="kcol-body" id="col-criada" data-status="Criada"></div>
-      <div id="mais-criada" style="display:none;padding:8px">
-        <button onclick="carregarMais('Criada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
-      </div>
-      <div id="menos-criada" style="display:none;padding:8px">
-        <button onclick="verMenos('Criada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      <div class="kcol-content-wrap">
+        <div class="kcol-body" id="col-criada" data-status="Criada"></div>
+        <div id="mais-criada" style="display:none;padding:8px">
+          <button onclick="carregarMais('Criada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+        </div>
+        <div id="menos-criada" style="display:none;padding:8px">
+          <button onclick="verMenos('Criada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-amber"></div> Em andamento</div>
-        <span class="kcol-count" id="count-andamento">0</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span class="kcol-count" id="count-andamento">0</span>
+          <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
+            <i class="ti ti-chevron-down"></i>
+          </button>
+        </div>
       </div>
-      <div class="kcol-body" id="col-andamento" data-status="Em andamento"></div>
-      <div id="mais-andamento" style="display:none;padding:8px">
-        <button onclick="carregarMais('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
-      </div>
-      <div id="menos-andamento" style="display:none;padding:8px">
-        <button onclick="verMenos('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      <div class="kcol-content-wrap">
+        <div class="kcol-body" id="col-andamento" data-status="Em andamento"></div>
+        <div id="mais-andamento" style="display:none;padding:8px">
+          <button onclick="carregarMais('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+        </div>
+        <div id="menos-andamento" style="display:none;padding:8px">
+          <button onclick="verMenos('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-red"></div> Impedimento</div>
-        <span class="kcol-count" id="count-impedimento">0</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span class="kcol-count" id="count-impedimento">0</span>
+          <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
+            <i class="ti ti-chevron-down"></i>
+          </button>
+        </div>
       </div>
-      <div class="kcol-body" id="col-impedimento" data-status="Impedimento"></div>
-      <div id="mais-impedimento" style="display:none;padding:8px">
-        <button onclick="carregarMais('Impedimento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
-      </div>
-      <div id="menos-impedimento" style="display:none;padding:8px">
-        <button onclick="verMenos('Impedimento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      <div class="kcol-content-wrap">
+        <div class="kcol-body" id="col-impedimento" data-status="Impedimento"></div>
+        <div id="mais-impedimento" style="display:none;padding:8px">
+          <button onclick="carregarMais('Impedimento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+        </div>
+        <div id="menos-impedimento" style="display:none;padding:8px">
+          <button onclick="verMenos('Impedimento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-green"></div> Finalizada</div>
-        <span class="kcol-count" id="count-finalizada">0</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span class="kcol-count" id="count-finalizada">0</span>
+          <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
+            <i class="ti ti-chevron-down"></i>
+          </button>
+        </div>
       </div>
-      <div class="kcol-body" id="col-finalizada" data-status="Finalizada"></div>
-      <div id="mais-finalizada" style="display:none;padding:8px">
-        <button onclick="carregarMais('Finalizada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
-      </div>
-      <div id="menos-finalizada" style="display:none;padding:8px">
-        <button onclick="verMenos('Finalizada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      <div class="kcol-content-wrap">
+        <div class="kcol-body" id="col-finalizada" data-status="Finalizada"></div>
+        <div id="mais-finalizada" style="display:none;padding:8px">
+          <button onclick="carregarMais('Finalizada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+        </div>
+        <div id="menos-finalizada" style="display:none;padding:8px">
+          <button onclick="verMenos('Finalizada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
   </div>
@@ -422,6 +537,27 @@
   let tecnicosSelecionadosEdicao = [];
   let osDataMap = {};
   let osEditandoId = null;
+
+  async function aplicarFiltros(){
+    const filtros = {
+      regiao: document.getElementById('filtro-regiao').value,
+      tecnico: document.getElementById('filtro-tecnico').value,
+      dataInicio: document.getElementById('filtro-data-inicio').value,
+      dataFim: document.getElementById('filtro-data-fim').value,
+      taskCode: document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+    };
+    carregarRompimentos(filtros);
+  }
+
+  async function limparFiltros(){
+    document.getElementById('filtro-regiao').value = '';
+    document.getElementById('filtro-tecnico').value = '';
+    document.getElementById('filtro-data-inicio').value = '';
+    document.getElementById('filtro-data-fim').value = '';
+    document.getElementById('filtro-taskcode').value = '';
+    carregarRompimentos();
+  }
+
 
   // ─── MODAIS ───
   window.abrirModal = function() {
@@ -1167,6 +1303,15 @@ async function verMenos(status){
 
 window.verMenos = verMenos;
 
+function toggleColuna(btn) {
+  const col = btn.closest('.kcol');
+  const collapsed = col.classList.toggle('collapsed');
+  btn.title = collapsed ? 'Expandir coluna' : 'Minimizar coluna';
+  btn.setAttribute('aria-label', collapsed ? 'Expandir coluna' : 'Minimizar coluna');
+}
+
+window.toggleColuna = toggleColuna;
+
   function rompimentoTemOsVinculada(r) {
     if (!r) return false;
     return r.is_parent_task === true || r.is_parent_task === 1 || r.is_parent_task === '1';
@@ -1232,9 +1377,9 @@ window.verMenos = verMenos;
   }
 
   // ─── CARREGAR ROMPIMENTOS ───
-  async function buscarColuna(status, limit, offset = 0) {
+  async function buscarColuna(status, limit, offset = 0, filtros = {}) {
     const token = localStorage.getItem('planner_token');
-    const params = new URLSearchParams({ status, limit, offset });
+    const params = new URLSearchParams({ status, limit, offset, ...filtros });
     const response = await fetch(`/api/rompimentos?${params}`, {
         headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
@@ -1242,13 +1387,13 @@ window.verMenos = verMenos;
     return data.rompimentos || [];
 }
 
-async function carregarRompimentos() {
+async function carregarRompimentos(filtros = {}) {
   Object.keys(offsetMap).forEach(k => offsetMap[k] = 0);
     const [criadas, andamento, impedimento, finalizadas] = await Promise.all([
-        buscarColuna('Criada', 10),
-        buscarColuna('Em andamento', 10),
-        buscarColuna('Impedimento', 10),
-        buscarColuna('Finalizada', 50),
+        buscarColuna('Criada', 10, 0, filtros),
+        buscarColuna('Em andamento', 10, 0, filtros),
+        buscarColuna('Impedimento', 10, 0, filtros),
+        buscarColuna('Finalizada', 50, 0, filtros),
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];

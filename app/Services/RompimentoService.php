@@ -11,18 +11,31 @@ class RompimentoService
 public function __construct(private OpTaskService $opTaskService
 , private GoogleChatService $googleChatService){}
 
-    public function getRompimentos(string $status = null, int $limit = 10, int $offset = 0)
+    public function getRompimentos(
+        string $status = null,
+        int $limit = 10,
+        int $offset = 0,
+        string $regiao = null,
+        string $tecnico = null,
+        string $taskCode = null,
+        string $dataInicio = null,
+        string $dataFim = null,
+    )
     {
-           $query = OpTask::whereIn('categoria', ['rompimento', 'rompimentos'])->orderBy('updated_at', 'desc');
-           if($status) {
-            $query->where('status', $status);
-           }
+        $query = OpTask::whereIn('categoria', ['rompimento', 'rompimentos'])
+        ->orderBy('updated_at', 'desc')
+        ->when($status, fn($q) => $q->where('status', $status))
+        ->when($regiao, fn($q) => $q->where('regiao', $regiao))
+        ->when($tecnico, fn($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
+        ->when($taskCode, fn($q) => $q->where('taskCode', $taskCode))
+        ->when($dataInicio, fn($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
+        ->when($dataFim, fn($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
-           if($status === 'Finalizada') {
-            return $query->limit(1000)->offset($offset)->get();
-           }
+    if ($status === 'Finalizada') {
+        return $query->limit(1000)->offset($offset)->get();
+    }
 
-           return $query->limit($limit)->offset($offset)->get();
+    return $query->limit($limit)->offset($offset)->get(); 
     }
 
     public function createRompimento(array $dados): OpTask
