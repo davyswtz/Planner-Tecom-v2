@@ -13,9 +13,13 @@ class RompimentoController extends Controller
     public function __construct(private RompimentoService $rompimentoService)
     {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $resultado = $this->rompimentoService->getRompimentos();
+        $status = $request->query('status');
+        $limit = (int) $request->query('limit', 10);
+        $offset = (int) $request->query('offset', 0);
+
+        $resultado = $this->rompimentoService->getRompimentos($status, $limit, $offset);
         return response()->json(['message' => 'Rompimentos listados com sucesso', 'rompimentos' => $resultado], 200);
     }
  

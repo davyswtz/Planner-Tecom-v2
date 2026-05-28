@@ -19,13 +19,13 @@ class GoogleChatService
     // já tem tópico pai → responde dentro dele
     if ($rompimento->chat_thread_key) {
         $mensagem['thread'] = ['name' => $rompimento->chat_thread_key];
-        $response = Http::post($webhook->url . '&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD', $mensagem);
+        $response = Http::timeout(4)->post($webhook->url . '&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD', $mensagem);
         \Log::info('Resposta reply:', ['status' => $response->status(), 'body' => $response->body()]);
         return;
     }
 
     // primeira mensagem → cria tópico pai sem parâmetro extra
-    $response = Http::post($webhook->url, $mensagem);
+    $response = Http::timeout(4)->post($webhook->url, $mensagem);
     \Log::info('Resposta primeira mensagem:', ['status' => $response->status(), 'body' => $response->body()]);
 
     if ($response->successful()) {
@@ -47,13 +47,16 @@ class GoogleChatService
 
         return [
             'text' => implode("\n", [
-                "{$emoji} *Rompimento atualizado*",
+                "{$emoji} *Alerta: ROMPIMENTO*",
                 "━━━━━━━━━━━━━━━━━━━━",
+                "💻 *Número da OS:* " . ($rompimento['numero_os'] ?? '—'),
                 "📍 *CTO:* " . ($rompimento['cto'] ?? '—'),
                 "📌 *Região:* " . ($rompimento['regiao'] ?? '—'),
                 "🔄 *Status:* {$statusAnterior} → {$statusNovo}",
                 "⚡ *Prioridade:* " . ($rompimento['prioridade'] ?? '—'),
                 "👥 *Clientes afetados:* " . ($rompimento['clientesAfetados'] ?? '0'),
+                "📍 *Coordenadas:* " . ($rompimento['coordenadas'] ?? '—'),
+                "📍 *Endereço:* " . ($rompimento['localizacao_texto'] ?? '—'),
                 "🔑 *Código:* " . ($rompimento['taskCode'] ?? '—'),
             ])
         ];

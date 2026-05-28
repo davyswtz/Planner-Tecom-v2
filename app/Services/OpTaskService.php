@@ -41,16 +41,20 @@ public function __construct(private GoogleChatService $googleChatService){}
             $statusAnterior,
             $dados['status']
         );
-
-        // tem pai? envia no tópico do pai
+    
+        $googleChatService = $this->googleChatService;
+    
         if (!empty($opTask->parent_task_id)) {
             $pai = OpTask::find($opTask->parent_task_id);
             if ($pai) {
-                $this->googleChatService->enviarNotificacao($pai, $mensagem);
+                app()->terminating(function() use ($pai, $mensagem, $googleChatService) {
+                    $googleChatService->enviarNotificacao($pai, $mensagem);
+                });
             }
         } else {
-            // não tem pai — envia normalmente
-            $this->googleChatService->enviarNotificacao($opTask, $mensagem);
+            app()->terminating(function() use ($opTask, $mensagem, $googleChatService) {
+                $googleChatService->enviarNotificacao($opTask, $mensagem);
+            });
         }
     }
 

@@ -1136,42 +1136,39 @@ async function carregarOS(rompimentoId) {
   }
 
   // ─── CARREGAR ROMPIMENTOS ───
-  async function carregarRompimentos() {
+  async function buscarColuna(status, limit, offset = 0) {
     const token = localStorage.getItem('planner_token');
-    const response = await fetch('/api/rompimentos', {
-      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+    const params = new URLSearchParams({ status, limit, offset });
+    const response = await fetch(`/api/rompimentos?${params}`, {
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
     const data = await response.json();
-    if (!response.ok) {
-      console.error('Erro ao carregar rompimentos:', data);
-      return;
-    }
-    const rompimentos = data.rompimentos || data;
-    if (!Array.isArray(rompimentos)) {
-      console.error('Resposta inesperada da API de rompimentos:', data);
-      return;
-    }
+    return data.rompimentos || [];
+}
 
+async function carregarRompimentos() {
+    const [criadas, andamento, impedimento, finalizadas] = await Promise.all([
+        buscarColuna('Criada', 10),
+        buscarColuna('Em andamento', 10),
+        buscarColuna('Impedimento', 10),
+        buscarColuna('Finalizada', 50),
+    ]);
+
+    const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
     Object.keys(rompimentosMap).forEach(k => delete rompimentosMap[k]);
-    rompimentos.forEach(r => { rompimentosMap[r.id] = r; });
+    todos.forEach(r => { rompimentosMap[r.id] = r; });
 
-    const criadas     = rompimentos.filter(r => r.status === 'Criada').slice(0, 10);
-    const andamento   = rompimentos.filter(r => r.status === 'Em andamento').slice(0, 10);
-    const impedimento = rompimentos.filter(r => r.status === 'Impedimento').slice(0, 10);
-    const finalizadas = rompimentos.filter(r => r.status === 'Finalizada').slice(0, 10);
-
-    document.getElementById('col-criada').innerHTML     = criadas.map(renderCard).join('');
-    document.getElementById('col-andamento').innerHTML  = andamento.map(renderCard).join('');
+    document.getElementById('col-criada').innerHTML      = criadas.map(renderCard).join('');
+    document.getElementById('col-andamento').innerHTML   = andamento.map(renderCard).join('');
     document.getElementById('col-impedimento').innerHTML = impedimento.map(renderCard).join('');
-    document.getElementById('col-finalizada').innerHTML = finalizadas.map(renderCard).join('');
-    document.getElementById('count-criada').textContent     = criadas.length;
-    document.getElementById('count-andamento').textContent  = andamento.length;
+    document.getElementById('col-finalizada').innerHTML  = finalizadas.map(renderCard).join('');
+    document.getElementById('count-criada').textContent      = criadas.length;
+    document.getElementById('count-andamento').textContent   = andamento.length;
     document.getElementById('count-impedimento').textContent = impedimento.length;
-    document.getElementById('count-finalizada').textContent = finalizadas.length;
-    document.getElementById('total-rompimentos').textContent = rompimentos.length;
-  }
-  window.carregarRompimentos = carregarRompimentos;
-
+    document.getElementById('count-finalizada').textContent  = finalizadas.length;
+    document.getElementById('total-rompimentos').textContent = todos.length;
+}
+window.carregarRompimentos = carregarRompimentos;
   // ─── RENDER CARD ───
   function renderCard(r) {
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
@@ -1320,23 +1317,31 @@ async function carregarOS(rompimentoId) {
     const colOrigem = card?.closest('.kcol-body');
     const statusAnterior = card?.dataset.status;
 
+    if (card) {
+        card.dataset.status = novoStatus;
+        colDestino.appendChild(card);
+        atualizarContadores();
+    }
+
     const token = localStorage.getItem('planner_token');
     const response = await fetch(`/api/rompimentos/${id}`, {
         method: 'PUT',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ status: novoStatus })
     });
+
     if (!response.ok) {
         const erro = await response.json();
+
+        if (card && colOrigem && statusAnterior) {
+            card.dataset.status = statusAnterior;
+            colOrigem.appendChild(card);
+            atualizarContadores();
+        }
+
         if (response.status === 422) {
             alert(erro.message || 'Finalize todas as OS antes de finalizar o rompimento.');
         }
-        return;
-    }
-    if (card) {
-        card.dataset.status = novoStatus;
-        colDestino.appendChild(card);
-        atualizarContadores();
     }
 }
 

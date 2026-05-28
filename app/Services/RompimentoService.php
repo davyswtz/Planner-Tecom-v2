@@ -10,9 +10,18 @@ class RompimentoService
 public function __construct(private OpTaskService $opTaskService
 , private GoogleChatService $googleChatService){}
 
-    public function getRompimentos()
+    public function getRompimentos(string $status = null, int $limit = 10, int $offset = 0)
     {
-           return OpTask::whereIn('categoria', ['rompimento', 'rompimentos'])->orderBy('updated_at', 'desc')->get();
+           $query = OpTask::whereIn('categoria', ['rompimento', 'rompimentos'])->orderBy('updated_at', 'desc');
+           if($status) {
+            $query->where('status', $status);
+           }
+
+           if($status === 'Finalizada') {
+            return $query->limit(1000)->offset($offset)->get();
+           }
+
+           return $query->limit($limit)->offset($offset)->get();
     }
 
     public function createRompimento(array $dados): OpTask
@@ -45,7 +54,10 @@ public function __construct(private OpTaskService $opTaskService
                 $statusAnterior,
                 $dados['status']
             );
-            $this->googleChatService->enviarNotificacao($rompimento, $mensagem);
+            $googleChatService = $this->googleChatService;
+            app()->terminating(function() use ($rompimento, $mensagem, $googleChatService) {
+                $googleChatService->enviarNotificacao($rompimento, $mensagem);
+            });
         }
         return $rompimento->fresh();
     }
