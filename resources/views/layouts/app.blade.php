@@ -12,7 +12,7 @@
   })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -97,15 +97,6 @@
   }
   [data-theme="dark"] .sidebar-top { border-bottom-color: rgba(255,255,255,0.06); }
   [data-theme="dark"] .sidebar-footer { border-top-color: rgba(255,255,255,0.06); }
-  [data-theme="dark"] .brand-icon {
-    background: #1a3a5c;
-    border-color: rgba(255,255,255,0.12);
-  }
-  [data-theme="dark"] .search-box {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.08);
-  }
-  [data-theme="dark"] .search-box:hover { background: rgba(255,255,255,0.08); }
   [data-theme="dark"] .nav-item:hover   { background: rgba(255,255,255,0.06); }
   [data-theme="dark"] .nav-item.active  { background: rgba(47,129,247,0.18); color: #79c0ff; }
 
@@ -197,35 +188,25 @@
     padding: 20px 14px 14px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
+  .brand { margin-bottom: 4px; }
+  .sidebar-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .sidebar-logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.06em;
+    line-height: 1;
   }
-  .brand-icon {
-    width: 34px; height: 34px;
-    background: #166ac4;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; color: #fff;
-    flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.15);
+  .sidebar-logo-svg { width: 140px; opacity: 0.92; }
+  .sidebar-logo-collapsed {
+    display: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.06em;
   }
-  .brand-text { flex: 1; }
-  .brand-name { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
-  .brand-sub { color: var(--blue-200); font-size: 11px; }
-  .search-box {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: var(--radius-sm);
-    padding: 7px 10px; cursor: text;
-    transition: background 0.15s;
-  }
-  .search-box:hover { background: rgba(255,255,255,0.1); }
-  .search-box i { color: rgba(255,255,255,0.35); font-size: 14px; }
-  .search-box span { color: rgba(255,255,255,0.3); font-size: 12px; }
   .sidebar-body {
     flex: 1; overflow-y: auto; padding: 10px 8px; scrollbar-width: none;
   }
@@ -283,19 +264,18 @@
 
   /* SIDEBAR COLLAPSED */
   .sidebar.collapsed { width: 60px; }
-  .sidebar.collapsed .brand-text,
-  .sidebar.collapsed .search-box,
+  .sidebar.collapsed .sidebar-logo,
   .sidebar.collapsed .nav-section-label,
   .sidebar.collapsed .nav-badge,
   .sidebar.collapsed .user-info,
   .sidebar.collapsed .nav-left span,
   .sidebar.collapsed .theme-toggle { display: none; }
+  .sidebar.collapsed .sidebar-logo-collapsed { display: block; }
+  .sidebar.collapsed .brand { display: flex; justify-content: center; }
   .sidebar.collapsed .nav-item { justify-content: center; padding: 8px; overflow: hidden; }
   .sidebar.collapsed .nav-left { gap: 0; overflow: hidden; white-space: nowrap; }
   .sidebar.collapsed .nav-left i { flex-shrink: 0; }
   .sidebar.collapsed .user-card { justify-content: center; }
-  .sidebar.collapsed .brand { justify-content: center; }
-  .sidebar.collapsed .brand-icon { margin: 0 auto; }
 
   /* MAIN */
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
@@ -484,6 +464,71 @@
   #mapa-calor { z-index: 0; }
   .leaflet-pane, .leaflet-top, .leaflet-bottom { z-index: 0 !important; }
 
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0,0,0,0);
+    visibility: hidden;
+    pointer-events: none;
+    transition: background 0.32s cubic-bezier(0.16,1,0.3,1), visibility 0.32s;
+  }
+  .modal-overlay.open {
+    visibility: visible;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.45);
+  }
+  .modal-box {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    width: 100%;
+    max-width: 680px;
+    overflow: hidden;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: scale(0.96) translateY(14px);
+    transition: transform 0.38s cubic-bezier(0.16,1,0.3,1), opacity 0.38s cubic-bezier(0.16,1,0.3,1);
+  }
+  .modal-overlay.open .modal-box { opacity: 1; transform: scale(1) translateY(0); }
+  .modal-head { padding: 16px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+  .modal-foot { padding: 14px 24px; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+  .modal-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0; }
+  .modal-sub { font-size: 12px; color: var(--gray-500); margin: 0; }
+  .modal-close { background: transparent; border: none; cursor: pointer; color: var(--gray-500); font-size: 18px; display: flex; align-items: center; padding: 4px; transition: color 0.15s; }
+  .modal-close:hover { color: var(--gray-950); }
+  .modal-tabs { display: flex; border-bottom: 1px solid var(--gray-200); padding: 0 24px; flex-shrink: 0; gap: 0; }
+  .modal-tab { padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--gray-500); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; transition: color 0.15s, border-color 0.15s; }
+  .modal-tab:hover { color: var(--gray-700); }
+  .modal-tab.active { color: #166ac4; border-bottom-color: #166ac4; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .detail-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-field { display: flex; flex-direction: column; gap: 5px; }
+  .detail-field.span-2 { grid-column: span 2; }
+  .detail-field.span-3 { grid-column: span 3; }
+  .detail-label { font-size: 12px; font-weight: 500; color: var(--gray-500); }
+  .detail-value { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 8px 10px; min-height: 38px; font-size: 13px; color: var(--gray-950); background: var(--gray-50); line-height: 1.4; word-break: break-word; }
+  .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 38px; }
+  .detail-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px 0; color: var(--gray-500); font-size: 13px; }
+  .detail-loading i { animation: spin 0.9s linear infinite; }
+  .detail-error { padding: 16px; border-radius: var(--radius-sm); background: var(--red-bg); color: var(--red-text); font-size: 13px; }
+  .detail-enter { animation: conteudoEntrada 0.42s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .btn-modal { padding: 0 16px; height: 36px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-modal-ghost { border: 1px solid var(--gray-200); background: transparent; color: var(--gray-500); }
+  .btn-modal-ghost:hover { background: var(--gray-50); border-color: var(--gray-400); }
+  .btn-modal-primary { border: none; background: #166ac4; color: #fff; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-modal-primary:hover { background: #0d5aaa; }
+  @keyframes conteudoEntrada { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .kcol { overflow: visible; }
@@ -525,15 +570,32 @@
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <div class="brand">
-      <div class="brand-icon">FT</div>
-      <div class="brand-text">
-        <div class="brand-name">Planner Telecom</div>
-        <div class="brand-sub">Painel operacional</div>
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-text">PLANNER</div>
+        <div class="sidebar-logo-svg">
+          <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="100%" height="100%" version="1.1" style="shape-rendering:geometricPrecision;text-rendering:geometricPrecision;image-rendering:optimizeQuality;fill-rule:evenodd;clip-rule:evenodd" viewBox="0 0 2728.77 550.48">
+            <defs><style type="text/css">.sfl0{fill:#fff}.sfl1{fill:#fff;fill-rule:nonzero}.sfl2{fill:#fff;opacity:.7}.sfl3{fill:#fff;opacity:.85}</style></defs>
+            <g><g><g><g>
+              <path class="sfl0" d="M2609.16 537.98l112.98 0.07c1.83,0 3.4,-0.65 4.69,-1.93 1.29,-1.29 1.94,-2.87 1.94,-4.69 0,-152.65 0,-306.74 0,-459.35 0,-18.08 -14.75,-32.84 -32.83,-32.84 -30.36,-0 -60.7,0.02 -91.05,0.04 -3.64,0.01 -6.62,2.98 -6.62,6.62l0 241.79c0,2.96 -1.87,5.48 -4.69,6.34 -2.82,0.86 -5.77,-0.18 -7.42,-2.63l-162.1 -240.51c-5.03,-7.47 -12.77,-11.59 -21.79,-11.59l-136.09 0c-3.64,0 -6.62,2.98 -6.62,6.62l0 485.48c0,3.65 2.98,6.62 6.62,6.62l91.2 0c9.15,0 16.84,-3.21 23.29,-9.7 6.44,-6.48 9.6,-14.21 9.54,-23.35l-1.58 -252.34c-0.02,-2.96 1.83,-5.48 4.67,-6.37 2.84,-0.87 5.79,0.17 7.45,2.64l186.63 277.47c5.03,7.48 12.77,11.61 21.79,11.61z"/>
+              <path class="sfl1" d="M1880.36 49.76c-98.02,35.43 -161.88,127.21 -162.71,241.81 0,143.09 112.29,258.91 255.3,258.91 143.38,0 256.08,-115.17 256.08,-258.91 -0.82,-112.89 -62.8,-203.65 -158.34,-240.21 2.73,9.07 4.21,18.66 4.21,28.58l0 125.15c15.44,22.42 24.96,51.67 25.33,87.43 2.2,183.41 -255.98,183.41 -253.78,0 0.4,-38.67 11.48,-69.72 29.2,-92.75l0 -119.82c0,-10.51 1.65,-20.66 4.71,-30.2z"/>
+              <path class="sfl2" d="M1975.27 0c44.16,0 79.97,24.92 79.97,55.65l0.01 194.57c-0.01,30.72 -35.81,55.64 -79.97,55.64c-44.16,-0.01 -79.97,-24.94 -79.97,-55.65l0 -194.57c0,-30.73 35.81,-55.65 79.97,-55.65z"/>
+            </g></g>
+            <path class="sfl0" d="M954.11 523.1l112.98 0.07c1.83,0 3.4,-0.65 4.69,-1.93 1.29,-1.29 1.94,-2.87 1.94,-4.69 0,-152.65 0,-306.74 0,-459.35 0,-18.08 -14.75,-32.84 -32.83,-32.84 -30.36,-0.01 -60.7,0.02 -91.05,0.04 -3.64,0.01 -6.62,2.98 -6.62,6.62l0 241.79c0,2.96 -1.87,5.47 -4.69,6.33 -2.82,0.86 -5.77,-0.18 -7.42,-2.63l-162.11 -240.51c-5.03,-7.47 -12.77,-11.59 -21.79,-11.59l-136.09 0c-3.64,0 -6.62,2.97 -6.62,6.62l0 485.48c0,3.65 2.98,6.62 6.62,6.62l91.19 0c9.15,0 16.84,-3.2 23.3,-9.7 6.44,-6.48 9.6,-14.21 9.55,-23.35l-1.58 -252.33c-0.02,-2.96 1.83,-5.49 4.67,-6.37 2.84,-0.87 5.79,0.17 7.45,2.64l186.62 277.47c5.03,7.48 12.78,11.61 21.8,11.61z"/>
+            <path class="sfl0" d="M1245.64 516.61c0,-153.05 0,-306.12 0,-459.17 0,-18.16 -14.75,-33 -32.84,-33l-91.05 0c-3.64,0 -6.62,2.98 -6.62,6.62l0 429.04c-0.75,30.13 15.85,62.77 49.35,62.88l74.51 0.26c1.83,0.01 3.4,-0.63 4.69,-1.94 1.3,-1.29 1.95,-2.87 1.95,-4.69z"/>
+            <path class="sfl1" d="M1712.52 92.48c-36.3,-49.88 -113.25,-73.41 -179.56,-73.41 -162.46,0.96 -254.73,125.94 -255.7,257.62 0,131.69 90.36,254.72 255.7,254.72 72.32,0 129.97,-18.35 183.67,-82.85 2.18,-2.61 2.02,-6.42 -0.35,-8.87l-44.94 -46.09c-13.67,-14.02 -35.13,-15.95 -51.08,-4.57 -28.55,20.35 -59.73,28.5 -89.23,27.02 -67.29,-3.84 -125.93,-58.64 -124.98,-138.42 0.96,-94.22 65.36,-143.24 134.59,-141.3 25.37,0.7 51.79,8.13 75.82,23.03 15.93,9.89 36.2,7.03 48.79,-6.87l46.82 -51.7c2.12,-2.34 2.31,-5.77 0.45,-8.34z"/>
+            <g>
+              <polygon class="sfl0" points="327.73,355.2 491.58,355.2 491.58,520.2 327.73,520.2"/>
+              <polygon class="sfl3" points="327.73,190.19 491.58,190.19 491.58,355.2 327.73,355.2"/>
+              <polygon class="sfl2" points="327.73,25.16 491.58,25.16 491.58,190.19 327.73,190.19"/>
+              <polygon class="sfl3" points="163.85,355.2 327.73,355.2 327.73,520.2 163.85,520.2"/>
+              <polygon class="sfl2" points="0,355.2 163.85,355.2 163.85,520.2 0,520.2"/>
+              <polygon class="sfl2" points="163.85,190.19 327.73,190.19 327.73,355.2 163.85,355.2"/>
+            </g>
+            </g></g>
+          </svg>
+        </div>
       </div>
-    </div>
-    <div class="search-box">
-      <i class="ti ti-search"></i>
-      <span>Buscar tarefas...</span>
+      <div class="sidebar-logo-collapsed">P</div>
     </div>
   </div>
 

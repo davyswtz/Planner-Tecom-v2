@@ -110,6 +110,22 @@
         </div>
       </div>
     </div>
+
+<!-- MODAL DETALHE -->
+<x-modal
+  id="detalhe-overlay"
+  titulo-id="detalhe-titulo"
+  subtitulo-id="detalhe-subtitulo"
+  fechar="fecharDetalhe()">
+
+  <div id="detalhe-conteudo"></div>
+
+  <x-slot name="footer">
+    <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
+  </x-slot>
+
+</x-modal>
+
 @endsection
 
 @section('scripts')
@@ -144,7 +160,7 @@
         const categoriaClass = categoriasClasses[tarefa.categoria?.toLowerCase()] || 'b-cat-gen';
         const prioridadeClass = tarefa.prioridade?.toLowerCase() === 'alta' ? 'b-alta' : tarefa.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
         return `
-        <div class="kcard">
+        <div class="kcard" data-id="${tarefa.id}">
           <div class="kcard-title">${tarefa.titulo}</div>
           <div class="kcard-foot">
             <span class="badge ${prioridadeClass}">${tarefa.prioridade || 'Média'}</span>
@@ -171,6 +187,136 @@
         document.getElementById('count-finalizada').textContent = finalizadas.length;
     }
 
-    carregarDashboard();
+    carregarDashboard().then(() => {
+        document.querySelector('.kanban-cols').addEventListener('click', (e) => {
+            const card = e.target.closest('.kcard');
+            if (card && card.dataset.id) abrirDetalhe(card.dataset.id);
+        });
+    });
+
+    function esc(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function formatarData(val) {
+        if (!val) return '—';
+        const d = new Date(val);
+        return isNaN(d) ? val : d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    function renderDetalheLoading() {
+        document.getElementById('detalhe-titulo').textContent = 'Carregando...';
+        document.getElementById('detalhe-subtitulo').textContent = '';
+        document.getElementById('detalhe-conteudo').innerHTML = `
+          <div class="detail-loading detail-enter">
+            <i class="ti ti-loader"></i> Buscando informações...
+          </div>`;
+    }
+
+    function renderDetalheErro(mensagem) {
+        document.getElementById('detalhe-titulo').textContent = 'Erro ao carregar';
+        document.getElementById('detalhe-subtitulo').textContent = '';
+        document.getElementById('detalhe-conteudo').innerHTML = `<div class="detail-error detail-enter">${esc(mensagem)}</div>`;
+    }
+
+    function renderDetalhe(t) {
+        document.getElementById('detalhe-titulo').textContent = t.titulo || 'Tarefa';
+        document.getElementById('detalhe-subtitulo').textContent = t.taskCode ? `Código: ${t.taskCode}` : '';
+        document.getElementById('detalhe-conteudo').dataset.id = t.id;
+
+        const prioridadeClass = t.prioridade?.toLowerCase() === 'alta' ? 'b-alta' : t.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
+        const regiaoClass = t.regiao && t.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
+        const categoriasClasses = {
+            'rompimentos': 'b-cat-rom', 'atendimento-cliente': 'b-cat-ate',
+            'otimizacao-rede': 'b-cat-otm', 'manutencao-corretiva': 'b-cat-man',
+            'troca-poste': 'b-cat-tro', 'troca-etiqueta': 'b-cat-etq',
+            'certificacao-cemig': 'b-cat-cer', 'correcao-atenuacao': 'b-cat-cor',
+            'qualidade-potencia': 'b-cat-qua',
+        };
+        const categoriaClass = categoriasClasses[t.categoria?.toLowerCase()] || 'b-cat-gen';
+
+        document.getElementById('detalhe-conteudo').innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
+            <div class="detail-badges">
+              <span class="badge ${prioridadeClass}">${esc(t.prioridade) || 'Média'}</span>
+              <span class="badge ${categoriaClass}">${esc(t.categoria) || 'Sem categoria'}</span>
+              <span class="badge ${regiaoClass}">${esc(t.regiao) || 'Sem região'}</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="detail-label">Título</span>
+                <div class="detail-value">${esc(t.titulo) || '—'}</div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Descrição</span>
+                <div class="detail-value">${esc(t.descricao) || '—'}</div>
+              </div>
+            </div>
+            <div class="detail-grid-2">
+              <div class="detail-field">
+                <span class="detail-label">Status</span>
+                <div class="detail-value">${esc(t.status) || '—'}</div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Prioridade</span>
+                <div class="detail-value">${esc(t.prioridade) || '—'}</div>
+              </div>
+            </div>
+            <div class="detail-grid-2">
+              <div class="detail-field">
+                <span class="detail-label">Região</span>
+                <div class="detail-value">${esc(t.regiao) || '—'}</div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Categoria</span>
+                <div class="detail-value">${esc(t.categoria) || '—'}</div>
+              </div>
+            </div>
+            <div class="detail-grid-2">
+              <div class="detail-field">
+                <span class="detail-label">Responsável</span>
+                <div class="detail-value">${esc(t.responsavel) || '—'}</div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Número OS (Hubsoft)</span>
+                <div class="detail-value">${esc(t.numero_os) || '—'}</div>
+              </div>
+            </div>
+            <div class="detail-grid-2">
+              <div class="detail-field">
+                <span class="detail-label">Criado em</span>
+                <div class="detail-value">${formatarData(t.criadaEm)}</div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Atualizado em</span>
+                <div class="detail-value">${formatarData(t.updated_at)}</div>
+              </div>
+            </div>
+          </div>`;
+    }
+
+    async function abrirDetalhe(id) {
+        document.getElementById('detalhe-overlay').classList.add('open');
+        renderDetalheLoading();
+        const token = localStorage.getItem('planner_token');
+        try {
+            const response = await fetch(`/api/op-tasks/${id}`, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok) { renderDetalheErro(data.message || 'Não foi possível carregar.'); return; }
+            renderDetalhe(data);
+        } catch {
+            renderDetalheErro('Erro de conexão.');
+        }
+    }
+    window.abrirDetalhe = abrirDetalhe;
+
+    function fecharDetalhe() {
+        document.getElementById('detalhe-overlay').classList.remove('open');
+    }
+    window.fecharDetalhe = fecharDetalhe;
+
 </script>
 @endsection
