@@ -394,7 +394,7 @@
     <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px">
       <i class="ti ti-search" style="color:var(--gray-400);font-size:14px"></i>
       <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
-        oninput="aplicarFiltros()"
+        oninput="aplicarFiltrosDebounce()"
         style=" text-transform:uppercase;border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;width:100%;color:var(--gray-950)"/>
     </div>
 
@@ -537,6 +537,17 @@
   let tecnicosSelecionadosEdicao = [];
   let osDataMap = {};
   let osEditandoId = null;
+
+  function debounce(func, delay = 500){
+    let timeout;
+
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), delay);
+  }
+}
+
+const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
   async function aplicarFiltros(){
     const filtros = {
@@ -764,10 +775,11 @@
 
   // ─── TÉCNICOS (MODAL CRIAR) ───
   async function carregarTecnicos(regiao, destino = 'dropdown-tecnicos') {
-    if (!regiao) return;
+    if (!regiao && destino === 'dropdown-tecnicos') return;
 
     const token = localStorage.getItem('planner_token');
-    const res = await fetch(`/api/tecnicos?regiao=${encodeURIComponent(regiao)}`, {
+    const url = regiao ? `/api/tecnicos?regiao=${encodeURIComponent(regiao)}` : '/api/tecnicos';
+    const res = await fetch(url, {
         headers: { 'Authorization': 'Bearer ' + token }
     });
     const tecnicos = await res.json();
@@ -1664,5 +1676,6 @@ window.carregarRompimentos = carregarRompimentos;
 
   initKanbanDragDrop();
   carregarRompimentos();
+  carregarTecnicos(null, 'filtro-tecnico');
 </script>
 @endsection
