@@ -364,6 +364,12 @@
         <span class="kcol-count" id="count-criada">0</span>
       </div>
       <div class="kcol-body" id="col-criada" data-status="Criada"></div>
+      <div id="mais-criada" style="display:none;padding:8px">
+        <button onclick="carregarMais('Criada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+      </div>
+      <div id="menos-criada" style="display:none;padding:8px">
+        <button onclick="verMenos('Criada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
@@ -371,6 +377,12 @@
         <span class="kcol-count" id="count-andamento">0</span>
       </div>
       <div class="kcol-body" id="col-andamento" data-status="Em andamento"></div>
+      <div id="mais-andamento" style="display:none;padding:8px">
+        <button onclick="carregarMais('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+      </div>
+      <div id="menos-andamento" style="display:none;padding:8px">
+        <button onclick="verMenos('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
@@ -378,6 +390,12 @@
         <span class="kcol-count" id="count-impedimento">0</span>
       </div>
       <div class="kcol-body" id="col-impedimento" data-status="Impedimento"></div>
+      <div id="mais-impedimento" style="display:none;padding:8px">
+        <button onclick="carregarMais('Impedimento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+      </div>
+      <div id="menos-impedimento" style="display:none;padding:8px">
+        <button onclick="verMenos('Impedimento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
@@ -385,6 +403,12 @@
         <span class="kcol-count" id="count-finalizada">0</span>
       </div>
       <div class="kcol-body" id="col-finalizada" data-status="Finalizada"></div>
+      <div id="mais-finalizada" style="display:none;padding:8px">
+        <button onclick="carregarMais('Finalizada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+      </div>
+      <div id="menos-finalizada" style="display:none;padding:8px">
+        <button onclick="verMenos('Finalizada')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1071,6 +1095,78 @@ async function carregarOS(rompimentoId) {
   const rompimentosMap = {};
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
+
+const offsetMap = {
+  'Criada': 0,
+  'Em andamento': 0,
+  'Impedimento':0,
+  'Finalizada': 0
+}
+
+const limitMap = {
+    'Criada': 10,
+    'Em andamento': 10,
+    'Impedimento': 10,
+    'Finalizada': 50,
+};
+
+const colIdMap = {
+    'Criada': 'criada',
+    'Em andamento': 'andamento',
+    'Impedimento': 'impedimento',
+    'Finalizada': 'finalizada',
+};
+
+async function carregarMais(status) {
+  const limit = limitMap[status];
+  offsetMap[status] += limit;
+
+  const novos = await buscarColuna(status, limit, offsetMap[status]);
+
+  const colId = colIdMap[status];
+  const col = document.getElementById(`col-${colId}`);
+
+  novos.forEach(r => {
+        col.insertAdjacentHTML('beforeend', renderCard(r));
+        rompimentosMap[r.id] = r;
+    });
+
+    // atualiza contador
+    const count = col.querySelectorAll('.kcard').length;
+    document.getElementById(`count-${colId}`).textContent = count;
+
+    // esconde o botão se não vieram mais registros
+    if (novos.length < limit) {
+        document.getElementById(`mais-${colId}`).style.display = 'none';
+    }
+
+    document.getElementById(`menos-${colId}`).style.display = 'block';
+}
+
+window.carregarMais = carregarMais;
+
+async function verMenos(status){
+  const colId = colIdMap[status];
+  const col = document.getElementById(`col-${colId}`);
+  const cards = col.querySelectorAll('.kcard');
+
+  cards.forEach((card,index)=>{
+    if(index>= 10) {
+      card.remove();
+    }
+  })
+
+  offsetMap[status] = 0
+
+  document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
+
+  document.getElementById(`menos-${colId}`).style.display = 'none';
+  document.getElementById(`mais-${colId}`).style.display = 'block';
+
+}
+
+window.verMenos = verMenos;
+
   function rompimentoTemOsVinculada(r) {
     if (!r) return false;
     return r.is_parent_task === true || r.is_parent_task === 1 || r.is_parent_task === '1';
@@ -1147,6 +1243,7 @@ async function carregarOS(rompimentoId) {
 }
 
 async function carregarRompimentos() {
+  Object.keys(offsetMap).forEach(k => offsetMap[k] = 0);
     const [criadas, andamento, impedimento, finalizadas] = await Promise.all([
         buscarColuna('Criada', 10),
         buscarColuna('Em andamento', 10),
@@ -1167,6 +1264,12 @@ async function carregarRompimentos() {
     document.getElementById('count-impedimento').textContent = impedimento.length;
     document.getElementById('count-finalizada').textContent  = finalizadas.length;
     document.getElementById('total-rompimentos').textContent = todos.length;
+
+    document.getElementById('mais-criada').style.display      = criadas.length === 10 ? 'block' : 'none';
+    document.getElementById('mais-andamento').style.display   = andamento.length === 10 ? 'block' : 'none';
+    document.getElementById('mais-impedimento').style.display = impedimento.length === 10 ? 'block' : 'none';
+    document.getElementById('mais-finalizada').style.display  = finalizadas.length === 50 ? 'block' : 'none';
+
 }
 window.carregarRompimentos = carregarRompimentos;
   // ─── RENDER CARD ───
