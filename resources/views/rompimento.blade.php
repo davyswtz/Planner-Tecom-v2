@@ -149,6 +149,123 @@
   .os-input:focus { border-color: #166ac4; box-shadow: 0 0 0 3px rgba(22,106,196,0.12); }
   @keyframes conteudoEntrada { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ── FILTROS ── */
+  .filtros-card { margin-bottom: 12px; }
+  .filtros-bar {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .filtro-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 130px;
+  }
+  .filtro-search-icon { color: var(--gray-400); font-size: 14px; flex-shrink: 0; }
+  .filtro-search-input {
+    text-transform: uppercase;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    background: transparent;
+    width: 100%;
+    color: var(--gray-950);
+  }
+  .filtro-divider { width: 1px; height: 20px; background: var(--gray-200); flex-shrink: 0; }
+  .filtro-select {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    background: transparent;
+    color: var(--gray-700);
+    cursor: pointer;
+    flex-shrink: 0;
+    max-width: 160px;
+  }
+  .filtro-datas { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .filtro-data-label { font-size: 12px; color: var(--gray-500); white-space: nowrap; }
+  .filtro-date {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    background: transparent;
+    color: var(--gray-700);
+    cursor: pointer;
+    max-width: 140px;
+  }
+  .filtro-limpar-btn {
+    border: none;
+    background: transparent;
+    color: var(--gray-400);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .filtro-limpar-btn:hover { color: var(--gray-700); }
+
+  /* Tablet — permite quebra de linha */
+  @media (max-width: 900px) {
+    .filtros-bar { flex-wrap: wrap; overflow-x: visible; }
+    .filtro-select { max-width: none; }
+    .filtro-date { max-width: none; }
+  }
+
+  /* Mobile — grid de 2 colunas */
+  @media (max-width: 600px) {
+    .filtros-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px;
+    }
+    .filtro-search {
+      grid-column: 1 / -1;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      min-width: unset;
+    }
+    .filtro-divider { display: none; }
+    .filtro-select {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      width: 100%;
+      max-width: none;
+      height: 38px;
+      background: var(--white);
+      box-sizing: border-box;
+    }
+    .filtro-datas {
+      grid-column: 1 / -1;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .filtro-date { flex: 1; min-width: 0; }
+    .filtro-limpar-btn {
+      grid-column: 1 / -1;
+      justify-content: flex-end;
+      padding-top: 2px;
+    }
+  }
+
   @media (max-width: 768px) {
     .detail-grid, .detail-grid-2 { grid-template-columns: 1fr; }
     .detail-field.span-2, .detail-field.span-3 { grid-column: span 1; }
@@ -188,6 +305,33 @@
     opacity: 0;
     pointer-events: none;
   }
+  /* ── MODAL FORM ── */
+  .modal-form { display: flex; flex-direction: column; gap: 14px; }
+  .input-hint { font-size: 11px; color: var(--gray-400); margin: 2px 0 0; }
+  .prioridade-wrap { display: flex; gap: 8px; }
+  .btn-prioridade {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter 0.15s, transform 0.1s;
+    border-width: 1px;
+    border-style: solid;
+  }
+  .btn-prioridade:active { transform: scale(0.97); }
+  .btn-prio-baixa  { border-color: #86efac; background: #f0fdf4; color: #166534; }
+  .btn-prio-media  { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
+  .btn-prio-alta   { border-color: #fca5a5; background: var(--red-bg); color: var(--red-text); }
+  .btn-prio-ativo  { border-width: 2px; }
+  @media (max-width: 600px) {
+    .modal-body { padding: 14px 14px !important; }
+    .modal-head { padding: 14px 16px !important; }
+    .modal-foot { padding: 12px 14px !important; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .kcard[draggable="true"], .kcol-body, .modal-overlay, .modal-box, .modal-close, .btn-modal { transition: none; }
     .detail-enter, .detail-loading i { animation: none; }
@@ -202,88 +346,83 @@
 <!-- MODAL CRIAR -->
 <x-modal id="modal-overlay" titulo="Novo rompimento" subtitulo="Preencha os dados do rompimento">
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Elemento(s)</label>
-      <input type="text" id="input-cto" placeholder="Ex: GVA1210"
-        oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value)"
-        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"/>
-      <p style="font-size:11px;color:var(--gray-400);margin-top:4px">Coordenadas preenchidas automaticamente</p>
-    </div>
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Tipo de rompimento</label>
-      <select id="input-tipo" style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">
-        <option value="">Selecione...</option>
-        <option>Fibra cortada</option>
-        <option>CTO offline</option>
-        <option>Queda de sinal</option>
-        <option>OLT offline</option>
-        <option>Cabo subterrâneo</option>
-      </select>
-    </div>
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Região</label>
-      <select id="input-regiao" onchange="carregarTecnicos(this.value)"
-        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white)">
-        <option value="">Selecione...</option>
-        <option>Goval</option>
-        <option>Vale do Aço</option>
-        <option>Caratinga</option>
-        <option>Teste</option>
-      </select>
-    </div>
-  </div>
+  <div class="modal-form">
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Técnico(s) responsável(is)</label>
-      <div id="tecnicos-wrap" style="position:relative;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;min-height:38px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text">
-        <span id="tecnicos-tags"></span>
-        <input id="input-tec" type="text" placeholder="Selecione uma região primeiro..." readonly
-          style="border:none;outline:none;font-size:12px;background:transparent;flex:1;min-width:80px;box-shadow:none;height:24px;font-family:inherit;cursor:pointer"
-          onclick="toggleDropdownTecnicos()"/>
-        <div id="dropdown-tecnicos" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+    <div class="detail-grid">
+      <div class="os-field">
+        <label class="os-label">Elemento(s)</label>
+        <input type="text" id="input-cto" placeholder="Ex: GVA1210" class="os-input"
+          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value)"/>
+        <p class="input-hint">Coordenadas preenchidas automaticamente</p>
+      </div>
+      <div class="os-field">
+        <label class="os-label">Tipo de rompimento</label>
+        <select id="input-tipo" class="os-input">
+          <option value="">Selecione...</option>
+          <option>Fibra cortada</option>
+          <option>CTO offline</option>
+          <option>Queda de sinal</option>
+          <option>OLT offline</option>
+          <option>Cabo subterrâneo</option>
+        </select>
+      </div>
+      <div class="os-field">
+        <label class="os-label">Região</label>
+        <select id="input-regiao" onchange="carregarTecnicos(this.value)" class="os-input">
+          <option value="">Selecione...</option>
+          <option>Goval</option>
+          <option>Vale do Aço</option>
+          <option>Caratinga</option>
+          <option>Teste</option>
+        </select>
       </div>
     </div>
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Cliente(s) afetado(s)</label>
-      <input type="number" id="input-clientes" placeholder="0" min="0"
-        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"/>
-    </div>
-  </div>
 
-  <div>
-    <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:8px">Prioridade</label>
-    <div style="display:flex;gap:8px">
-      <button onclick="selecionarPrioridade(this,'Baixa')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:1px solid #86efac;background:#f0fdf4;color:#166534;font-size:13px;font-weight:500;cursor:pointer">Baixa</button>
-      <button onclick="selecionarPrioridade(this,'Média')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:2px solid var(--amber);background:var(--amber-bg);color:var(--amber-text);font-size:13px;font-weight:500;cursor:pointer">Média ✓</button>
-      <button onclick="selecionarPrioridade(this,'Alta')" class="btn-prioridade" style="flex:1;padding:8px 0;border-radius:var(--radius-sm);border:1px solid #fca5a5;background:var(--red-bg);color:var(--red-text);font-size:13px;font-weight:500;cursor:pointer">Alta</button>
-    </div>
-  </div>
-
-  <div>
-    <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Número da OS (Hubsoft)</label>
-    <input
-      type="text"
-      id="input-numero-hubsoft"
-      inputmode="numeric"
-      placeholder="Ex: 123456"
-      style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none"
-    />
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Coordenadas</label>
-      <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
-        style="width:100%;height:38px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;outline:none;background:var(--gray-50);color:var(--gray-500)"/>
-    </div>
-    <div>
-      <label style="font-size:12px;font-weight:500;color:var(--gray-500);display:block;margin-bottom:5px">Endereço</label>
-      <div id="endereco-box" style="border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 10px;min-height:38px;font-size:13px;color:var(--gray-400);background:var(--gray-50)">
-        Gerado pelas coordenadas...
+    <div class="detail-grid-2">
+      <div class="os-field">
+        <label class="os-label">Técnico(s) responsável(is)</label>
+        <div id="tecnicos-wrap" style="position:relative;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;min-height:38px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text">
+          <span id="tecnicos-tags"></span>
+          <input id="input-tec" type="text" placeholder="Selecione uma região primeiro..." readonly
+            style="border:none;outline:none;font-size:12px;background:transparent;flex:1;min-width:80px;box-shadow:none;height:24px;font-family:inherit;cursor:pointer"
+            onclick="toggleDropdownTecnicos()"/>
+          <div id="dropdown-tecnicos" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+        </div>
+      </div>
+      <div class="os-field">
+        <label class="os-label">Cliente(s) afetado(s)</label>
+        <input type="number" id="input-clientes" placeholder="0" min="0" class="os-input"/>
       </div>
     </div>
+
+    <div class="os-field">
+      <label class="os-label">Prioridade</label>
+      <div class="prioridade-wrap">
+        <button onclick="selecionarPrioridade(this,'Baixa')" class="btn-prioridade btn-prio-baixa">Baixa</button>
+        <button onclick="selecionarPrioridade(this,'Média')" class="btn-prioridade btn-prio-media btn-prio-ativo">Média ✓</button>
+        <button onclick="selecionarPrioridade(this,'Alta')" class="btn-prioridade btn-prio-alta">Alta</button>
+      </div>
+    </div>
+
+    <div class="os-field">
+      <label class="os-label">Número da OS (Hubsoft)</label>
+      <input type="text" id="input-numero-hubsoft" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
+    </div>
+
+    <div class="detail-grid-2">
+      <div class="os-field">
+        <label class="os-label">Coordenadas</label>
+        <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
+          class="os-input" style="background:var(--gray-50);color:var(--gray-500)"/>
+      </div>
+      <div class="os-field">
+        <label class="os-label">Endereço</label>
+        <div id="endereco-box" class="detail-value" style="background:var(--gray-50);color:var(--gray-400)">
+          Gerado pelas coordenadas...
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <x-slot name="footer">
@@ -388,20 +527,19 @@
 </x-modal>
 
 <!-- FILTROS -->
-<div class="card" style="margin-bottom:12px">
-  <div style="padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    
-    <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px">
-      <i class="ti ti-search" style="color:var(--gray-400);font-size:14px"></i>
+<div class="card filtros-card">
+  <div class="filtros-bar">
+
+    <div class="filtro-search">
+      <i class="ti ti-search filtro-search-icon"></i>
       <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
         oninput="aplicarFiltrosDebounce()"
-        style=" text-transform:uppercase;border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;width:100%;color:var(--gray-950)"/>
+        class="filtro-search-input"/>
     </div>
 
-    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+    <div class="filtro-divider"></div>
 
-    <select id="filtro-regiao" onchange="aplicarFiltros()"
-      style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer">
+    <select id="filtro-regiao" onchange="aplicarFiltros()" class="filtro-select">
       <option value="">Todas as regiões</option>
       <option>Goval</option>
       <option>Vale do Aço</option>
@@ -409,28 +547,24 @@
       <option>Teste</option>
     </select>
 
-    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+    <div class="filtro-divider"></div>
 
-    <select id="filtro-tecnico" onchange="aplicarFiltros()"
-      style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer">
+    <select id="filtro-tecnico" onchange="aplicarFiltros()" class="filtro-select">
       <option value="">Todos os técnicos</option>
     </select>
 
-    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+    <div class="filtro-divider"></div>
 
-    <div style="display:flex;align-items:center;gap:6px">
-      <label style="font-size:12px;color:var(--gray-500)">De</label>
-      <input type="date" id="filtro-data-inicio" onchange="aplicarFiltros()"
-        style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer"/>
-      <label style="font-size:12px;color:var(--gray-500)">Até</label>
-      <input type="date" id="filtro-data-fim" onchange="aplicarFiltros()"
-        style="border:none;outline:none;font-size:13px;font-family:inherit;background:transparent;color:var(--gray-700);cursor:pointer"/>
+    <div class="filtro-datas">
+      <label class="filtro-data-label">De</label>
+      <input type="date" id="filtro-data-inicio" onchange="aplicarFiltros()" class="filtro-date"/>
+      <label class="filtro-data-label">Até</label>
+      <input type="date" id="filtro-data-fim" onchange="aplicarFiltros()" class="filtro-date"/>
     </div>
 
-    <div style="width:1px;height:20px;background:var(--gray-200)"></div>
+    <div class="filtro-divider"></div>
 
-    <button onclick="limparFiltros()"
-      style="border:none;background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">
+    <button onclick="limparFiltros()" class="filtro-limpar-btn">
       <i class="ti ti-x" style="font-size:12px"></i> Limpar
     </button>
 
