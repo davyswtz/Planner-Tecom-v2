@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\RompimentoController;
+use App\Http\Controllers\Api\OtimizaçãoDeRedeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,4 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('troca-poste/coordenada', [TrocaPosteController::class, 'buscarEndereco']);
     Route::get('troca-poste/{id}/os', [TrocaPosteController::class, 'listarOS']);
     Route::apiResource('troca-poste', TrocaPosteController::class);
+    Route::get('otimizacao-rede/coordenada', [OtimizaçãoDeRedeController::class, 'buscarEndereco']);
+    Route::get('otimizacao-rede/{id}/os', [OtimizaçãoDeRedeController::class, 'listarOS']);
+    Route::apiResource('otimizacao-rede', OtimizaçãoDeRedeController::class);
 });
