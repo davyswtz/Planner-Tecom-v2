@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\TrocaPosteController;
 use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OpTaskController;
@@ -20,4 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('rompimentos/{id}/os', [RompimentoController::class, 'listarOS']);
     Route::apiResource('tecnicos', TecnicoController::class);
     Route::put('os/{id}', [OpTaskController::class, 'update']);
+    Route::get('troca-poste/coordenada', [TrocaPosteController::class, 'buscarEndereco']);
+    Route::get('troca-poste/{id}/os', [TrocaPosteController::class, 'listarOS']);
+    Route::apiResource('troca-poste', TrocaPosteController::class);
 });

@@ -61,8 +61,25 @@ public function __construct(private GoogleChatService $googleChatService){}
     return $opTask->fresh();
 }
 
-    public function deleteOpTask(OpTask $opTask){
+    /**
+     * Remove uma Ordem de Serviço do banco.
+     *
+     * Regra de negócio: somente OpTasks com categoria "ordem-servico" podem ser
+     * excluídas por este método — evita apagar rompimentos/trocas de poste
+     * acidentalmente via endpoint genérico /api/op-tasks/{id}.
+     *
+     * @throws \InvalidArgumentException quando a tarefa não é uma OS
+     */
+    public function deleteOpTask(OpTask $opTask): OpTask
+    {
+        if ($opTask->categoria !== 'ordem-servico') {
+            throw new \InvalidArgumentException(
+                'Somente ordens de serviço podem ser excluídas por este endpoint.'
+            );
+        }
+
         $opTask->delete();
+
         return $opTask;
     }
 

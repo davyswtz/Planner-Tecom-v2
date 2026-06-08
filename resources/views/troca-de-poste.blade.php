@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Rompimentos — Planner Telecom')
-@section('page-title', 'Rompimentos')
-@section('btn-label', 'Novo rompimento')
+@section('title', 'Troca de Poste — Planner Telecom')
+@section('page-title', 'Troca de Poste')
+@section('btn-label', 'Nova troca de poste')
 
 @section('styles')
 <style>
@@ -41,35 +41,17 @@
     background: #fef2f2;
   }
   .modal-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    background: rgba(0,0,0,0);
-    visibility: hidden;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+    background: rgba(0,0,0,0); visibility: hidden; pointer-events: none;
     transition: background 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s;
   }
-  .modal-overlay.open {
-    visibility: visible;
-    pointer-events: auto;
-    background: rgba(0,0,0,0.45);
-  }
+  .modal-overlay.open { visibility: visible; pointer-events: auto; background: rgba(0,0,0,0.45); }
   .modal-box {
-    background: var(--white);
-    border-radius: var(--radius);
-    border: 1px solid var(--gray-200);
-    width: 100%;
-    max-width: 680px;
-    overflow: hidden;
-    max-height: calc(100vh - 32px);
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    transform: scale(0.96) translateY(14px);
+    background: var(--white); border-radius: var(--radius); border: 1px solid var(--gray-200);
+    width: 100%; max-width: 680px; overflow: hidden; max-height: calc(100vh - 32px);
+    display: flex; flex-direction: column;
+    opacity: 0; transform: scale(0.96) translateY(14px);
     transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity;
   }
@@ -168,10 +150,6 @@
   .os-status-pill-finalizada { background: #dcfce7; color: #166534; }
   .os-status-close { border: none; background: transparent; cursor: pointer; color: var(--gray-400); font-size: 13px; padding: 2px 3px; line-height: 1; margin-left: 2px; border-radius: 4px; }
   .os-status-close:hover { color: var(--gray-700); background: var(--gray-100, #f3f4f6); }
-  .modal-os-overlay { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0); visibility: hidden; pointer-events: none; transition: background 0.28s cubic-bezier(0.16,1,0.3,1), visibility 0.28s; }
-  .modal-os-overlay.open { visibility: visible; pointer-events: auto; background: rgba(0,0,0,0.55); }
-  .modal-os-box { background: var(--white); border-radius: var(--radius); border: 1px solid var(--gray-200); width: 100%; max-width: 560px; overflow: hidden; max-height: calc(100vh - 32px); display: flex; flex-direction: column; opacity: 0; transform: scale(0.96) translateY(14px); transition: transform 0.34s cubic-bezier(0.16,1,0.3,1), opacity 0.34s cubic-bezier(0.16,1,0.3,1); will-change: transform, opacity; }
-  .modal-os-overlay.open .modal-os-box { opacity: 1; transform: scale(1) translateY(0); }
   .os-field { display: flex; flex-direction: column; gap: 5px; }
   .os-label { font-size: 12px; font-weight: 500; color: var(--gray-500); }
   .os-input { width: 100%; height: 38px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0 10px; font-size: 13px; font-family: inherit; outline: none; background: var(--white); color: var(--gray-950); transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box; }
@@ -181,186 +159,48 @@
 
   /* ── FILTROS ── */
   .filtros-card { margin-bottom: 12px; }
-  .filtros-bar {
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-  .filtro-search {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    min-width: 130px;
-  }
+  .filtros-bar { padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; overflow-x: auto; }
+  .filtro-search { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 130px; }
   .filtro-search-icon { color: var(--gray-400); font-size: 14px; flex-shrink: 0; }
-  .filtro-search-input {
-    text-transform: uppercase;
-    border: none;
-    outline: none;
-    font-size: 13px;
-    font-family: inherit;
-    background: transparent;
-    width: 100%;
-    color: var(--gray-950);
-  }
+  .filtro-search-input { text-transform: uppercase; border: none; outline: none; font-size: 13px; font-family: inherit; background: transparent; width: 100%; color: var(--gray-950); }
   .filtro-divider { width: 1px; height: 20px; background: var(--gray-200); flex-shrink: 0; }
-  .filtro-select {
-    border: none;
-    outline: none;
-    font-size: 13px;
-    font-family: inherit;
-    background: transparent;
-    color: var(--gray-700);
-    cursor: pointer;
-    flex-shrink: 0;
-    max-width: 160px;
-  }
+  .filtro-select { border: none; outline: none; font-size: 13px; font-family: inherit; background: transparent; color: var(--gray-700); cursor: pointer; flex-shrink: 0; max-width: 160px; }
   .filtro-datas { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .filtro-data-label { font-size: 12px; color: var(--gray-500); white-space: nowrap; }
-  .filtro-date {
-    border: none;
-    outline: none;
-    font-size: 13px;
-    font-family: inherit;
-    background: transparent;
-    color: var(--gray-700);
-    cursor: pointer;
-    max-width: 140px;
-  }
-  .filtro-limpar-btn {
-    border: none;
-    background: transparent;
-    color: var(--gray-400);
-    font-size: 12px;
-    cursor: pointer;
-    font-family: inherit;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
+  .filtro-date { border: none; outline: none; font-size: 13px; font-family: inherit; background: transparent; color: var(--gray-700); cursor: pointer; max-width: 140px; }
+  .filtro-limpar-btn { border: none; background: transparent; color: var(--gray-400); font-size: 12px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; }
   .filtro-limpar-btn:hover { color: var(--gray-700); }
 
-  /* Tablet — permite quebra de linha */
-  @media (max-width: 900px) {
-    .filtros-bar { flex-wrap: wrap; overflow-x: visible; }
-    .filtro-select { max-width: none; }
-    .filtro-date { max-width: none; }
-  }
-
-  /* Mobile — grid de 2 colunas */
+  @media (max-width: 900px) { .filtros-bar { flex-wrap: wrap; overflow-x: visible; } .filtro-select { max-width: none; } .filtro-date { max-width: none; } }
   @media (max-width: 600px) {
-    .filtros-bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding: 12px;
-    }
-    .filtro-search {
-      grid-column: 1 / -1;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      min-width: unset;
-    }
+    .filtros-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+    .filtro-search { grid-column: 1 / -1; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 8px 10px; min-width: unset; }
     .filtro-divider { display: none; }
-    .filtro-select {
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      width: 100%;
-      max-width: none;
-      height: 38px;
-      background: var(--white);
-      box-sizing: border-box;
-    }
-    .filtro-datas {
-      grid-column: 1 / -1;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      width: 100%;
-      box-sizing: border-box;
-    }
+    .filtro-select { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 8px 10px; width: 100%; max-width: none; height: 38px; background: var(--white); box-sizing: border-box; }
+    .filtro-datas { grid-column: 1 / -1; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 8px 10px; width: 100%; box-sizing: border-box; }
     .filtro-date { flex: 1; min-width: 0; }
-    .filtro-limpar-btn {
-      grid-column: 1 / -1;
-      justify-content: flex-end;
-      padding-top: 2px;
-    }
+    .filtro-limpar-btn { grid-column: 1 / -1; justify-content: flex-end; padding-top: 2px; }
   }
+  @media (max-width: 768px) { .detail-grid, .detail-grid-2 { grid-template-columns: 1fr; } .detail-field.span-2, .detail-field.span-3 { grid-column: span 1; } }
 
-  @media (max-width: 768px) {
-    .detail-grid, .detail-grid-2 { grid-template-columns: 1fr; }
-    .detail-field.span-2, .detail-field.span-3 { grid-column: span 1; }
-  }
-  .btn-kcol-toggle {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--gray-400);
-    font-size: 12px;
-    padding: 2px 4px;
-    border-radius: var(--radius-sm);
-    display: inline-flex;
-    align-items: center;
-    line-height: 1;
-    transition: color 0.15s, background 0.15s;
-    flex-shrink: 0;
-  }
+  .btn-kcol-toggle { background: transparent; border: none; cursor: pointer; color: var(--gray-400); font-size: 12px; padding: 2px 4px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; line-height: 1; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
   .btn-kcol-toggle:hover { color: var(--gray-700); background: var(--gray-100); }
-  .btn-kcol-toggle i {
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    display: block;
-  }
+  .btn-kcol-toggle i { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: block; }
   .kcol.collapsed .btn-kcol-toggle i { transform: rotate(-90deg); }
-  .kcol-content-wrap {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    max-height: 3000px;
-    opacity: 1;
-    transition: max-height 0.36s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .kcol.collapsed .kcol-content-wrap {
-    max-height: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
+  .kcol-content-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; max-height: 3000px; opacity: 1; transition: max-height 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1); }
+  .kcol.collapsed .kcol-content-wrap { max-height: 0; opacity: 0; pointer-events: none; }
+
   /* ── MODAL FORM ── */
   .modal-form { display: flex; flex-direction: column; gap: 14px; }
   .input-hint { font-size: 11px; color: var(--gray-400); margin: 2px 0 0; }
   .prioridade-wrap { display: flex; gap: 8px; }
-  .btn-prioridade {
-    flex: 1;
-    padding: 8px 0;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: inherit;
-    transition: filter 0.15s, transform 0.1s;
-    border-width: 1px;
-    border-style: solid;
-  }
+  .btn-prioridade { flex: 1; padding: 8px 0; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: filter 0.15s, transform 0.1s; border-width: 1px; border-style: solid; }
   .btn-prioridade:active { transform: scale(0.97); }
   .btn-prio-baixa  { border-color: #86efac; background: #f0fdf4; color: #166534; }
   .btn-prio-media  { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
   .btn-prio-alta   { border-color: #fca5a5; background: var(--red-bg); color: var(--red-text); }
   .btn-prio-ativo  { border-width: 2px; }
-  @media (max-width: 600px) {
-    .modal-body { padding: 14px 14px !important; }
-    .modal-head { padding: 14px 16px !important; }
-    .modal-foot { padding: 12px 14px !important; }
-  }
-
+  @media (max-width: 600px) { .modal-body { padding: 14px 14px !important; } .modal-head { padding: 14px 16px !important; } .modal-foot { padding: 12px 14px !important; } }
   @media (prefers-reduced-motion: reduce) {
     .kcard[draggable="true"], .kcol-body, .modal-overlay, .modal-box, .modal-close, .btn-modal { transition: none; }
     .detail-enter, .detail-loading i { animation: none; }
@@ -373,38 +213,30 @@
 @section('content')
 
 <!-- MODAL CRIAR -->
-<x-modal id="modal-overlay" titulo="Novo rompimento" subtitulo="Preencha os dados do rompimento">
+<x-modal id="modal-overlay" titulo="Nova troca de poste" subtitulo="Preencha os dados da troca de poste">
 
   <div class="modal-form">
 
-    <div class="detail-grid">
+    <div class="detail-grid-2">
       <div class="os-field">
-        <label class="os-label">Elemento(s)</label>
-        <input type="text" id="input-cto" placeholder="Ex: GVA1210" class="os-input"
-          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value)"/>
-        <p class="input-hint">Coordenadas preenchidas automaticamente</p>
+        <label class="os-label">Coordenadas (opcional)</label>
+        <input type="text" id="input-coordenadas" placeholder="Ex: -18.8517, -41.9494" class="os-input"/>
       </div>
       <div class="os-field">
-        <label class="os-label">Tipo de rompimento</label>
-        <select id="input-tipo" class="os-input">
-          <option value="">Selecione...</option>
-          <option>Fibra cortada</option>
-          <option>CTO offline</option>
-          <option>Queda de sinal</option>
-          <option>OLT offline</option>
-          <option>Cabo subterrâneo</option>
-        </select>
+        <label class="os-label">Endereço / Localização</label>
+        <input type="text" id="input-localizacao-texto" placeholder="Ex: Rua das Flores, 123 — Goval" class="os-input"/>
       </div>
-      <div class="os-field">
-        <label class="os-label">Região</label>
-        <select id="input-regiao" onchange="carregarTecnicos(this.value)" class="os-input">
-          <option value="">Selecione...</option>
-          <option>Goval</option>
-          <option>Vale do Aço</option>
-          <option>Caratinga</option>
-          <option>Teste</option>
-        </select>
-      </div>
+    </div>
+
+    <div class="os-field">
+      <label class="os-label">Região</label>
+      <select id="input-regiao" onchange="carregarTecnicos(this.value)" class="os-input">
+        <option value="">Selecione...</option>
+        <option>Goval</option>
+        <option>Vale do Aço</option>
+        <option>Caratinga</option>
+        <option>Teste</option>
+      </select>
     </div>
 
     <div class="detail-grid-2">
@@ -419,8 +251,8 @@
         </div>
       </div>
       <div class="os-field">
-        <label class="os-label">Cliente(s) afetado(s)</label>
-        <input type="number" id="input-clientes" placeholder="0" min="0" class="os-input"/>
+        <label class="os-label">Número da OS (Hubsoft)</label>
+        <input type="text" id="input-numero-os" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
       </div>
     </div>
 
@@ -433,31 +265,12 @@
       </div>
     </div>
 
-    <div class="os-field">
-      <label class="os-label">Número da OS (Hubsoft)</label>
-      <input type="text" id="input-numero-hubsoft" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
-    </div>
-
-    <div class="detail-grid-2">
-      <div class="os-field">
-        <label class="os-label">Coordenadas</label>
-        <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
-          class="os-input" style="background:var(--gray-50);color:var(--gray-500)"/>
-      </div>
-      <div class="os-field">
-        <label class="os-label">Endereço</label>
-        <div id="endereco-box" class="detail-value" style="background:var(--gray-50);color:var(--gray-400)">
-          Gerado pelas coordenadas...
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <x-slot name="footer">
     <button onclick="fecharModal()" class="btn-modal btn-modal-ghost">Cancelar</button>
-    <button onclick="criarRompimento()" class="btn-modal btn-modal-primary">
-      <i class="ti ti-bolt" style="font-size:14px"></i> Criar rompimento
+    <button onclick="criarTrocaPoste()" class="btn-modal btn-modal-primary">
+      <i class="ti ti-tools" style="font-size:14px"></i> Criar troca de poste
     </button>
   </x-slot>
 
@@ -488,19 +301,19 @@
   <div id="detalhe-tab-os" style="display:none">
     <div class="os-tab-head">
       <span class="os-tab-title">Ordens de Serviço vinculadas</span>
-      <button class="btn-nova-os" onclick="abrirNovaOS()">
+      <button type="button" class="btn-nova-os" onclick="abrirNovaOS()">
         <i class="ti ti-plus" style="font-size:13px"></i> Nova OS
       </button>
     </div>
     <div class="os-empty">
       <i class="ti ti-clipboard-off"></i>
-      <span>Nenhuma OS vinculada a este rompimento</span>
+      <span>Nenhuma OS vinculada a esta troca de poste</span>
     </div>
   </div>
 
   <x-slot name="footer">
     <div class="modal-foot-inner">
-      <button type="button" onclick="abrirConfirmacaoExclusao()" id="btn-excluir" class="btn-modal btn-modal-danger" title="Excluir este rompimento">
+      <button type="button" onclick="abrirConfirmacaoExclusao()" id="btn-excluir" class="btn-modal btn-modal-danger" title="Excluir esta troca de poste">
         <i class="ti ti-trash" style="font-size:14px"></i> Excluir
       </button>
       <div class="modal-foot-actions">
@@ -520,11 +333,11 @@
 
 </x-modal>
 
-<!-- Confirmação de exclusão -->
+<!-- Confirmação de exclusão (somente UI — integrar API no backend) -->
 <div id="confirm-excluir-overlay" class="confirm-excluir-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-excluir-title">
   <div class="confirm-excluir-box">
     <div class="confirm-excluir-icon"><i class="ti ti-alert-triangle"></i></div>
-    <p class="confirm-excluir-title" id="confirm-excluir-title">Excluir rompimento?</p>
+    <p class="confirm-excluir-title" id="confirm-excluir-title">Excluir troca de poste?</p>
     <p class="confirm-excluir-text" id="confirm-excluir-text">
       Esta ação não pode ser desfeita. A tarefa e os dados vinculados serão removidos permanentemente.
     </p>
@@ -554,7 +367,7 @@
   </div>
 </div>
 
-<!-- MODAL NOVA OS -->
+<!-- MODAL NOVA OS (vinculada à tarefa) -->
 <x-modal
   id="modal-os-overlay"
   titulo="Nova Ordem de Serviço"
@@ -565,7 +378,7 @@
   <div class="os-field">
     <label class="os-label">Tipo de serviço</label>
     <input type="text" id="os-input-tipo" class="os-input"
-      placeholder="Ex: REPARO DE CABO"
+      placeholder="Ex: TROCA DE POSTE"
       oninput="this.value = this.value.toUpperCase()"/>
   </div>
 
@@ -579,16 +392,16 @@
     <div class="os-field">
       <label class="os-label">Status</label>
       <select id="os-input-status" class="os-input">
-        <option value="aberta">Aberta</option>
-        <option value="em_andamento">Em andamento</option>
-        <option value="finalizada">Finalizada</option>
+        <option value="Aberta">Aberta</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Finalizada">Finalizada</option>
       </select>
     </div>
   </div>
 
   <x-slot name="footer">
-    <button onclick="fecharNovaOS()" class="btn-modal btn-modal-ghost">Cancelar</button>
-    <button class="btn-modal btn-modal-primary" id="os-btn-salvar" onclick="salvarOs()">
+    <button type="button" onclick="fecharNovaOS()" class="btn-modal btn-modal-ghost">Cancelar</button>
+    <button type="button" class="btn-modal btn-modal-primary" id="os-btn-salvar" onclick="salvarOs()">
       <i class="ti ti-clipboard-check" style="font-size:14px" id="os-btn-icon"></i>
       <span id="os-btn-label">Criar OS</span>
     </button>
@@ -641,12 +454,11 @@
   </div>
 </div>
 
-
 <!-- KANBAN -->
 <div class="card" style="flex:1">
   <div class="card-header">
-    <span class="card-title">Kanban de Rompimentos</span>
-    <span class="card-action">total: <span id="total-rompimentos">0</span></span>
+    <span class="card-title">Kanban de Troca de Poste</span>
+    <span class="card-action">total: <span id="total-trocas">0</span></span>
   </div>
   <div class="kanban-cols">
     <div class="kcol">
@@ -739,47 +551,65 @@
   let prioridadeSelecionada = 'Média';
   let tecnicosSelecionados = [];
   let tecnicosSelecionadosEdicao = [];
-  let osDataMap = {};
   let osEditandoId = null;
   /** ID da OS aguardando confirmação no modal de exclusão (null = nenhuma pendente) */
   let osExclusaoPendenteId = null;
+  const osDataMap = {};
 
-  function debounce(func, delay = 500){
+  function debounce(func, delay = 500) {
     let timeout;
-
     return function (...args) {
       clearTimeout(timeout);
       timeout = setTimeout(() => func.apply(this, args), delay);
+    }
   }
-}
 
-const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
+  const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
-  async function aplicarFiltros(){
+  async function aplicarFiltros() {
     const filtros = {
-      regiao: document.getElementById('filtro-regiao').value,
-      tecnico: document.getElementById('filtro-tecnico').value,
+      regiao:     document.getElementById('filtro-regiao').value,
+      tecnico:    document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
-      dataFim: document.getElementById('filtro-data-fim').value,
-      taskCode: document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+      dataFim:    document.getElementById('filtro-data-fim').value,
+      taskCode:   document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
     };
-    carregarRompimentos(filtros);
+    carregarTrocas(filtros);
   }
 
-  async function limparFiltros(){
+  async function limparFiltros() {
     document.getElementById('filtro-regiao').value = '';
     document.getElementById('filtro-tecnico').value = '';
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
     document.getElementById('filtro-taskcode').value = '';
-    carregarRompimentos();
+    carregarTrocas();
   }
 
-
   // ─── MODAIS ───
+  function limparFormularioTroca() {
+    document.getElementById('input-regiao').value = '';
+    document.getElementById('input-numero-os').value = '';
+    document.getElementById('input-localizacao-texto').value = '';
+    document.getElementById('input-coordenadas').value = '';
+    document.getElementById('input-tec').placeholder = 'Selecione uma região primeiro...';
+    document.getElementById('dropdown-tecnicos').innerHTML = '';
+    prioridadeSelecionada = 'Média';
+    document.querySelectorAll('.btn-prioridade').forEach(b => {
+      b.textContent = b.textContent.replace(' ✓', '');
+      b.style.borderWidth = '1px';
+    });
+    const btnMedia = document.querySelector('.btn-prio-media');
+    if (btnMedia) {
+      btnMedia.style.borderWidth = '2px';
+      btnMedia.textContent = 'Média ✓';
+    }
+  }
+
   window.abrirModal = function() {
     tecnicosSelecionados = [];
     renderizarTags();
+    limparFormularioTroca();
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -787,22 +617,24 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     document.getElementById('modal-overlay').classList.remove('open');
   }
 
-  // ─── MODAL NOVA OS ───
-  function abrirNovaOS() {
+  // ─── ORDENS DE SERVIÇO ───
+  window.abrirNovaOS = function() {
+    const trocaId = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    if (!trocaId) return;
+
     osEditandoId = null;
     document.getElementById('modal-os-overlay').classList.add('open');
-    const regiaoRompimento = document.getElementById('detalhe-conteudo').dataset.regiao || '';
-    carregarTecnicos(regiaoRompimento, 'os-input-tecnico');
+    const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
+    carregarTecnicos(regiao, 'os-input-tecnico');
     document.getElementById('os-modal-titulo').textContent = 'Nova Ordem de Serviço';
     document.getElementById('os-btn-icon').className = 'ti ti-clipboard-check';
     document.getElementById('os-btn-label').textContent = 'Criar OS';
     document.getElementById('os-input-tipo').value = '';
     document.getElementById('os-input-tecnico').value = '';
-    document.getElementById('os-input-status').value = 'aberta';
-    
-  }
+    document.getElementById('os-input-status').value = 'Aberta';
+  };
 
-  function editarOs(id) {
+  window.editarOs = function(id) {
     const os = osDataMap[id];
     if (!os) return;
 
@@ -813,7 +645,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
     const tipoValue = (os.titulo || '').replace(/^OS\s*[—\-]\s*/i, '');
     document.getElementById('os-input-tipo').value = tipoValue;
-    document.getElementById('os-input-status').value = os.status || 'aberta';
+    document.getElementById('os-input-status').value = os.status || 'Aberta';
 
     const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
     carregarTecnicos(regiao, 'os-input-tecnico').then(() => {
@@ -835,7 +667,16 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     });
 
     document.getElementById('modal-os-overlay').classList.add('open');
-  }
+  };
+
+  window.fecharNovaOS = function() {
+    osEditandoId = null;
+    document.getElementById('modal-os-overlay').classList.remove('open');
+  };
+
+  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharNovaOS();
+  });
 
   window.alterarStatusOS = async function(osId, novoStatus) {
     const token = localStorage.getItem('planner_token');
@@ -844,454 +685,33 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({ status: novoStatus })
+      body: JSON.stringify({ status: novoStatus }),
     });
 
-    if(!response.ok) {
+    if (!response.ok) {
       const erro = await response.json();
-      console.error("Erro ao atualizar o status da OS:", erro.message);
+      console.error('Erro ao atualizar o status da OS:', erro.message);
+      const trocaId = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      if (trocaId) carregarOS(trocaId);
+    } else if (osDataMap[osId]) {
+      osDataMap[osId].status = novoStatus;
     }
-  }
-
-  function fecharNovaOS() {
-    osEditandoId = null;
-    document.getElementById('modal-os-overlay').classList.remove('open');
-  }
-
-  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharNovaOS();
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') fecharNovaOS();
-  }, { capture: false });
-
-  function trocarAba(aba) {
-    document.getElementById('detalhe-tab-detalhes').style.display = aba === 'detalhes' ? 'block' : 'none';
-    document.getElementById('detalhe-tab-os').style.display = aba === 'os' ? 'block' : 'none';
-    document.getElementById('tab-btn-detalhes').classList.toggle('active', aba === 'detalhes');
-    document.getElementById('tab-btn-os').classList.toggle('active', aba === 'os');
-
-    if (aba === 'os') {
-        const id = document.getElementById('detalhe-conteudo').dataset.id;
-        carregarOS(id);
-    }
-}
-
-  function resetBotoesDetalhe() {
-    document.getElementById('btn-excluir').style.display = '';
-    document.getElementById('btn-editar').style.display = '';
-    document.getElementById('btn-salvar').style.display = 'none';
-    document.getElementById('btn-cancelar').style.display = 'none';
-  }
-
-  function fecharDetalhe() {
-    fecharConfirmacaoExclusao();
-    fecharConfirmacaoExclusaoOs();
-    document.getElementById('detalhe-overlay').classList.remove('open');
-    trocarAba('detalhes');
-    resetBotoesDetalhe();
-    tecnicosSelecionadosEdicao = [];
-  }
-
-  function cancelarEdicao() {
-    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    tecnicosSelecionadosEdicao = [];
-    resetBotoesDetalhe();
-    if (id) window.abrirDetalhe(id);
-  }
-
-  function abrirConfirmacaoExclusao() {
-    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    if (!id) return;
-    const titulo = document.getElementById('detalhe-titulo')?.textContent?.trim() || 'este rompimento';
-    document.getElementById('confirm-excluir-text').textContent =
-      `Tem certeza que deseja excluir "${titulo}"? Esta ação não pode ser desfeita.`;
-    document.getElementById('confirm-excluir-overlay').classList.add('open');
-  }
-
-  function fecharConfirmacaoExclusao() {
-    document.getElementById('confirm-excluir-overlay')?.classList.remove('open');
-  }
-
-  async function confirmarExclusaoTarefa() {
-    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    if (!id) return;
-
-    const token = localStorage.getItem('planner_token');
-    try {
-      const response = await fetch(`/api/rompimentos/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const erro = await response.json();
-        throw new Error(erro.message || 'Erro ao excluir rompimento.');
-      }
-
-      fecharConfirmacaoExclusao();
-      fecharDetalhe();
-      window.carregarRompimentos();
-    } catch (err) {
-      console.error('Erro ao excluir rompimento:', err.message);
-      alert(err.message || 'Erro ao excluir rompimento.');
-    }
-  }
-
-  document.getElementById('modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
-
-  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharDetalhe();
-  });
-
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
-  });
-
-  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusaoOs();
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Escape') return;
-    // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
-    if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
-      fecharConfirmacaoExclusaoOs();
-      return;
-    }
-    if (document.getElementById('confirm-excluir-overlay')?.classList.contains('open')) {
-      fecharConfirmacaoExclusao();
-      return;
-    }
-    fecharDetalhe();
-    fecharModal();
-  });
-
-  // ─── PRIORIDADE ───
-  function selecionarPrioridade(btn, nivel) {
-    document.querySelectorAll('.btn-prioridade').forEach(b => {
-      b.textContent = b.textContent.replace(' ✓', '');
-      b.style.borderWidth = '1px';
-    });
-    btn.style.borderWidth = '2px';
-    btn.textContent += ' ✓';
-    prioridadeSelecionada = nivel;
-  }
-
-  // ─── CTOs ───
-  const CTO_SOURCES = [
-    '/json/cto-gv-viabilidade.json',
-    '/json/cto-ipatinga-viabilidade.json',
-  ];
-  let CTOs = [];
-
-  async function carregarCTOs() {
-    for (const url of CTO_SOURCES) {
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        CTOs = CTOs.concat(data);
-      } catch (e) {
-        console.warn('Erro ao carregar CTOs de:', url);
-      }
-    }
-    console.log(`Total de CTOs carregadas: ${CTOs.length}`);
-  }
-
-  function setField(id, texto) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = texto;
-    else el.textContent = texto;
-  }
-
-  function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box') {
-    const termo = valor.trim().toUpperCase();
-    if (termo.length < 3) {
-      const elCoords = document.getElementById(campoCoords);
-      if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'Gerado pelas coordenadas...');
-      return;
-    }
-    const encontrada = CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo);
-    if (encontrada) {
-      const elCoords = document.getElementById(campoCoords);
-      if (elCoords) elCoords.value = `${encontrada.lat}, ${encontrada.lng}`;
-      setField(campoEndereco, 'Buscando endereço...');
-      buscarEndereco(encontrada.lat, encontrada.lng, campoEndereco);
-    } else {
-      const elCoords = document.getElementById(campoCoords);
-      if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
-    }
-  }
-
-  async function buscarEndereco(lat, lng, campoEndereco = 'endereco-box') {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-        { headers: { 'Accept-Language': 'pt-BR' } }
-      );
-      const data = await res.json();
-      setField(campoEndereco, data.display_name || 'Endereço não encontrado');
-    } catch (e) {
-      setField(campoEndereco, 'Erro ao buscar endereço');
-    }
-  }
-
-  // ─── TÉCNICOS (MODAL CRIAR) ───
-  async function carregarTecnicos(regiao, destino = 'dropdown-tecnicos') {
-    if (!regiao && destino === 'dropdown-tecnicos') return;
-
-    const token = localStorage.getItem('planner_token');
-    const headers = { 'Authorization': 'Bearer ' + token };
-
-    async function buscarTecnicos(regiaoFiltro) {
-      const url = regiaoFiltro
-        ? `/api/tecnicos?regiao=${encodeURIComponent(regiaoFiltro)}`
-        : '/api/tecnicos';
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    }
-
-    let tecnicos = await buscarTecnicos(regiao);
-    if (regiao && destino === 'os-input-tecnico' && tecnicos.length === 0) {
-      tecnicos = await buscarTecnicos(null);
-    }
-
-    const el = document.getElementById(destino);
-    if (!el) return;
-
-    if (el.tagName === 'SELECT') {
-        const placeholder = destino === 'filtro-tecnico'
-          ? '<option value="">Todos os técnicos</option>'
-          : '<option value="">Selecione...</option>';
-        el.innerHTML = placeholder
-            + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
-        return;
-    }
-
-    el.innerHTML = tecnicos.length
-        ? tecnicos.map(t => `<div onclick="selecionarTecnico(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-                style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-                onmouseover="this.style.background='var(--gray-50)'"
-                onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('')
-        : '<div style="padding:8px 12px;font-size:13px;color:var(--gray-400)">Nenhum técnico nessa região</div>';
-
-    document.getElementById('input-tec').placeholder = tecnicos.length ? 'Selecionar técnico...' : 'Nenhum técnico';
-}
-  function toggleDropdownTecnicos() {
-    const d = document.getElementById('dropdown-tecnicos');
-    d.style.display = d.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function selecionarTecnico(id, nome) {
-    if (tecnicosSelecionados.find(t => t.id === id)) return;
-    tecnicosSelecionados.push({ id, nome });
-    renderizarTags();
-    document.getElementById('dropdown-tecnicos').style.display = 'none';
-  }
-
-  function removerTecnico(id) {
-    tecnicosSelecionados = tecnicosSelecionados.filter(t => t.id !== id);
-    renderizarTags();
-  }
-
-  function renderizarTags() {
-    document.getElementById('tecnicos-tags').innerHTML = tecnicosSelecionados.map(t => `
-      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
-        ${t.nome}
-        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="removerTecnico(${t.id})"></i>
-      </span>`).join('');
-  }
-
-  // ─── TÉCNICOS (MODAL EDIÇÃO) ───
-  async function inicializarSeletorTecnicosEdicao(el, valorAtual) {
-    tecnicosSelecionadosEdicao = [];
-    el.innerHTML = `
-      <div id="edicao-tec-wrap" style="position:relative">
-        <div id="edicao-tec-tags" onclick="toggleDropdownTecnicosEdicao()"
-          style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;cursor:pointer;
-                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;background:var(--white)">
-          <span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px">Carregando...</span>
-        </div>
-        <div id="dropdown-tec-edicao"
-          style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);
-                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;
-                 max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
-        </div>
-      </div>`;
-
-    const token = localStorage.getItem('planner_token');
-    const res = await fetch('/api/tecnicos', { headers: { 'Authorization': 'Bearer ' + token } });
-    const tecnicos = await res.json();
-
-    if (valorAtual) {
-      valorAtual.split(',').map(n => n.trim()).filter(Boolean).forEach(nome => {
-        const tec = tecnicos.find(t => t.nome === nome);
-        if (tec) tecnicosSelecionadosEdicao.push({ id: tec.id, nome: tec.nome });
-      });
-    }
-
-    document.getElementById('dropdown-tec-edicao').innerHTML = tecnicos.map(t => `
-      <div onclick="adicionarTecnicoEdicao(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-        style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-        onmouseover="this.style.background='var(--gray-50)'"
-        onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('');
-
-    renderizarTagsEdicao();
-  }
-
-  function toggleDropdownTecnicosEdicao() {
-    const d = document.getElementById('dropdown-tec-edicao');
-    if (!d) return;
-    d.style.display = d.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function adicionarTecnicoEdicao(id, nome) {
-    if (tecnicosSelecionadosEdicao.find(t => t.id === id)) return;
-    tecnicosSelecionadosEdicao.push({ id, nome });
-    renderizarTagsEdicao();
-    document.getElementById('dropdown-tec-edicao').style.display = 'none';
-  }
-
-  function removerTecnicoEdicao(id) {
-    tecnicosSelecionadosEdicao = tecnicosSelecionadosEdicao.filter(t => t.id !== id);
-    renderizarTagsEdicao();
-  }
-
-  function renderizarTagsEdicao() {
-    const container = document.getElementById('edicao-tec-tags');
-    if (!container) return;
-    const vazio = tecnicosSelecionadosEdicao.length === 0;
-    container.innerHTML = tecnicosSelecionadosEdicao.map(t => `
-      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
-        ${t.nome}
-        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="event.stopPropagation();removerTecnicoEdicao(${t.id})"></i>
-      </span>`).join('')
-      + `<span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px;${vazio ? '' : 'display:none'}">Selecionar técnico...</span>`;
-  }
-
-  document.addEventListener('click', function(e) {
-    const wrap = document.getElementById('tecnicos-wrap');
-    const dropdown = document.getElementById('dropdown-tecnicos');
-    if (wrap && dropdown && !wrap.contains(e.target)) dropdown.style.display = 'none';
-
-    const wrapEd = document.getElementById('edicao-tec-wrap');
-    const dropdownEd = document.getElementById('dropdown-tec-edicao');
-    if (wrapEd && dropdownEd && !wrapEd.contains(e.target)) dropdownEd.style.display = 'none';
-  });
-
-  // ─── EDIÇÃO ───
-  function ativarEdicao() {
-    document.getElementById('btn-excluir').style.display = 'none';
-    document.getElementById('btn-editar').style.display = 'none';
-    document.getElementById('btn-salvar').style.display = 'flex';
-    document.getElementById('btn-cancelar').style.display = 'flex';
-
-    const campos = [
-      { id: 'campo-cto', tipo: 'cto' },
-      { id: 'campo-tipo', tipo: 'select', opcoes: ['Fibra cortada', 'CTO offline', 'Queda de sinal', 'OLT offline', 'Cabo subterrâneo'] },
-      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga'] },
-      { id: 'campo-tecnicos', tipo: 'custom' },
-      { id: 'campo-clientes', tipo: 'number' },
-      { id: 'campo-coordenadas', tipo: 'coords' },
-      { id: 'campo-endereco', tipo: 'text' },
-      { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
-      { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
-      { id: 'campo-numero-os', tipo: 'text' },
-    ];
-
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
-
-    campos.forEach(({ id, tipo, opcoes }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const valorAtual = el.textContent.trim();
-      const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'custom') {
-        inicializarSeletorTecnicosEdicao(el, valor);
-        return;
-      }
-
-      if (tipo === 'cto') {
-        el.innerHTML = `<input type="text" value="${valor}"
-          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value, 'campo-coordenadas', 'campo-endereco')"
-          style="${inputStyle}"/>`;
-        return;
-      }
-
-      if (tipo === 'coords') {
-        el.innerHTML = `<input type="text" id="campo-coordenadas-input" value="${valor}" style="${inputStyle}"/>`;
-        return;
-      }
-
-      if (tipo === 'select') {
-        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
-        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
-        return;
-      }
-
-      el.innerHTML = `<input type="${tipo}" value="${valor}" style="${inputStyle}"/>`;
-    });
-  }
-
-  async function salvarEdicao() {
-    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    if (!id) return;
-
-    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
-
-    const dados = {
-      cto:               getVal('#campo-cto input'),
-      titulo:            `Rompimento — ${getVal('#campo-cto input')}`,
-      descricao:         getVal('#campo-tipo select'),
-      regiao:            getVal('#campo-regiao select'),
-      responsavel:       tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
-      clientesAfetados:  getVal('#campo-clientes input'),
-      coordenadas:       getVal('#campo-coordenadas input') || getVal('#campo-coordenadas-input'),
-      localizacao_texto: document.querySelector('#campo-endereco input')?.value ?? document.getElementById('campo-endereco')?.textContent ?? '',
-      prioridade:        getVal('#campo-prioridade select'),
-      status:            getVal('#campo-status select'),
-      numero_os:         getVal('#campo-numero-os input'),
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/rompimentos/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(dados)
-    });
-
-    if (response.ok) {
-      fecharDetalhe();
-      window.carregarRompimentos();
-    } else {
-      const erro = await response.json();
-      console.error('Erro ao salvar:', erro.message);
-    }
-  }
+  };
 
   async function salvarOs() {
-    const rompimentoId = document.getElementById('detalhe-conteudo').dataset.id;
-    const tipo      = document.getElementById('os-input-tipo').value;
-    const tecnico   = document.getElementById('os-input-tecnico').value;
-    const status    = document.getElementById('os-input-status').value;
-    const token     = localStorage.getItem('planner_token');
+    const trocaId = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    const tipo = document.getElementById('os-input-tipo').value.trim();
+    const tecnico = document.getElementById('os-input-tecnico').value;
+    const status = document.getElementById('os-input-status').value;
+    const token = localStorage.getItem('planner_token');
+
+    if (!trocaId) return;
+    if (!tipo) {
+      alert('Informe o tipo de serviço.');
+      return;
+    }
 
     const btn = document.getElementById('os-btn-salvar');
     btn.disabled = true;
@@ -1299,53 +719,86 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     try {
       if (osEditandoId) {
         const dados = {
-          titulo:      `OS — ${tipo}`,
+          titulo: `OS — ${tipo}`,
           responsavel: tecnico,
           status,
         };
         const response = await fetch(`/api/op-tasks/${osEditandoId}`, {
           method: 'PUT',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(dados)
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(dados),
         });
         if (response.ok) {
           fecharNovaOS();
-          carregarOS(rompimentoId);
-          if (rompimentoId && window.carregarRompimentos) window.carregarRompimentos();
+          carregarOS(trocaId);
+          if (window.carregarTrocas) window.carregarTrocas();
         } else {
           const erro = await response.json();
           console.error('Erro ao atualizar OS:', erro.message);
+          alert(erro.message || 'Erro ao atualizar OS.');
         }
       } else {
         const dados = {
-          titulo:         `OS — ${tipo}`,
-          responsavel:    tecnico,
+          titulo: `OS — ${tipo}`,
+          responsavel: tecnico,
           status,
-          categoria:      'ordem-servico',
-          parent_task_id: rompimentoId,
+          categoria: 'ordem-servico',
+          parent_task_id: trocaId,
         };
         const response = await fetch('/api/op-tasks', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(dados)
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(dados),
         });
         if (response.ok) {
           fecharNovaOS();
-          carregarOS(rompimentoId);
-          if (rompimentoId && window.carregarRompimentos) window.carregarRompimentos();
+          carregarOS(trocaId);
+          if (window.carregarTrocas) window.carregarTrocas();
         } else {
           const erro = await response.json();
           console.error('Erro ao criar OS:', erro.message);
+          alert(erro.message || 'Erro ao criar OS.');
         }
       }
     } finally {
       btn.disabled = false;
     }
   }
+  window.salvarOs = salvarOs;
+
+  function escOs(valor) {
+    if (valor == null || valor === '') return '—';
+    return String(valor).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function carregarOS(trocaId) {
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(`/api/troca-poste/${trocaId}/os`, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    const lista = data.os || [];
+
+    lista.forEach(os => { osDataMap[os.id] = os; });
+    renderListaOS(lista);
+  }
+  window.carregarOS = carregarOS;
 
   // ─── EXCLUSÃO DE OS ───────────────────────────────────────────────────────
   // Fluxo: botão lixeira no card → modal de confirmação → DELETE /api/op-tasks/{id}
-  // A tarefa pai (rompimento) permanece; apenas a OS vinculada é removida.
+  // A tarefa pai (troca de poste) permanece; apenas a OS vinculada é removida.
 
   /** Abre o modal pedindo confirmação antes de excluir uma OS */
   window.abrirConfirmacaoExclusaoOs = function(osId, event) {
@@ -1393,7 +846,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       delete osDataMap[osId];
       fecharConfirmacaoExclusaoOs();
       if (parentId) carregarOS(parentId);
-      if (window.carregarRompimentos) window.carregarRompimentos();
+      if (window.carregarTrocas) window.carregarTrocas();
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
       alert(err.message || 'Erro ao excluir ordem de serviço.');
@@ -1403,131 +856,76 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
   }
   window.confirmarExclusaoOs = confirmarExclusaoOs;
 
-async function carregarOS(rompimentoId) {
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/rompimentos/${rompimentoId}/os`, {
-        headers: {
-            'Authorization': 'Bearer ' + token,
-            'Accept': 'application/json'
-        }
-    });
-
-    const data = await response.json();
-    const lista = data.os || [];
-
-    lista.forEach(os => { osDataMap[os.id] = os; });
-
+  function renderListaOS(lista) {
     const container = document.getElementById('detalhe-tab-os');
-
-    const statusBorder = { 'Finalizada': '#22c55e', 'Impedimento': '#ef4444', 'Em andamento': '#f59e0b', 'em_andamento': '#f59e0b', 'Aberta': '#166ac4' };
-    const statusBadge  = { 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta', 'Aberta': 'b-aberta', 'aberta': 'b-aberta' };
-    const statusDot    = { 'Aberta': '#166ac4', 'aberta': '#166ac4', 'Em andamento': '#f59e0b', 'em_andamento': '#f59e0b', 'Finalizada': '#22c55e', 'Impedimento': '#ef4444' };
+    const statusBorder = { 'Finalizada': '#22c55e', 'Impedimento': '#ef4444', 'Em andamento': '#f59e0b', 'Aberta': '#166ac4' };
+    const statusBadge  = { 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta', 'Aberta': 'b-aberta' };
     const statusOpts   = [
-        { value: 'Aberta',       label: 'Aberta',       cls: 'aberta',     border: '#166ac4' },
-        { value: 'Em andamento', label: 'Em andamento', cls: 'andamento',  border: '#f59e0b' },
-        { value: 'Finalizada',   label: 'Finalizada',   cls: 'finalizada', border: '#22c55e' },
+      { value: 'Aberta',       label: 'Aberta',       cls: 'aberta',     border: '#166ac4' },
+      { value: 'Em andamento', label: 'Em andamento', cls: 'andamento',  border: '#f59e0b' },
+      { value: 'Finalizada',   label: 'Finalizada',   cls: 'finalizada', border: '#22c55e' },
     ];
 
     if (lista.length === 0) {
-        container.innerHTML = `
-            <div class="os-tab-head">
-                <span class="os-tab-title">Ordens de Serviço <span class="os-count-pill">0</span></span>
-                <button class="btn-nova-os" onclick="abrirNovaOS()">
-                    <i class="ti ti-plus" style="font-size:12px"></i> Nova OS
-                </button>
-            </div>
-            <div class="os-empty">
-                <i class="ti ti-clipboard-off"></i>
-                <span>Nenhuma OS vinculada a este rompimento</span>
-            </div>`;
-        return;
+      container.innerHTML = `
+        <div class="os-tab-head">
+          <span class="os-tab-title">Ordens de Serviço <span class="os-count-pill">0</span></span>
+          <button type="button" class="btn-nova-os" onclick="abrirNovaOS()">
+            <i class="ti ti-plus" style="font-size:12px"></i> Nova OS
+          </button>
+        </div>
+        <div class="os-empty">
+          <i class="ti ti-clipboard-off"></i>
+          <span>Nenhuma OS vinculada a esta troca de poste</span>
+        </div>`;
+      return;
     }
 
     container.innerHTML = `
-        <div class="os-tab-head">
-            <span class="os-tab-title">Ordens de Serviço <span class="os-count-pill">${lista.length}</span></span>
-            <button class="btn-nova-os" onclick="abrirNovaOS()">
-                <i class="ti ti-plus" style="font-size:12px"></i> Nova OS
-            </button>
-        </div>
-        ${lista.map(os => {
-            const border = statusBorder[os.status] || '#166ac4';
-            const badge  = statusBadge[os.status]  || 'b-media';
-            const av     = (os.responsavel || '?').trim().split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
-            return `
-            <div class="os-card" style="border-left-color:${border}">
-                <div class="os-card-row">
-                    <span class="os-card-title">${os.titulo}</span>
-                    <div class="os-card-actions">
-                      <button type="button" class="btn-edit-os" title="Editar OS" onclick="editarOs(${os.id})">
-                          <i class="ti ti-pencil" style="font-size:12px"></i>
-                      </button>
-                      <button type="button" class="btn-delete-os" title="Excluir OS" onclick="abrirConfirmacaoExclusaoOs(${os.id}, event)">
-                          <i class="ti ti-trash" style="font-size:12px"></i>
-                      </button>
-                    </div>
-                </div>
-                <div class="os-card-meta">
-                    <span class="os-card-av">${av}</span>
-                    <span class="os-card-tecnico">${os.responsavel || '—'}</span>
-                    <div class="os-status-wrap" id="sw-${os.id}">
-                        <button class="os-status-badge" onclick="abrirStatusPills(${os.id}, event)" title="Alterar status">
-                            <span class="badge ${badge}" id="sb-${os.id}">${os.status}</span>
-                            <span class="drop-arrow">✎</span>
-                        </button>
-                        <div class="os-status-pills" id="sp-${os.id}">
-                            ${statusOpts.map(opt => `<button class="os-status-pill os-status-pill-${opt.cls}${os.status === opt.value ? ' active' : ''}" onclick="selecionarStatusOS(${os.id}, '${opt.value}', event)">${opt.label}</button>`).join('')}
-                            <button class="os-status-close" onclick="fecharStatusPills(${os.id}, event)" title="Cancelar">✕</button>
-                        </div>
-                    </div>
-                    <span class="os-card-code">${os.taskCode || ''}</span>
-                </div>
-            </div>`;
-        }).join('')}`;
-}
-
-
-  async function criarRompimento() {
-    const dados = {
-      titulo:            `Rompimento — ${document.getElementById('input-cto').value}`,
-      cto:               document.getElementById('input-cto').value,
-      descricao:         document.getElementById('input-tipo').value,
-      regiao:            document.getElementById('input-regiao').value,
-      responsavel:       tecnicosSelecionados.map(t => t.nome).join(', '),
-      clientesAfetados:  document.getElementById('input-clientes').value,
-      prioridade:        prioridadeSelecionada,
-      coordenadas:       document.getElementById('input-coords').value,
-      localizacao_texto: document.getElementById('endereco-box').textContent,
-      status:            'Criada',
-      categoria:         'rompimentos',
-      numero_os:         document.getElementById('input-numero-hubsoft').value
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch('/api/rompimentos', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(dados)
-    });
-
-    const resultado = await response.json();
-    if (response.ok) {
-      fecharModal();
-      window.carregarRompimentos();
-    } else {
-      console.error('Erro ao criar rompimento:', resultado.message);
-    }
+      <div class="os-tab-head">
+        <span class="os-tab-title">Ordens de Serviço <span class="os-count-pill">${lista.length}</span></span>
+        <button type="button" class="btn-nova-os" onclick="abrirNovaOS()">
+          <i class="ti ti-plus" style="font-size:12px"></i> Nova OS
+        </button>
+      </div>
+      ${lista.map(os => {
+        const border = statusBorder[os.status] || '#166ac4';
+        const badge  = statusBadge[os.status]  || 'b-media';
+        const av     = (os.responsavel || '?').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+        return `
+        <div class="os-card" style="border-left-color:${border}">
+          <div class="os-card-row">
+            <span class="os-card-title">${escOs(os.titulo)}</span>
+            <div class="os-card-actions">
+              <button type="button" class="btn-edit-os" title="Editar OS" onclick="editarOs(${os.id})">
+                <i class="ti ti-pencil" style="font-size:12px"></i>
+              </button>
+              <button type="button" class="btn-delete-os" title="Excluir OS" onclick="abrirConfirmacaoExclusaoOs(${os.id}, event)">
+                <i class="ti ti-trash" style="font-size:12px"></i>
+              </button>
+            </div>
+          </div>
+          <div class="os-card-meta">
+            <span class="os-card-av">${av}</span>
+            <span class="os-card-tecnico">${escOs(os.responsavel || '—')}</span>
+            <div class="os-status-wrap" id="sw-${os.id}">
+              <button type="button" class="os-status-badge" onclick="abrirStatusPills(${os.id}, event)" title="Alterar status">
+                <span class="badge ${badge}" id="sb-${os.id}">${escOs(os.status)}</span>
+                <span class="drop-arrow">✎</span>
+              </button>
+              <div class="os-status-pills" id="sp-${os.id}">
+                ${statusOpts.map(opt => `<button type="button" class="os-status-pill os-status-pill-${opt.cls}${os.status === opt.value ? ' active' : ''}" onclick="selecionarStatusOS(${os.id}, '${opt.value}', event)">${opt.label}</button>`).join('')}
+                <button type="button" class="os-status-close" onclick="fecharStatusPills(${os.id}, event)" title="Cancelar">✕</button>
+              </div>
+            </div>
+            <span class="os-card-code">${os.taskCode ? escOs(os.taskCode) : ''}</span>
+          </div>
+        </div>`;
+      }).join('')}`;
   }
-  window.trocarAba = trocarAba;
-  carregarCTOs();
 
-  // ── Status pills inline das OS ────────────────────────────────────────
-  const statusBadgeMap  = { 'Aberta': 'b-aberta', 'aberta': 'b-aberta', 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta' };
-  const statusBorderMap = { 'Aberta': '#166ac4', 'aberta': '#166ac4', 'Finalizada': '#22c55e', 'Impedimento': '#ef4444', 'Em andamento': '#f59e0b' };
+  const statusBadgeMap  = { 'Aberta': 'b-aberta', 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta' };
+  const statusBorderMap = { 'Aberta': '#166ac4', 'Finalizada': '#22c55e', 'Impedimento': '#ef4444', 'Em andamento': '#f59e0b' };
 
   window.abrirStatusPills = function(osId, e) {
     e.stopPropagation();
@@ -1550,156 +948,460 @@ async function carregarOS(rompimentoId) {
 
   function fecharTodasPills() {
     document.querySelectorAll('.os-status-pills.open').forEach(p => {
-      const id = p.id.replace('sp-', '');
-      fecharStatusPills(id, null);
+      fecharStatusPills(p.id.replace('sp-', ''), null);
     });
   }
 
   window.selecionarStatusOS = function(osId, novoStatus, e) {
     e.stopPropagation();
+
     const wrap  = document.getElementById('sw-' + osId);
     const pills = document.getElementById('sp-' + osId);
     if (!wrap || !pills) return;
 
-    // Atualiza badge
     const badgeEl = document.getElementById('sb-' + osId);
     if (badgeEl) {
       badgeEl.className = 'badge ' + (statusBadgeMap[novoStatus] || 'b-media');
       badgeEl.textContent = novoStatus;
     }
 
-    // Atualiza borda esquerda do card
     const card = wrap.closest('.os-card');
     if (card) card.style.borderLeftColor = statusBorderMap[novoStatus] || '#166ac4';
 
-    // Marca pill ativa
     pills.querySelectorAll('.os-status-pill').forEach(pill => {
       pill.classList.toggle('active', pill.textContent.trim() === novoStatus);
     });
 
     fecharStatusPills(osId, null);
 
-    // Chama o handler que você irá implementar
     if (typeof window.alterarStatusOS === 'function') {
       window.alterarStatusOS(osId, novoStatus);
     }
   };
 
-  // Fecha pills ao clicar fora
   document.addEventListener('click', fecharTodasPills);
+
+  function trocarAba(aba) {
+    document.getElementById('detalhe-tab-detalhes').style.display = aba === 'detalhes' ? 'block' : 'none';
+    document.getElementById('detalhe-tab-os').style.display = aba === 'os' ? 'block' : 'none';
+    document.getElementById('tab-btn-detalhes').classList.toggle('active', aba === 'detalhes');
+    document.getElementById('tab-btn-os').classList.toggle('active', aba === 'os');
+    if (aba === 'os') {
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      if (id) carregarOS(id);
+    }
+  }
+
+  function resetBotoesDetalhe() {
+    document.getElementById('btn-excluir').style.display = '';
+    document.getElementById('btn-editar').style.display = '';
+    document.getElementById('btn-salvar').style.display = 'none';
+    document.getElementById('btn-cancelar').style.display = 'none';
+  }
+
+  function fecharDetalhe() {
+    fecharConfirmacaoExclusao();
+    fecharConfirmacaoExclusaoOs();
+    document.getElementById('detalhe-overlay').classList.remove('open');
+    trocarAba('detalhes');
+    resetBotoesDetalhe();
+    tecnicosSelecionadosEdicao = [];
+  }
+
+  function cancelarEdicao() {
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    tecnicosSelecionadosEdicao = [];
+    resetBotoesDetalhe();
+    if (id) window.abrirDetalhe(id);
+  }
+
+  function abrirConfirmacaoExclusao() {
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    if (!id) return;
+    const titulo = document.getElementById('detalhe-titulo')?.textContent?.trim() || 'esta tarefa';
+    document.getElementById('confirm-excluir-text').textContent =
+      `Tem certeza que deseja excluir "${titulo}"? Esta ação não pode ser desfeita.`;
+    document.getElementById('confirm-excluir-overlay').classList.add('open');
+  }
+
+  function fecharConfirmacaoExclusao() {
+    document.getElementById('confirm-excluir-overlay')?.classList.remove('open');
+  }
+
+  async function confirmarExclusaoTarefa() {
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    if (!id) return;
+
+    const token = localStorage.getItem('planner_token');
+    try {
+      const response = await fetch(`/api/troca-poste/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const erro = await response.json();
+        throw new Error(erro.message || 'Erro ao excluir troca de poste.');
+      }
+
+      fecharConfirmacaoExclusao();
+      fecharDetalhe();
+      window.carregarTrocas();
+    } catch (err) {
+      console.error('Erro ao excluir troca de poste:', err.message);
+      alert(err.message || 'Erro ao excluir troca de poste.');
+    }
+  }
+
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharDetalhe();
+  });
+  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
+    if (e.target === this) fecharConfirmacaoExclusao();
+  });
+  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
+    if (e.target === this) fecharConfirmacaoExclusaoOs();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
+    if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
+      fecharConfirmacaoExclusaoOs();
+      return;
+    }
+    if (document.getElementById('confirm-excluir-overlay')?.classList.contains('open')) {
+      fecharConfirmacaoExclusao();
+      return;
+    }
+    fecharDetalhe();
+    fecharModal();
+  });
+
+  // ─── PRIORIDADE ───
+  function selecionarPrioridade(btn, nivel) {
+    document.querySelectorAll('.btn-prioridade').forEach(b => {
+      b.textContent = b.textContent.replace(' ✓', '');
+      b.style.borderWidth = '1px';
+    });
+    btn.style.borderWidth = '2px';
+    btn.textContent += ' ✓';
+    prioridadeSelecionada = nivel;
+  }
+
+  // ─── TÉCNICOS (MODAL CRIAR) ───
+  async function carregarTecnicos(regiao, destino = 'dropdown-tecnicos') {
+    if (!regiao && destino === 'dropdown-tecnicos') return;
+    const token = localStorage.getItem('planner_token');
+    const headers = { 'Authorization': 'Bearer ' + token };
+
+    async function buscarTecnicos(regiaoFiltro) {
+      const url = regiaoFiltro
+        ? `/api/tecnicos?regiao=${encodeURIComponent(regiaoFiltro)}`
+        : '/api/tecnicos';
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+
+    let tecnicos = await buscarTecnicos(regiao);
+    if (regiao && destino === 'os-input-tecnico' && tecnicos.length === 0) {
+      tecnicos = await buscarTecnicos(null);
+    }
+
+    const el = document.getElementById(destino);
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      const placeholder = destino === 'filtro-tecnico'
+        ? '<option value="">Todos os técnicos</option>'
+        : '<option value="">Selecione...</option>';
+      el.innerHTML = placeholder
+        + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+      return;
+    }
+    el.innerHTML = tecnicos.length
+      ? tecnicos.map(t => `<div onclick="selecionarTecnico(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
+              style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
+              onmouseover="this.style.background='var(--gray-50)'"
+              onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('')
+      : '<div style="padding:8px 12px;font-size:13px;color:var(--gray-400)">Nenhum técnico nessa região</div>';
+    document.getElementById('input-tec').placeholder = tecnicos.length ? 'Selecionar técnico...' : 'Nenhum técnico';
+  }
+
+  function toggleDropdownTecnicos() {
+    const d = document.getElementById('dropdown-tecnicos');
+    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function selecionarTecnico(id, nome) {
+    if (tecnicosSelecionados.find(t => t.id === id)) return;
+    tecnicosSelecionados.push({ id, nome });
+    renderizarTags();
+    document.getElementById('dropdown-tecnicos').style.display = 'none';
+  }
+
+  function removerTecnico(id) {
+    tecnicosSelecionados = tecnicosSelecionados.filter(t => t.id !== id);
+    renderizarTags();
+  }
+
+  function renderizarTags() {
+    document.getElementById('tecnicos-tags').innerHTML = tecnicosSelecionados.map(t => `
+      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
+        ${t.nome}
+        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="removerTecnico(${t.id})"></i>
+      </span>`).join('');
+  }
+
+  // ─── TÉCNICOS (MODAL EDIÇÃO) ───
+  async function inicializarSeletorTecnicosEdicao(el, valorAtual) {
+    tecnicosSelecionadosEdicao = [];
+    el.innerHTML = `
+      <div id="edicao-tec-wrap" style="position:relative">
+        <div id="edicao-tec-tags" onclick="toggleDropdownTecnicosEdicao()"
+          style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;cursor:pointer;
+                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;background:var(--white)">
+          <span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px">Carregando...</span>
+        </div>
+        <div id="dropdown-tec-edicao"
+          style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);
+                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;
+                 max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+        </div>
+      </div>`;
+    const token = localStorage.getItem('planner_token');
+    const res = await fetch('/api/tecnicos', { headers: { 'Authorization': 'Bearer ' + token } });
+    const tecnicos = await res.json();
+    if (valorAtual) {
+      valorAtual.split(',').map(n => n.trim()).filter(Boolean).forEach(nome => {
+        const tec = tecnicos.find(t => t.nome === nome);
+        if (tec) tecnicosSelecionadosEdicao.push({ id: tec.id, nome: tec.nome });
+      });
+    }
+    document.getElementById('dropdown-tec-edicao').innerHTML = tecnicos.map(t => `
+      <div onclick="adicionarTecnicoEdicao(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
+        style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
+        onmouseover="this.style.background='var(--gray-50)'"
+        onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('');
+    renderizarTagsEdicao();
+  }
+
+  function toggleDropdownTecnicosEdicao() {
+    const d = document.getElementById('dropdown-tec-edicao');
+    if (!d) return;
+    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function adicionarTecnicoEdicao(id, nome) {
+    if (tecnicosSelecionadosEdicao.find(t => t.id === id)) return;
+    tecnicosSelecionadosEdicao.push({ id, nome });
+    renderizarTagsEdicao();
+    document.getElementById('dropdown-tec-edicao').style.display = 'none';
+  }
+
+  function removerTecnicoEdicao(id) {
+    tecnicosSelecionadosEdicao = tecnicosSelecionadosEdicao.filter(t => t.id !== id);
+    renderizarTagsEdicao();
+  }
+
+  function renderizarTagsEdicao() {
+    const container = document.getElementById('edicao-tec-tags');
+    if (!container) return;
+    const vazio = tecnicosSelecionadosEdicao.length === 0;
+    container.innerHTML = tecnicosSelecionadosEdicao.map(t => `
+      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
+        ${t.nome}
+        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="event.stopPropagation();removerTecnicoEdicao(${t.id})"></i>
+      </span>`).join('')
+      + `<span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px;${vazio ? '' : 'display:none'}">Selecionar técnico...</span>`;
+  }
+
+  document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('tecnicos-wrap');
+    const dropdown = document.getElementById('dropdown-tecnicos');
+    if (wrap && dropdown && !wrap.contains(e.target)) dropdown.style.display = 'none';
+    const wrapEd = document.getElementById('edicao-tec-wrap');
+    const dropdownEd = document.getElementById('dropdown-tec-edicao');
+    if (wrapEd && dropdownEd && !wrapEd.contains(e.target)) dropdownEd.style.display = 'none';
+  });
+
+  // ─── EDIÇÃO ───
+  function ativarEdicao() {
+    document.getElementById('btn-excluir').style.display = 'none';
+    document.getElementById('btn-editar').style.display = 'none';
+    document.getElementById('btn-salvar').style.display = 'flex';
+    document.getElementById('btn-cancelar').style.display = 'flex';
+
+    const campos = [
+      { id: 'campo-titulo',          tipo: 'text' },
+      { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-tecnicos',        tipo: 'custom' },
+      { id: 'campo-numero-os',       tipo: 'text' },
+      { id: 'campo-localizacao-texto', tipo: 'text' },
+      { id: 'campo-coordenadas',     tipo: 'text' },
+      { id: 'campo-prioridade',      tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
+      { id: 'campo-status',          tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
+    ];
+
+    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
+
+    campos.forEach(({ id, tipo, opcoes }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const valorAtual = el.textContent.trim();
+      const valor = valorAtual === '—' ? '' : valorAtual;
+
+      if (tipo === 'custom') {
+        inicializarSeletorTecnicosEdicao(el, valor);
+        return;
+      }
+      if (tipo === 'select') {
+        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
+        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
+        return;
+      }
+      el.innerHTML = `<input type="text" value="${valor}" style="${inputStyle}"/>`;
+    });
+  }
+
+  async function salvarEdicao() {
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    if (!id) return;
+    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
+
+    const dados = {
+      titulo:            getVal('#campo-titulo input'),
+      regiao:            getVal('#campo-regiao select'),
+      responsavel:       tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
+      numero_os:         getVal('#campo-numero-os input'),
+      localizacao_texto: document.querySelector('#campo-localizacao-texto input')?.value ?? document.getElementById('campo-localizacao-texto')?.textContent ?? '',
+      coordenadas:       getVal('#campo-coordenadas input'),
+      prioridade:        getVal('#campo-prioridade select'),
+      status:            getVal('#campo-status select'),
+    };
+
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(`/api/troca-poste/${id}`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+
+    if (response.ok) {
+      fecharDetalhe();
+      window.carregarTrocas();
+    } else {
+      const erro = await response.json();
+      console.error('Erro ao salvar:', erro.message);
+    }
+  }
+
+  async function criarTrocaPoste() {
+    const regiao = document.getElementById('input-regiao').value;
+    const numeroOs = document.getElementById('input-numero-os').value.trim();
+
+    if (!regiao) {
+      alert('Selecione a região.');
+      return;
+    }
+
+    const dados = {
+      titulo:            numeroOs ? `Troca de Poste — OS ${numeroOs}` : 'Troca de Poste',
+      coordenadas:       document.getElementById('input-coordenadas').value.trim(),
+      localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
+      regiao:            regiao,
+      responsavel:       tecnicosSelecionados.map(t => t.nome).join(', '),
+      prioridade:        prioridadeSelecionada,
+      numero_os:         numeroOs,
+      status:            'Criada',
+    };
+
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch('/api/troca-poste', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+
+    const resultado = await response.json();
+    if (response.ok) {
+      fecharModal();
+      window.carregarTrocas();
+    } else {
+      alert(resultado.message || 'Erro ao criar troca de poste.');
+      console.error('Erro ao criar troca de poste:', resultado);
+    }
+  }
+
+  window.trocarAba = trocarAba;
+
+  async function buscarEndereco(coordenada) {
+    const coord = (coordenada ?? '').trim();
+    if (!coord) return;
+
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(
+      `/api/troca-poste/coordenada?coordenada=${encodeURIComponent(coord)}`,
+      { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } }
+    );
+    const data = await response.json();
+    if (response.ok) {
+      document.getElementById('input-localizacao-texto').value = data.endereco ?? '';
+    }
+  }
+
+  document.getElementById('input-coordenadas').addEventListener('blur', function () {
+    buscarEndereco(this.value);
+  });
 </script>
 
 <script type="module">
   let draggedId = null;
   let draggedStatus = null;
   let wasDragged = false;
-  const rompimentosMap = {};
+  const trocasMap = {};
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
+  const offsetMap = { 'Criada': 0, 'Em andamento': 0, 'Impedimento': 0, 'Finalizada': 0 };
+  const limitMap  = { 'Criada': 10, 'Em andamento': 10, 'Impedimento': 10, 'Finalizada': 50 };
+  const colIdMap  = { 'Criada': 'criada', 'Em andamento': 'andamento', 'Impedimento': 'impedimento', 'Finalizada': 'finalizada' };
 
-const offsetMap = {
-  'Criada': 0,
-  'Em andamento': 0,
-  'Impedimento':0,
-  'Finalizada': 0
-}
-
-const limitMap = {
-    'Criada': 10,
-    'Em andamento': 10,
-    'Impedimento': 10,
-    'Finalizada': 50,
-};
-
-const colIdMap = {
-    'Criada': 'criada',
-    'Em andamento': 'andamento',
-    'Impedimento': 'impedimento',
-    'Finalizada': 'finalizada',
-};
-
-async function carregarMais(status) {
-  const limit = limitMap[status];
-  offsetMap[status] += limit;
-
-  const novos = await buscarColuna(status, limit, offsetMap[status]);
-
-  const colId = colIdMap[status];
-  const col = document.getElementById(`col-${colId}`);
-
-  novos.forEach(r => {
-        col.insertAdjacentHTML('beforeend', renderCard(r));
-        rompimentosMap[r.id] = r;
-    });
-
-    // atualiza contador
-    const count = col.querySelectorAll('.kcard').length;
-    document.getElementById(`count-${colId}`).textContent = count;
-
-    // esconde o botão se não vieram mais registros
-    if (novos.length < limit) {
-        document.getElementById(`mais-${colId}`).style.display = 'none';
-    }
-
+  async function carregarMais(status) {
+    const limit = limitMap[status];
+    offsetMap[status] += limit;
+    const novos = await buscarColuna(status, limit, offsetMap[status]);
+    const colId = colIdMap[status];
+    const col = document.getElementById(`col-${colId}`);
+    novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); trocasMap[r.id] = r; });
+    document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
+    if (novos.length < limit) document.getElementById(`mais-${colId}`).style.display = 'none';
     document.getElementById(`menos-${colId}`).style.display = 'block';
-}
-
-window.carregarMais = carregarMais;
-
-async function verMenos(status){
-  const colId = colIdMap[status];
-  const col = document.getElementById(`col-${colId}`);
-  const cards = col.querySelectorAll('.kcard');
-
-  cards.forEach((card,index)=>{
-    if(index>= 10) {
-      card.remove();
-    }
-  })
-
-  offsetMap[status] = 0
-
-  document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
-
-  document.getElementById(`menos-${colId}`).style.display = 'none';
-  document.getElementById(`mais-${colId}`).style.display = 'block';
-
-}
-
-window.verMenos = verMenos;
-
-function toggleColuna(btn) {
-  const col = btn.closest('.kcol');
-  const collapsed = col.classList.toggle('collapsed');
-  btn.title = collapsed ? 'Expandir coluna' : 'Minimizar coluna';
-  btn.setAttribute('aria-label', collapsed ? 'Expandir coluna' : 'Minimizar coluna');
-}
-
-window.toggleColuna = toggleColuna;
-
-  function rompimentoTemOsVinculada(r) {
-    if (!r) return false;
-    return r.is_parent_task === true || r.is_parent_task === 1 || r.is_parent_task === '1';
   }
+  window.carregarMais = carregarMais;
 
-  function rompimentoTemNumeroOs(r) {
-    return String(r?.numero_os ?? '').trim() !== '';
+  async function verMenos(status) {
+    const colId = colIdMap[status];
+    const col = document.getElementById(`col-${colId}`);
+    col.querySelectorAll('.kcard').forEach((card, index) => { if (index >= 10) card.remove(); });
+    offsetMap[status] = 0;
+    document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
+    document.getElementById(`menos-${colId}`).style.display = 'none';
+    document.getElementById(`mais-${colId}`).style.display = 'block';
   }
+  window.verMenos = verMenos;
 
-  /** Só exige OS vinculada + número ao entrar em "Em andamento". */
-  function podeMoverParaStatus(id, novoStatus) {
-    if (novoStatus !== 'Em andamento') return true;
-    const r = rompimentosMap[id];
-    return rompimentoTemOsVinculada(r) && rompimentoTemNumeroOs(r);
+  function toggleColuna(btn) {
+    const col = btn.closest('.kcol');
+    const collapsed = col.classList.toggle('collapsed');
+    btn.title = collapsed ? 'Expandir coluna' : 'Minimizar coluna';
+    btn.setAttribute('aria-label', collapsed ? 'Expandir coluna' : 'Minimizar coluna');
   }
-
-  function mensagemBloqueioEmAndamento(id) {
-    const r = rompimentosMap[id];
-    const faltas = [];
-    if (!rompimentoTemOsVinculada(r)) faltas.push('pelo menos uma OS vinculada');
-    if (!rompimentoTemNumeroOs(r)) faltas.push('número da OS (Hubsoft) no rompimento');
-    return 'Para mover para Em andamento: ' + faltas.join(' e ') + '.';
-  }
+  window.toggleColuna = toggleColuna;
 
   // ─── HELPERS ───
   function esc(valor) {
@@ -1741,29 +1443,29 @@ window.toggleColuna = toggleColuna;
     </div>`;
   }
 
-  // ─── CARREGAR ROMPIMENTOS ───
+  // ─── CARREGAR TROCAS ───
   async function buscarColuna(status, limit, offset = 0, filtros = {}) {
     const token = localStorage.getItem('planner_token');
     const params = new URLSearchParams({ status, limit, offset, ...filtros });
-    const response = await fetch(`/api/rompimentos?${params}`, {
-        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+    const response = await fetch(`/api/troca-poste?${params}`, {
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
     const data = await response.json();
-    return data.rompimentos || [];
-}
+    return data.trocaDePoste || [];
+  }
 
-async function carregarRompimentos(filtros = {}) {
-  Object.keys(offsetMap).forEach(k => offsetMap[k] = 0);
+  async function carregarTrocas(filtros = {}) {
+    Object.keys(offsetMap).forEach(k => offsetMap[k] = 0);
     const [criadas, andamento, impedimento, finalizadas] = await Promise.all([
-        buscarColuna('Criada', 10, 0, filtros),
-        buscarColuna('Em andamento', 10, 0, filtros),
-        buscarColuna('Impedimento', 10, 0, filtros),
-        buscarColuna('Finalizada', 50, 0, filtros),
+      buscarColuna('Criada', 10, 0, filtros),
+      buscarColuna('Em andamento', 10, 0, filtros),
+      buscarColuna('Impedimento', 10, 0, filtros),
+      buscarColuna('Finalizada', 50, 0, filtros),
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
-    Object.keys(rompimentosMap).forEach(k => delete rompimentosMap[k]);
-    todos.forEach(r => { rompimentosMap[r.id] = r; });
+    Object.keys(trocasMap).forEach(k => delete trocasMap[k]);
+    todos.forEach(r => { trocasMap[r.id] = r; });
 
     document.getElementById('col-criada').innerHTML      = criadas.map(renderCard).join('');
     document.getElementById('col-andamento').innerHTML   = andamento.map(renderCard).join('');
@@ -1773,21 +1475,20 @@ async function carregarRompimentos(filtros = {}) {
     document.getElementById('count-andamento').textContent   = andamento.length;
     document.getElementById('count-impedimento').textContent = impedimento.length;
     document.getElementById('count-finalizada').textContent  = finalizadas.length;
-    document.getElementById('total-rompimentos').textContent = todos.length;
+    document.getElementById('total-trocas').textContent = todos.length;
 
     document.getElementById('mais-criada').style.display      = criadas.length === 10 ? 'block' : 'none';
     document.getElementById('mais-andamento').style.display   = andamento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-impedimento').style.display = impedimento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-finalizada').style.display  = finalizadas.length === 50 ? 'block' : 'none';
+  }
+  window.carregarTrocas = carregarTrocas;
 
-}
-window.carregarRompimentos = carregarRompimentos;
   // ─── RENDER CARD ───
   function renderCard(r) {
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
       : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
-
     return `
     <div class="kcard"
       data-id="${r.id}"
@@ -1798,21 +1499,18 @@ window.carregarRompimentos = carregarRompimentos;
         <span class="kcard-code" style="font-size:11px">${r.taskCode || 'S/C'}</span>
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
-      <div class="kcard-title">${esc(r.cto || r.titulo)}</div>
+      <div class="kcard-title">${esc(r.titulo)}</div>
       <div class="kcard-foot" style="margin-top:6px">
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
-        ${r.clientesAfetados ? `<span style="font-size:10px;color:var(--gray-500);margin-left:auto">👥 ${r.clientesAfetados}</span>` : ''}
+        ${r.responsavel ? `<span style="font-size:10px;color:var(--gray-400);margin-left:auto">${esc(r.responsavel)}</span>` : ''}
       </div>
     </div>`;
   }
 
   // ─── RENDER DETALHE ───
   function renderDetalhe(r) {
-    document.getElementById('detalhe-conteudo').dataset.regiao = r.regiao || '';
-    document.getElementById('detalhe-titulo').textContent = r.titulo || 'Rompimento';
+    document.getElementById('detalhe-titulo').textContent = r.titulo || 'Troca de Poste';
     document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
-
-    const tecnicos = r.responsavel || '—';
 
     document.getElementById('detalhe-conteudo').innerHTML = `
       <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
@@ -1821,18 +1519,23 @@ window.carregarRompimentos = carregarRompimentos;
           ${badgePrioridade(r.prioridade)}
           ${badgeRegiao(r.regiao)}
         </div>
-        <div class="detail-grid">
-          ${campoDetalhe('CTO / Elemento', esc(r.cto), 1, 'campo-cto')}
-          ${campoDetalhe('Tipo de rompimento', esc(r.descricao), 1, 'campo-tipo')}
+        <div class="detail-grid-2">
+          ${campoDetalhe('Título', esc(r.titulo), 1, 'campo-titulo')}
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Técnico(s) responsável(is)', esc(tecnicos), 1, 'campo-tecnicos')}
+          ${campoDetalhe('Técnico(s) responsável(is)', esc(r.responsavel), 1, 'campo-tecnicos')}
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
-          ${campoDetalhe('Clientes afetados', esc(r.clientesAfetados ?? '0'), 1, 'campo-clientes')}
         </div>
         <div class="detail-grid-2">
+          ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
           ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
+        </div>
+        <div class="detail-grid-2">
+          ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
+          ${campoDetalhe('Status', esc(r.status), 1, 'campo-status')}
+        </div>
+        <div class="detail-grid-2">
           <div class="detail-field">
             <span class="detail-label">Código da tarefa</span>
             <div style="display:flex;align-items:center;gap:6px">
@@ -1845,21 +1548,13 @@ window.carregarRompimentos = carregarRompimentos;
               </button>
             </div>
           </div>
-        </div>
-        <div class="detail-grid-2">
-          ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
-          ${campoDetalhe('Status', esc(r.status), 1, 'campo-status')}
-        </div>
-        <div class="detail-grid">
-          ${campoDetalhe('Endereço', esc(r.localizacao_texto), 3, 'campo-endereco')}
-        </div>
-        <div class="detail-grid-2">
           ${campoDetalhe('Criado em', formatarData(r.criadaEm))}
-          ${campoDetalhe('Atualizado em', formatarData(r.updated_at))}
         </div>
       </div>`;
 
     document.getElementById('detalhe-conteudo').dataset.id = r.id;
+    document.getElementById('detalhe-conteudo').dataset.regiao = r.regiao || '';
+    carregarOS(r.id);
   }
 
   function puxarId() {
@@ -1899,12 +1594,12 @@ window.carregarRompimentos = carregarRompimentos;
     renderDetalheLoading();
     const token = localStorage.getItem('planner_token');
     try {
-      const response = await fetch(`/api/rompimentos/${id}`, {
+      const response = await fetch(`/api/troca-poste/${id}`, {
         headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
       });
       const data = await response.json();
       if (!response.ok) { renderDetalheErro(data.message || 'Não foi possível carregar.'); return; }
-      renderDetalhe(data.rompimento || data);
+      renderDetalhe(data.trocaDePoste || data.troca || data);
     } catch {
       renderDetalheErro('Erro de conexão.');
     }
@@ -1925,38 +1620,25 @@ window.carregarRompimentos = carregarRompimentos;
     });
   }
 
-  async function moverRompimento(id, novoStatus, colDestino) {
+  async function moverTroca(id, novoStatus, colDestino) {
     const card = document.querySelector(`.kcard[data-id="${id}"]`);
     const colOrigem = card?.closest('.kcol-body');
     const statusAnterior = card?.dataset.status;
-
-    if (card) {
-        card.dataset.status = novoStatus;
-        colDestino.appendChild(card);
-        atualizarContadores();
-    }
+    if (card) { card.dataset.status = novoStatus; colDestino.appendChild(card); atualizarContadores(); }
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/rompimentos/${id}`, {
-        method: 'PUT',
-        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ status: novoStatus })
+    const response = await fetch(`/api/troca-poste/${id}`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ status: novoStatus })
     });
 
     if (!response.ok) {
-        const erro = await response.json();
-
-        if (card && colOrigem && statusAnterior) {
-            card.dataset.status = statusAnterior;
-            colOrigem.appendChild(card);
-            atualizarContadores();
-        }
-
-        if (response.status === 422) {
-            alert(erro.message || 'Finalize todas as OS antes de finalizar o rompimento.');
-        }
+      if (card && colOrigem && statusAnterior) { card.dataset.status = statusAnterior; colOrigem.appendChild(card); atualizarContadores(); }
+      const erro = await response.json();
+      if (response.status === 422) alert(erro.message || 'Não foi possível mover o card.');
     }
-}
+  }
 
   function initKanbanDragDrop() {
     const kanban = document.querySelector('.kanban-cols');
@@ -1994,14 +1676,11 @@ window.carregarRompimentos = carregarRompimentos;
     kanban.addEventListener('dragover', (e) => {
       const col = e.target.closest('.kcol-body');
       if (!col || !draggedId) return;
-      const novoStatus = col.dataset.status;
-      const permitido = podeMoverParaStatus(draggedId, novoStatus);
       e.preventDefault();
-      e.dataTransfer.dropEffect = permitido ? 'move' : 'none';
+      e.dataTransfer.dropEffect = 'move';
       document.querySelectorAll('.kcol-body').forEach(el => {
-        const alvo = el === col;
-        el.classList.toggle('drag-over', alvo && permitido);
-        el.classList.toggle('drag-bloqueado', alvo && !permitido);
+        el.classList.toggle('drag-over', el === col);
+        el.classList.remove('drag-bloqueado');
       });
     });
 
@@ -2012,15 +1691,10 @@ window.carregarRompimentos = carregarRompimentos;
       limparDragOver();
       const novoStatus = col.dataset.status;
       if (novoStatus === draggedStatus) return;
-      if (!podeMoverParaStatus(draggedId, novoStatus)) {
-        alert(mensagemBloqueioEmAndamento(draggedId));
-        return;
-      }
-      await moverRompimento(draggedId, novoStatus, col);
+      await moverTroca(draggedId, novoStatus, col);
     });
   }
 
-  // função global para o iniciarArrasto chamado pelo ondragstart do HTML
   window.iniciarArrasto = function(event, id) {
     draggedId = String(id);
     const card = event.target.closest('.kcard');
@@ -2028,7 +1702,7 @@ window.carregarRompimentos = carregarRompimentos;
   };
 
   initKanbanDragDrop();
-  carregarRompimentos();
+  carregarTrocas();
   carregarTecnicos(null, 'filtro-tecnico');
   carregarTecnicos(null, 'os-input-tecnico');
 </script>

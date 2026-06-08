@@ -613,7 +613,7 @@
         <div class="nav-left"><i class="ti ti-bolt"></i><span>Rompimentos</span></div>
         <span class="nav-badge crit">2</span>
       </a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-tools"></i><span>Troca de poste</span></div><span class="nav-badge">2</span></a>
+      <a href="/troca-de-poste" class="nav-item {{ request()->is('troca-de-poste*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-tools"></i><span>Troca de poste</span></div><span class="nav-badge">2</span></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-wifi"></i><span>Otimização de rede</span></div><span class="nav-badge">4</span></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-headset"></i><span>Atendimento</span></div><span class="nav-badge">49</span></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div><span class="nav-badge">3</span></a>

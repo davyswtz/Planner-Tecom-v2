@@ -69,11 +69,19 @@ class OpTaskController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Exclui uma Ordem de Serviço (OpTask).
+     *
+     * Rota: DELETE /api/op-tasks/{opTask}
+     * Usado pelas telas de Rompimento e Troca de Poste na aba "Ordens de Serviço".
      */
     public function destroy(OpTask $opTask)
     {
-       $opTask = $this->opTaskService->deleteOpTask($opTask);
-       return response()->json(['message' => 'OpTask deletado com sucesso', 'opTask' => $opTask]);
+        try {
+            $this->opTaskService->deleteOpTask($opTask);
+
+            return response()->json(['message' => 'Ordem de serviço excluída com sucesso'], 200);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 }

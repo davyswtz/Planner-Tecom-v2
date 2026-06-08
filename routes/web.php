@@ -17,3 +17,7 @@ Route::get('/dashboard', function () {
 Route::get('/rompimento', function () {
     return view('rompimento');
 });
+
+Route::get('/troca-de-poste', function () {
+    return view('troca-de-poste');
+});
