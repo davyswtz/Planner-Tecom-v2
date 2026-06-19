@@ -10,8 +10,10 @@ use Illuminate\Http\Request;
 
 class RompimentoController extends Controller
 {
-    public function __construct(private RompimentoService $rompimentoService)
-    {}
+    public function __construct(
+        private RompimentoService $rompimentoService,
+        private OpTaskService $opTaskService,
+    ) {}
 
     public function index(Request $request)
     {
@@ -54,10 +56,7 @@ class RompimentoController extends Controller
 
     public function listarOS($id)
 {
-    $os = OpTask::where('parent_task_id', $id)
-        ->where('categoria', 'ordem-servico')
-        ->orderBy('criadaEm', 'desc')
-        ->get();
+    $os = $this->opTaskService->listarOsVinculadas((int) $id);
 
     return response()->json(['os' => $os], 200);
 }

@@ -11,7 +11,14 @@ class User extends Authenticatable
     use HasApiTokens, Notifiable;
 
     protected $table = 'usuario';
-    protected $primaryKey = 'id';
+
+    protected $primaryKey = 'username';
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'username',
@@ -30,7 +37,7 @@ class User extends Authenticatable
     {
         return [
             'created_at' => 'datetime',
-            'updated_at' => 'datetime',
+            'pass_iterations' => 'integer',
         ];
     }
 }

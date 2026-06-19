@@ -41,6 +41,7 @@ public function __construct(private OpTaskService $opTaskService
     public function createRompimento(array $dados): OpTask
     {
         $dados['categoria'] = 'rompimentos';
+        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
         return OpTask::create($dados);
 

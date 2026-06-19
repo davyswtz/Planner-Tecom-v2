@@ -566,15 +566,29 @@
 
   const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
-  async function aplicarFiltros() {
-    const filtros = {
+  function obterFiltrosFormulario() {
+    return {
       regiao:     document.getElementById('filtro-regiao').value,
       tecnico:    document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
       dataFim:    document.getElementById('filtro-data-fim').value,
       taskCode:   document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
     };
-    carregarTrocas(filtros);
+  }
+
+  function filtrosParaApi(filtros) {
+    return Object.fromEntries(
+      Object.entries(filtros).filter(([, valor]) => valor != null && String(valor).trim() !== '')
+    );
+  }
+
+  window.obterFiltrosFormulario = obterFiltrosFormulario;
+  window.filtrosParaApi = filtrosParaApi;
+
+  async function aplicarFiltros() {
+    if (window.carregarTrocas) {
+      window.carregarTrocas(obterFiltrosFormulario());
+    }
   }
 
   async function limparFiltros() {
@@ -583,7 +597,7 @@
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
     document.getElementById('filtro-taskcode').value = '';
-    carregarTrocas();
+    if (window.carregarTrocas) window.carregarTrocas({});
   }
 
   // ─── MODAIS ───
@@ -1365,6 +1379,7 @@
   let draggedStatus = null;
   let wasDragged = false;
   const trocasMap = {};
+  let filtrosAtivos = {};
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
   const offsetMap = { 'Criada': 0, 'Em andamento': 0, 'Impedimento': 0, 'Finalizada': 0 };
@@ -1374,7 +1389,7 @@
   async function carregarMais(status) {
     const limit = limitMap[status];
     offsetMap[status] += limit;
-    const novos = await buscarColuna(status, limit, offsetMap[status]);
+    const novos = await buscarColuna(status, limit, offsetMap[status], filtrosAtivos);
     const colId = colIdMap[status];
     const col = document.getElementById(`col-${colId}`);
     novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); trocasMap[r.id] = r; });
@@ -1446,7 +1461,10 @@
   // ─── CARREGAR TROCAS ───
   async function buscarColuna(status, limit, offset = 0, filtros = {}) {
     const token = localStorage.getItem('planner_token');
-    const params = new URLSearchParams({ status, limit, offset, ...filtros });
+    const params = new URLSearchParams({ status, limit, offset });
+    Object.entries(filtros).forEach(([chave, valor]) => {
+      if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
+    });
     const response = await fetch(`/api/troca-poste?${params}`, {
       headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
@@ -1454,13 +1472,19 @@
     return data.trocaDePoste || [];
   }
 
-  async function carregarTrocas(filtros = {}) {
+  async function carregarTrocas(filtros) {
+    const filtrosEfetivos = filtros !== undefined
+      ? filtros
+      : (window.obterFiltrosFormulario ? window.obterFiltrosFormulario() : {});
+    filtrosAtivos = window.filtrosParaApi
+      ? window.filtrosParaApi(filtrosEfetivos)
+      : filtrosEfetivos;
     Object.keys(offsetMap).forEach(k => offsetMap[k] = 0);
     const [criadas, andamento, impedimento, finalizadas] = await Promise.all([
-      buscarColuna('Criada', 10, 0, filtros),
-      buscarColuna('Em andamento', 10, 0, filtros),
-      buscarColuna('Impedimento', 10, 0, filtros),
-      buscarColuna('Finalizada', 50, 0, filtros),
+      buscarColuna('Criada', 10, 0, filtrosAtivos),
+      buscarColuna('Em andamento', 10, 0, filtrosAtivos),
+      buscarColuna('Impedimento', 10, 0, filtrosAtivos),
+      buscarColuna('Finalizada', 50, 0, filtrosAtivos),
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];

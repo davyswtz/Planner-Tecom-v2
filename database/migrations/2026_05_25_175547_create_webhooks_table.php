@@ -1,24 +1,19 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
+/**
+ * Legado: webhooks ficam em app_config (cfg_key = webhookConfig).
+ */
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('webhooks', function (Blueprint $table) {
-            $table->id();
-            $table->string('regiao');
-            $table->text('url');
-            $table->boolean('ativo')->default(true);
-            $table->timestamps();
-        });
+        // noop — ver 2026_06_17_000000_create_hostinger_baseline_schema
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('webhooks');
+        // noop
     }
 };

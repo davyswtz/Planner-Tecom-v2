@@ -423,15 +423,43 @@ flowchart LR
 
 ## 8. Banco de dados
 
-### Migrations versionadas
+### Schema Hostinger (dump `localhost.sql`)
 
-| Tabela | Migration |
-|--------|-----------|
-| `tecnicos` | `2026_05_22_183430_create_tecnicos_table.php` |
-| `webhooks` | `2026_05_25_175547_create_webhooks_table.php` |
-| `personal_access_tokens` | Sanctum |
-| `op_tasks` | Apenas alterações parciais (`cto`, `numero_os`) — **create table não está no repo** |
-| `usuario` | **Sem migration no repo** |
+15 tabelas de negócio:
+
+`usuario`, `op_tasks`, `os_tecnicos`, `app_config`, `app_activity_event`, `app_notification`, `op_task_image`, `deleted_entity_log`, `chat_message`, `calendar_notes`, `escalas`, `eventos`, `bm_room`, `bm_input`, `schema_migrations`
+
+**Não existem no dump:** `users`, `tecnicos`, `webhooks`, `personal_access_tokens`.
+
+### Tabelas extras do Laravel (criadas pelo `migrate`)
+
+| Tabela | Motivo |
+|--------|--------|
+| `migrations` | Controle de migrations do Laravel |
+| `personal_access_tokens` | Login API (Sanctum); `tokenable_id` é `VARCHAR` (PK de `usuario` = `username`) |
+
+### Migrations
+
+| Arquivo | Função |
+|---------|--------|
+| `2026_06_17_000000_create_hostinger_baseline_schema.php` | Cria as 15 tabelas Hostinger (com `hasTable`, seguro em banco já importado) |
+| `2026_05_19_200908_create_personal_access_tokens_table.php` | Tokens Sanctum |
+| `2026_06_18_000001_fix_personal_access_tokens_tokenable_id_for_string_pk.php` | Corrige `tokenable_id` em bancos antigos |
+| `0001_01_01_*` (users/cache/jobs) | **noop** — não usados (auth em `usuario`, cache/session em arquivo) |
+| `2026_05_21` … `2026_05_27` (cto, tecnicos, webhooks…) | **noop** — legado substituído pela baseline |
+
+### Setup do banco
+
+```bash
+# 1. Importar dump da Hostinger
+mysql -u USUARIO -p NOME_DO_BANCO < localhost.sql
+
+# 2. Conferir o que falta
+php artisan db:schema-check
+
+# 3. Criar tabelas Laravel que faltam
+php artisan migrate
+```
 
 ---
 

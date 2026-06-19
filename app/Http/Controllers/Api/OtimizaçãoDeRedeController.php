@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\OpTask;
 use App\Services\OtimizaçãoDeRedeService;
+use App\Services\OpTaskService;
 use Illuminate\Http\Request;
 
 class OtimizaçãoDeRedeController extends Controller
 {
-    public function __construct(private OtimizaçãoDeRedeService $otimizaçãoDeRedeService) {}
+    public function __construct(
+        private OtimizaçãoDeRedeService $otimizaçãoDeRedeService,
+        private OpTaskService $opTaskService,
+    ) {}
 
     public function index(Request $request)
     {
@@ -90,10 +94,7 @@ class OtimizaçãoDeRedeController extends Controller
 
     public function listarOS($id)
     {
-        $os = OpTask::where('parent_task_id', $id)
-            ->where('categoria', 'ordem-servico')
-            ->orderBy('criadaEm', 'desc')
-            ->get();
+        $os = $this->opTaskService->listarOsVinculadas((int) $id);
 
         return response()->json(['os' => $os], 200);
     }

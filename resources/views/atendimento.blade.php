@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Otimização de Rede — Planner Telecom')
-@section('page-title', 'Otimização de Rede')
-@section('btn-label', 'Nova otimização')
+@section('title', 'Atendimento — Planner Telecom')
+@section('page-title', 'Atendimento')
+@section('btn-label', 'Novo atendimento')
 
 @section('styles')
 <style>
@@ -325,24 +325,41 @@
 @section('content')
 
 <!-- MODAL CRIAR -->
-<x-modal id="modal-overlay" titulo="Nova otimização de rede" subtitulo="Preencha os dados da otimização">
+<x-modal id="modal-overlay" titulo="Novo atendimento" subtitulo="Preencha os dados do atendimento ao cliente">
 
   <div class="modal-form">
 
     <div class="os-field">
-      <label class="os-label">Nome</label>
-      <input type="text" id="input-nome" placeholder="Ex: Otimização rede GVA1210" class="os-input"/>
+      <label class="os-label">Nome do cliente</label>
+      <input type="text" id="input-nome-cliente" placeholder="Ex: João Silva" class="os-input"/>
+    </div>
+
+    <div class="detail-grid-2">
+      <div class="os-field">
+        <label class="os-label">Protocolo</label>
+        <input type="text" id="input-protocolo" placeholder="Ex: #160783" class="os-input"/>
+      </div>
+      <div class="os-field">
+        <label class="os-label">Sub-processo</label>
+        <input type="text" id="input-sub-processo" placeholder="Ex: Instalação, Reparo, Mudança..." class="os-input"/>
+      </div>
+    </div>
+
+    <div class="detail-grid-2">
+      <div class="os-field">
+        <label class="os-label">Data de entrada</label>
+        <input type="date" id="input-data-entrada" class="os-input"/>
+      </div>
+      <div class="os-field">
+        <label class="os-label">Data de instalação</label>
+        <input type="date" id="input-data-instalacao" class="os-input"/>
+      </div>
     </div>
 
     <div class="os-field">
       <label class="os-label">Descrição</label>
-      <textarea id="input-descricao" rows="3" placeholder="Descreva a otimização..." class="os-input"
+      <textarea id="input-descricao" rows="3" placeholder="Descreva o atendimento..." class="os-input"
         style="resize:vertical;min-height:72px"></textarea>
-    </div>
-
-    <div class="os-field">
-      <label class="os-label">Data de vencimento</label>
-      <input type="date" id="input-prazo" class="os-input"/>
     </div>
 
     <div class="os-field">
@@ -396,8 +413,8 @@
 
   <x-slot name="footer">
     <button onclick="fecharModal()" class="btn-modal btn-modal-ghost">Cancelar</button>
-    <button onclick="criarOtimizacao()" class="btn-modal btn-modal-primary">
-      <i class="ti ti-wifi" style="font-size:14px"></i> Criar otimização
+    <button onclick="criarAtendimento()" class="btn-modal btn-modal-primary">
+      <i class="ti ti-headset" style="font-size:14px"></i> Criar atendimento
     </button>
   </x-slot>
 
@@ -434,13 +451,13 @@
     </div>
     <div class="os-empty">
       <i class="ti ti-clipboard-off"></i>
-      <span>Nenhuma OS vinculada a esta otimização</span>
+      <span>Nenhuma OS vinculada a este atendimento</span>
     </div>
   </div>
 
   <x-slot name="footer">
     <div class="modal-foot-inner">
-      <button type="button" onclick="abrirConfirmacaoExclusao()" id="btn-excluir" class="btn-modal btn-modal-danger" title="Excluir esta otimização">
+      <button type="button" onclick="abrirConfirmacaoExclusao()" id="btn-excluir" class="btn-modal btn-modal-danger" title="Excluir este atendimento">
         <i class="ti ti-trash" style="font-size:14px"></i> Excluir
       </button>
       <div class="modal-foot-actions">
@@ -464,7 +481,7 @@
 <div id="confirm-excluir-overlay" class="confirm-excluir-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-excluir-title">
   <div class="confirm-excluir-box">
     <div class="confirm-excluir-icon"><i class="ti ti-alert-triangle"></i></div>
-    <p class="confirm-excluir-title" id="confirm-excluir-title">Excluir otimização?</p>
+    <p class="confirm-excluir-title" id="confirm-excluir-title">Excluir atendimento?</p>
     <p class="confirm-excluir-text" id="confirm-excluir-text">
       Esta ação não pode ser desfeita. A tarefa e os dados vinculados serão removidos permanentemente.
     </p>
@@ -505,7 +522,7 @@
   <div class="os-field">
     <label class="os-label">Tipo de serviço</label>
     <input type="text" id="os-input-tipo" class="os-input"
-      placeholder="Ex: OTIMIZAÇÃO DE REDE"
+      placeholder="Ex: ATENDIMENTO AO CLIENTE"
       oninput="this.value = this.value.toUpperCase()"/>
   </div>
 
@@ -584,8 +601,8 @@
 <!-- KANBAN -->
 <div class="card" style="flex:1">
   <div class="card-header">
-    <span class="card-title">Kanban de Otimização de Rede</span>
-    <span class="card-action">total: <span id="total-otimizacoes">0</span></span>
+    <span class="card-title">Kanban de Atendimento</span>
+    <span class="card-action">total: <span id="total-atendimentos">0</span></span>
   </div>
   <div class="kanban-cols">
     <div class="kcol">
@@ -713,8 +730,8 @@
   window.filtrosParaApi = filtrosParaApi;
 
   async function aplicarFiltros() {
-    if (window.carregarOtimizacoes) {
-      window.carregarOtimizacoes(obterFiltrosFormulario());
+    if (window.carregarAtendimentos) {
+      window.carregarAtendimentos(obterFiltrosFormulario());
     }
   }
 
@@ -724,14 +741,17 @@
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
     document.getElementById('filtro-taskcode').value = '';
-    if (window.carregarOtimizacoes) window.carregarOtimizacoes({});
+    if (window.carregarAtendimentos) window.carregarAtendimentos({});
   }
 
   // ─── MODAIS ───
-  function limparFormularioOtimizacao() {
-    document.getElementById('input-nome').value = '';
+  function limparFormularioAtendimento() {
+    document.getElementById('input-nome-cliente').value = '';
+    document.getElementById('input-protocolo').value = '';
+    document.getElementById('input-sub-processo').value = '';
+    document.getElementById('input-data-entrada').value = '';
+    document.getElementById('input-data-instalacao').value = '';
     document.getElementById('input-descricao').value = '';
-    document.getElementById('input-prazo').value = '';
     document.getElementById('input-regiao').value = '';
     document.getElementById('input-numero-os').value = '';
     document.getElementById('input-localizacao-texto').value = '';
@@ -759,7 +779,7 @@
 
   window.abrirModal = function() {
     tecnicosSelecionados = [];
-    limparFormularioOtimizacao();
+    limparFormularioAtendimento();
     renderizarTags();
     document.getElementById('modal-overlay').classList.add('open');
   }
@@ -886,7 +906,7 @@
         if (response.ok) {
           fecharNovaOS();
           carregarOS(trocaId);
-          if (window.carregarOtimizacoes) window.carregarOtimizacoes();
+          if (window.carregarAtendimentos) window.carregarAtendimentos();
         } else {
           const erro = await response.json();
           console.error('Erro ao atualizar OS:', erro.message);
@@ -912,7 +932,7 @@
         if (response.ok) {
           fecharNovaOS();
           carregarOS(trocaId);
-          if (window.carregarOtimizacoes) window.carregarOtimizacoes();
+          if (window.carregarAtendimentos) window.carregarAtendimentos();
         } else {
           const erro = await response.json();
           console.error('Erro ao criar OS:', erro.message);
@@ -932,7 +952,7 @@
 
   async function carregarOS(trocaId) {
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/otimizacao-rede/${trocaId}/os`, {
+    const response = await fetch(`/api/atendimento/${trocaId}/os`, {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Accept': 'application/json',
@@ -997,7 +1017,7 @@
       delete osDataMap[osId];
       fecharConfirmacaoExclusaoOs();
       if (parentId) carregarOS(parentId);
-      if (window.carregarOtimizacoes) window.carregarOtimizacoes();
+      if (window.carregarAtendimentos) window.carregarAtendimentos();
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
       alert(err.message || 'Erro ao excluir ordem de serviço.');
@@ -1027,7 +1047,7 @@
         </div>
         <div class="os-empty">
           <i class="ti ti-clipboard-off"></i>
-          <span>Nenhuma OS vinculada a esta otimização</span>
+          <span>Nenhuma OS vinculada a este atendimento</span>
         </div>`;
       return;
     }
@@ -1189,7 +1209,7 @@
     btn.disabled = true;
 
     try {
-      const response = await fetch(`/api/otimizacao-rede/${id}`, {
+      const response = await fetch(`/api/atendimento/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -1199,15 +1219,15 @@
 
       if (!response.ok) {
         const erro = await response.json();
-        throw new Error(erro.message || 'Erro ao excluir otimização.');
+        throw new Error(erro.message || 'Erro ao excluir atendimento.');
       }
 
       fecharConfirmacaoExclusao();
       fecharDetalhe();
-      window.carregarOtimizacoes();
+      window.carregarAtendimentos();
     } catch (err) {
-      console.error('Erro ao excluir otimização:', err.message);
-      alert(err.message || 'Erro ao excluir otimização.');
+      console.error('Erro ao excluir atendimento:', err.message);
+      alert(err.message || 'Erro ao excluir atendimento.');
     } finally {
       btn.disabled = false;
     }
@@ -1466,16 +1486,15 @@
     document.getElementById('btn-cancelar').style.display = 'flex';
 
     const campos = [
-      { id: 'campo-titulo',          tipo: 'text' },
-      { id: 'campo-cto',             tipo: 'text' },
-      { id: 'campo-tipo',            tipo: 'select', opcoes: ['Fusão', 'Splitter', 'Cabo', 'Conector', 'Outro'] },
-      { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
-      { id: 'campo-tecnicos',        tipo: 'custom' },
-      { id: 'campo-numero-os',       tipo: 'text' },
+      { id: 'campo-nome',              tipo: 'text' },
+      { id: 'campo-protocolo',         tipo: 'text' },
+      { id: 'campo-sub-processo',      tipo: 'text' },
+      { id: 'campo-numero-os',         tipo: 'text' },
+      { id: 'campo-regiao',            tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-tecnicos',          tipo: 'custom' },
       { id: 'campo-localizacao-texto', tipo: 'text' },
-      { id: 'campo-coordenadas',     tipo: 'text' },
-      { id: 'campo-prioridade',      tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
-      { id: 'campo-status',          tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
+      { id: 'campo-coordenadas',       tipo: 'text' },
+      { id: 'campo-descricao',         tipo: 'text' },
     ];
 
     const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
@@ -1504,21 +1523,22 @@
     if (!id) return;
     const getVal = (selector) => document.querySelector(selector)?.value ?? '';
 
+    const nome = getVal('#campo-nome input');
     const dados = {
-      titulo:            getVal('#campo-titulo input'),
-      cto:               getVal('#campo-cto input'),
-      descricao:         getVal('#campo-tipo select'),
+      titulo:            nome,
+      nome_cliente:      nome,
+      protocolo:         getVal('#campo-protocolo input'),
+      sub_processo:      getVal('#campo-sub-processo input'),
       regiao:            getVal('#campo-regiao select'),
       responsavel:       tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
       numero_os:         getVal('#campo-numero-os input'),
       localizacao_texto: document.querySelector('#campo-localizacao-texto input')?.value ?? document.getElementById('campo-localizacao-texto')?.textContent ?? '',
       coordenadas:       getVal('#campo-coordenadas input'),
-      prioridade:        getVal('#campo-prioridade select'),
-      status:            getVal('#campo-status select'),
+      descricao:         getVal('#campo-descricao input'),
     };
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/otimizacao-rede/${id}`, {
+    const response = await fetch(`/api/atendimento/${id}`, {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(dados)
@@ -1526,7 +1546,7 @@
 
     if (response.ok) {
       fecharDetalhe();
-      window.carregarOtimizacoes();
+      window.carregarAtendimentos();
     } else {
       const erro = await response.json();
       console.error('Erro ao salvar:', erro.message);
@@ -1543,15 +1563,18 @@
   window.confirmarExclusaoTarefa = confirmarExclusaoTarefa;
   window.fecharConfirmacaoExclusaoOs = fecharConfirmacaoExclusaoOs;
 
-  async function criarOtimizacao() {
-    const nome = document.getElementById('input-nome').value.trim();
+  async function criarAtendimento() {
+    const nomeCliente = document.getElementById('input-nome-cliente').value.trim();
+    const protocolo = document.getElementById('input-protocolo').value.trim();
+    const subProcesso = document.getElementById('input-sub-processo').value.trim();
+    const dataEntrada = document.getElementById('input-data-entrada').value;
+    const dataInstalacao = document.getElementById('input-data-instalacao').value;
     const descricao = document.getElementById('input-descricao').value.trim();
-    const prazo = document.getElementById('input-prazo').value;
     const regiao = document.getElementById('input-regiao').value;
     const numeroOs = document.getElementById('input-numero-os').value.trim();
 
-    if (!nome) {
-      alert('Informe o nome da otimização.');
+    if (!nomeCliente) {
+      alert('Informe o nome do cliente.');
       return;
     }
     if (!regiao) {
@@ -1560,9 +1583,13 @@
     }
 
     const dados = {
-      titulo:            nome,
+      titulo:            nomeCliente,
+      nome_cliente:      nomeCliente,
+      protocolo:         protocolo,
+      sub_processo:      subProcesso,
+      data_entrada:      dataEntrada || null,
+      data_instalacao:   dataInstalacao || null,
       descricao:         descricao,
-      prazo:             prazo || null,
       coordenadas:       document.getElementById('input-coordenadas').value.trim(),
       localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
       regiao:            regiao,
@@ -1573,7 +1600,7 @@
     };
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch('/api/otimizacao-rede', {
+    const response = await fetch('/api/atendimento', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(dados)
@@ -1582,10 +1609,10 @@
     const resultado = await response.json();
     if (response.ok) {
       fecharModal();
-      window.carregarOtimizacoes();
+      window.carregarAtendimentos();
     } else {
-      alert(resultado.message || 'Erro ao criar otimização.');
-      console.error('Erro ao criar otimização:', resultado);
+      alert(resultado.message || 'Erro ao criar atendimento.');
+      console.error('Erro ao criar atendimento:', resultado);
     }
   }
 
@@ -1597,7 +1624,7 @@
 
     const token = localStorage.getItem('planner_token');
     const response = await fetch(
-      `/api/otimizacao-rede/coordenada?coordenada=${encodeURIComponent(coord)}`,
+      `/api/atendimento/coordenada?coordenada=${encodeURIComponent(coord)}`,
       { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } }
     );
     const data = await response.json();
@@ -1615,7 +1642,7 @@
   let draggedId = null;
   let draggedStatus = null;
   let wasDragged = false;
-  const otimizacoesMap = {};
+  const atendimentosMap = {};
   let filtrosAtivos = {};
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
@@ -1629,7 +1656,7 @@
     const novos = await buscarColuna(status, limit, offsetMap[status], filtrosAtivos);
     const colId = colIdMap[status];
     const col = document.getElementById(`col-${colId}`);
-    novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); otimizacoesMap[r.id] = r; });
+    novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); atendimentosMap[r.id] = r; });
     document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
     if (novos.length < limit) document.getElementById(`mais-${colId}`).style.display = 'none';
     document.getElementById(`menos-${colId}`).style.display = 'block';
@@ -1695,21 +1722,21 @@
     </div>`;
   }
 
-  // ─── CARREGAR OTIMIZAÇÕES ───
+  // ─── CARREGAR ATENDIMENTOS ───
   async function buscarColuna(status, limit, offset = 0, filtros = {}) {
     const token = localStorage.getItem('planner_token');
     const params = new URLSearchParams({ status, limit, offset });
     Object.entries(filtros).forEach(([chave, valor]) => {
       if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
     });
-    const response = await fetch(`/api/otimizacao-rede?${params}`, {
+    const response = await fetch(`/api/atendimento?${params}`, {
       headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
     const data = await response.json();
-    return data.otimizacaoDeRede || [];
+    return data.atendimentos || [];
   }
 
-  async function carregarOtimizacoes(filtros) {
+  async function carregarAtendimentos(filtros) {
     const filtrosEfetivos = filtros !== undefined
       ? filtros
       : (window.obterFiltrosFormulario ? window.obterFiltrosFormulario() : {});
@@ -1725,8 +1752,8 @@
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
-    Object.keys(otimizacoesMap).forEach(k => delete otimizacoesMap[k]);
-    todos.forEach(r => { otimizacoesMap[r.id] = r; });
+    Object.keys(atendimentosMap).forEach(k => delete atendimentosMap[k]);
+    todos.forEach(r => { atendimentosMap[r.id] = r; });
 
     document.getElementById('col-criada').innerHTML      = criadas.map(renderCard).join('');
     document.getElementById('col-andamento').innerHTML   = andamento.map(renderCard).join('');
@@ -1736,14 +1763,14 @@
     document.getElementById('count-andamento').textContent   = andamento.length;
     document.getElementById('count-impedimento').textContent = impedimento.length;
     document.getElementById('count-finalizada').textContent  = finalizadas.length;
-    document.getElementById('total-otimizacoes').textContent = todos.length;
+    document.getElementById('total-atendimentos').textContent = todos.length;
 
     document.getElementById('mais-criada').style.display      = criadas.length === 10 ? 'block' : 'none';
     document.getElementById('mais-andamento').style.display   = andamento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-impedimento').style.display = impedimento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-finalizada').style.display  = finalizadas.length === 50 ? 'block' : 'none';
   }
-  window.carregarOtimizacoes = carregarOtimizacoes;
+  window.carregarAtendimentos = carregarAtendimentos;
 
   // ─── RENDER CARD ───
   function renderCard(r) {
@@ -1760,10 +1787,11 @@
         <span class="kcard-code" style="font-size:11px">${r.taskCode || 'S/C'}</span>
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
-      <div class="kcard-title">${esc(r.titulo)}</div>
+      <div class="kcard-title">${esc(r.nome || r.nome_cliente || r.titulo)}</div>
       <div class="kcard-foot" style="margin-top:6px">
-        ${r.cto ? `<span class="badge b-cat-otm">${esc(r.cto)}</span>` : ''}
-        ${r.descricao ? `<span class="badge b-cat-gen">${esc(r.descricao)}</span>` : ''}
+        ${r.protocolo ? `<span class="badge b-cat-gen">${esc(r.protocolo)}</span>` : ''}
+        ${r.sub_processo ? `<span class="badge b-cat-ate">${esc(r.sub_processo)}</span>` : ''}
+        ${r.numero_os ? `<span class="badge b-cat-gen">${esc(r.numero_os)}</span>` : ''}
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
         ${r.responsavel ? `<span style="font-size:10px;color:var(--gray-400);margin-left:auto">${esc(r.responsavel)}</span>` : ''}
       </div>
@@ -1772,7 +1800,8 @@
 
   // ─── RENDER DETALHE ───
   function renderDetalhe(r) {
-    document.getElementById('detalhe-titulo').textContent = r.titulo || 'Otimização de Rede';
+    const nome = r.nome || r.nome_cliente || r.titulo || 'Atendimento';
+    document.getElementById('detalhe-titulo').textContent = nome;
     document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
 
     document.getElementById('detalhe-conteudo').innerHTML = `
@@ -1783,24 +1812,23 @@
           ${badgeRegiao(r.regiao)}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Título', esc(r.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('CTO', esc(r.cto), 1, 'campo-cto')}
+          ${campoDetalhe('Nome', esc(nome), 1, 'campo-nome')}
+          ${campoDetalhe('Protocolo', esc(r.protocolo), 1, 'campo-protocolo')}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Tipo de otimização', esc(r.descricao), 1, 'campo-tipo')}
-          ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
-        </div>
-        <div class="detail-grid-2">
-          ${campoDetalhe('Técnico(s) responsável(is)', esc(r.responsavel), 1, 'campo-tecnicos')}
+          ${campoDetalhe('Sub-processo', esc(r.sub_processo), 1, 'campo-sub-processo')}
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
+        </div>
+        <div class="detail-grid-2">
+          ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
+          ${campoDetalhe('Técnico(s) responsável(is)', esc(r.responsavel), 1, 'campo-tecnicos')}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
           ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
         </div>
-        <div class="detail-grid-2">
-          ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
-          ${campoDetalhe('Status', esc(r.status), 1, 'campo-status')}
+        <div class="detail-grid">
+          ${campoDetalhe('Descrição', esc(r.descricao), 3, 'campo-descricao')}
         </div>
         <div class="detail-grid-2">
           <div class="detail-field">
@@ -1862,12 +1890,12 @@
     renderDetalheLoading();
     const token = localStorage.getItem('planner_token');
     try {
-      const response = await fetch(`/api/otimizacao-rede/${id}`, {
+      const response = await fetch(`/api/atendimento/${id}`, {
         headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
       });
       const data = await response.json();
       if (!response.ok) { renderDetalheErro(data.message || 'Não foi possível carregar.'); return; }
-      renderDetalhe(data.otimizacaoDeRede || data);
+      renderDetalhe(data.atendimento || data);
     } catch {
       renderDetalheErro('Erro de conexão.');
     }
@@ -1888,14 +1916,14 @@
     });
   }
 
-  async function moverOtimizacao(id, novoStatus, colDestino) {
+  async function moverAtendimento(id, novoStatus, colDestino) {
     const card = document.querySelector(`.kcard[data-id="${id}"]`);
     const colOrigem = card?.closest('.kcol-body');
     const statusAnterior = card?.dataset.status;
     if (card) { card.dataset.status = novoStatus; colDestino.appendChild(card); atualizarContadores(); }
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/otimizacao-rede/${id}`, {
+    const response = await fetch(`/api/atendimento/${id}`, {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ status: novoStatus })
@@ -1959,7 +1987,7 @@
       limparDragOver();
       const novoStatus = col.dataset.status;
       if (novoStatus === draggedStatus) return;
-      await moverOtimizacao(draggedId, novoStatus, col);
+      await moverAtendimento(draggedId, novoStatus, col);
     });
   }
 
@@ -1970,7 +1998,7 @@
   };
 
   initKanbanDragDrop();
-  carregarOtimizacoes();
+  carregarAtendimentos();
   carregarTecnicos(null, 'filtro-tecnico');
   carregarTecnicos(null, 'os-input-tecnico');
 </script>

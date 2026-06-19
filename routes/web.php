@@ -25,3 +25,7 @@ Route::get('/troca-de-poste', function () {
 Route::get('/otimizacao-de-rede', function () {
     return view('otimizacao-de-rede');
 });
+
+Route::get('/atendimento', function () {
+    return view('atendimento');
+});

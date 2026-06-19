@@ -1,22 +1,19 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
+/**
+ * Legado: produção usa setor (não coluna cto).
+ */
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('op_tasks', function (Blueprint $table) {
-            $table->string('cto')->nullable()->after('coordenadas');
-        });
+        // noop — coluna cto não existe no banco Hostinger
     }
 
     public function down(): void
     {
-        Schema::table('op_tasks', function (Blueprint $table) {
-            $table->dropColumn('cto');
-        });
+        // noop
     }
 };

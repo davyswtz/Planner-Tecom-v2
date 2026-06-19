@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\OpTask;
+use App\Models\OsTecnico;
 use App\Services\GoogleChatService;
 
 class OpTaskService
@@ -17,6 +18,7 @@ public function __construct(private GoogleChatService $googleChatService){}
 
     public function createOpTask(array $dados): OpTask{
         $dados['taskCode'] = $this->gerarTaskCode($dados);
+        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
         $task = OpTask::create($dados);
 
         if(!empty($dados['parent_task_id'])) {
@@ -28,6 +30,22 @@ public function __construct(private GoogleChatService $googleChatService){}
 
     public function showOpTask(OpTask $opTask){
         return $opTask;
+    }
+
+    public function listarOsVinculadas(int $parentId)
+    {
+        $taskIdsFromOsTecnicos = OsTecnico::where('parent_task_id', $parentId)
+            ->pluck('task_id');
+
+        return OpTask::where('parent_task_id', $parentId)
+            ->where(function ($query) use ($taskIdsFromOsTecnicos) {
+                $query->where('categoria', 'ordem-servico');
+                if ($taskIdsFromOsTecnicos->isNotEmpty()) {
+                    $query->orWhereIn('id', $taskIdsFromOsTecnicos);
+                }
+            })
+            ->orderBy('criadaEm', 'desc')
+            ->get();
     }
 
     public function updateOpTask(OpTask $opTask, array $dados): OpTask

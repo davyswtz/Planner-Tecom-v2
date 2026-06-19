@@ -4,18 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\OpTask;
 use App\Services\TrocaDePosteService;
+use App\Services\OpTaskService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class TrocaPosteController extends Controller
 {
-    public function __construct(private TrocaDePosteService $trocaDePosteService) {}
+    public function __construct(
+        private TrocaDePosteService $trocaDePosteService,
+        private OpTaskService $opTaskService,
+    ) {}
 
     public function index(Request $request)
     {
         $resultado = $this->trocaDePosteService->getTrocaDePoste(
-            $request->query('limit', 10),
-            $request->query('offset', 0),
+            (int) $request->query('limit', 10),
+            (int) $request->query('offset', 0),
             $request->query('status'),
             $request->query('regiao'),
             $request->query('tecnico'),
@@ -87,10 +91,7 @@ class TrocaPosteController extends Controller
 
     public function listarOS($id)
     {
-        $os = OpTask::where('parent_task_id', $id)
-            ->where('categoria', 'ordem-servico')
-            ->orderBy('criadaEm', 'desc')
-            ->get();
+        $os = $this->opTaskService->listarOsVinculadas((int) $id);
 
         return response()->json(['os' => $os], 200);
     }

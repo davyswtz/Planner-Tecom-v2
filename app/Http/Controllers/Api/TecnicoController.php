@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Services\TecnicoService;
-use App\Models\Tecnico;
+use App\Models\OsTecnico;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -17,9 +17,10 @@ class TecnicoController extends Controller
         return response()->json($resultado, 200);
     }
 
-    public function show(Tecnico $tecnico)
+    public function show(OsTecnico $tecnico)
     {
         $resultado = $this->tecnicoService->showTecnico($tecnico);
+
         return response()->json(['message' => 'Tecnico encontrado com sucesso', 'tecnico' => $resultado], 200);
     }
 }
