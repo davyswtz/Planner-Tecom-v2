@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\RompimentoController;
 use App\Http\Controllers\Api\OtimizaçãoDeRedeController;
 use App\Http\Controllers\Api\AtendimentoController;
+use App\Http\Controllers\Api\OrdemServicoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,4 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('atendimento/coordenada', [AtendimentoController::class, 'buscarEndereco']);
     Route::get('atendimento/{id}/os', [AtendimentoController::class, 'listarOS']);
     Route::apiResource('atendimento', AtendimentoController::class);
+    Route::get('ordem-servico/dashboard', [OrdemServicoController::class, 'dashboard']);
+    Route::get('ordem-servico/{id}', [OrdemServicoController::class, 'show'])->whereNumber('id');
+    Route::get('ordem-servico', [OrdemServicoController::class, 'index']);
 });

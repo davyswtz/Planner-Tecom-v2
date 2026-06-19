@@ -22,8 +22,7 @@ class AtendimentoService
         ?string $dataInicio = null,
         ?string $dataFim = null,
     ) {
-        $query = OpTask::where('categoria', 'atendimento-cliente')
-            ->whereNull('parent_task_id')
+        $query = OpTask::tarefasPai('atendimento-cliente')
             ->orderBy('updated_at', 'desc')
             ->when($status, fn ($q) => $q->where('status', $status))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))

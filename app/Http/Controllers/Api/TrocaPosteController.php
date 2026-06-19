@@ -36,7 +36,7 @@ class TrocaPosteController extends Controller
 
     public function show(OpTask $troca_poste)
     {
-        if ($troca_poste->categoria !== 'troca-poste') {
+        if (! $troca_poste->isTarefaPaiOf('troca-poste')) {
             return response()->json(['message' => 'Troca de poste não encontrada'], 404);
         }
 
@@ -58,7 +58,7 @@ class TrocaPosteController extends Controller
 
     public function update(Request $request, OpTask $troca_poste)
     {
-        if ($troca_poste->categoria !== 'troca-poste') {
+        if (! $troca_poste->isTarefaPaiOf('troca-poste')) {
             return response()->json(['message' => 'Troca de poste não encontrada'], 404);
         }
 
@@ -71,7 +71,7 @@ class TrocaPosteController extends Controller
 
     public function destroy(OpTask $troca_poste)
     {
-        if ($troca_poste->categoria !== 'troca-poste') {
+        if (! $troca_poste->isTarefaPaiOf('troca-poste')) {
             return response()->json(['message' => 'Troca de poste não encontrada'], 404);
         }
 
@@ -91,6 +91,11 @@ class TrocaPosteController extends Controller
 
     public function listarOS($id)
     {
+        $pai = OpTask::find((int) $id);
+        if (! $pai?->isTarefaPaiOf('troca-poste')) {
+            return response()->json(['message' => 'Troca de poste não encontrada'], 404);
+        }
+
         $os = $this->opTaskService->listarOsVinculadas((int) $id);
 
         return response()->json(['os' => $os], 200);

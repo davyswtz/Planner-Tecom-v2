@@ -36,7 +36,7 @@ class OtimizaçãoDeRedeController extends Controller
 
     public function show(OpTask $otimizacao_rede)
     {
-        if ($otimizacao_rede->categoria !== 'otimizacao-rede') {
+        if (! $otimizacao_rede->isTarefaPaiOf('otimizacao-rede')) {
             return response()->json(['message' => 'Otimização de rede não encontrada'], 404);
         }
 
@@ -58,7 +58,7 @@ class OtimizaçãoDeRedeController extends Controller
 
     public function update(Request $request, OpTask $otimizacao_rede)
     {
-        if ($otimizacao_rede->categoria !== 'otimizacao-rede') {
+        if (! $otimizacao_rede->isTarefaPaiOf('otimizacao-rede')) {
             return response()->json(['message' => 'Otimização de rede não encontrada'], 404);
         }
 
@@ -72,7 +72,7 @@ class OtimizaçãoDeRedeController extends Controller
 
     public function destroy(OpTask $otimizacao_rede)
     {
-        if ($otimizacao_rede->categoria !== 'otimizacao-rede') {
+        if (! $otimizacao_rede->isTarefaPaiOf('otimizacao-rede')) {
             return response()->json(['message' => 'Otimização de rede não encontrada'], 404);
         }
 
@@ -94,6 +94,11 @@ class OtimizaçãoDeRedeController extends Controller
 
     public function listarOS($id)
     {
+        $pai = OpTask::find((int) $id);
+        if (! $pai?->isTarefaPaiOf('otimizacao-rede')) {
+            return response()->json(['message' => 'Otimização de rede não encontrada'], 404);
+        }
+
         $os = $this->opTaskService->listarOsVinculadas((int) $id);
 
         return response()->json(['os' => $os], 200);

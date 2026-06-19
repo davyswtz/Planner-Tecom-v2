@@ -22,7 +22,7 @@ class OtimizaçãoDeRedeService
         ?string $dataInicio = null,
         ?string $dataFim = null,
     ) {
-        $query = OpTask::where('categoria', 'otimizacao-rede')
+        $query = OpTask::tarefasPai('otimizacao-rede')
             ->orderBy('updated_at', 'desc')
             ->when($status, fn($q) => $q->where('status', $status))
             ->when($regiao, fn($q) => $q->where('regiao', $regiao))

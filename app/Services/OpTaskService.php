@@ -13,7 +13,11 @@ public function __construct(private GoogleChatService $googleChatService){}
 
     public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc')
     {
-        return OpTask::orderBy($orderBy, $order)->limit($limit)->get();
+        return OpTask::query()
+            ->whereNull('parent_task_id')
+            ->orderBy($orderBy, $order)
+            ->limit($limit)
+            ->get();
     }
 
     public function createOpTask(array $dados): OpTask{

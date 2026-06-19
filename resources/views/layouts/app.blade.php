@@ -603,8 +603,6 @@
     <div class="nav-section">
       <div class="nav-section-label">Principal</div>
       <a href="/dashboard" class="nav-item {{ request()->is('dashboard') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></div></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-layout-kanban"></i><span>Kanban</span></div></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-map-pin"></i><span>Mapa de calor</span></div></a>
     </div>
 
     <div class="nav-section">
@@ -617,7 +615,7 @@
       <a href="/otimizacao-de-rede" class="nav-item {{ request()->is('otimizacao-de-rede*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-wifi"></i><span>Otimização de rede</span></div><span class="nav-badge">4</span></a>
       <a href="/atendimento" class="nav-item {{ request()->is('atendimento*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-headset"></i><span>Atendimento</span></div><span class="nav-badge">49</span></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div><span class="nav-badge">3</span></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-file-check"></i><span>Ordem de serviço</span></div></a>
+      <a href="/ordem-de-servico" class="nav-item {{ request()->is('ordem-de-servico*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-file-check"></i><span>Ordem de serviço</span></div><span class="nav-badge" id="nav-badge-os">—</span></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-certificate"></i><span>Certificação</span></div><span class="nav-badge">5</span></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-wave-sine"></i><span>Correção de sinal</span></div></a>
     </div>
@@ -625,7 +623,6 @@
     <div class="nav-section">
       <div class="nav-section-label">Gestão</div>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-activity"></i><span>Atividade</span></div></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>
     </div>
   </div>
@@ -736,6 +733,7 @@
     request()->is('troca-de-poste*') => ['categorias' => ['troca-poste'], 'reload' => 'carregarTrocas'],
     request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede'], 'reload' => 'carregarOtimizacoes'],
     request()->is('atendimento*') => ['categorias' => ['atendimento-cliente'], 'reload' => 'carregarAtendimentos'],
+    request()->is('ordem-de-servico*') => ['categorias' => ['ordem-servico'], 'reload' => 'carregarOrdemServicoDashboard'],
     default => null,
   };
 

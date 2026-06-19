@@ -22,7 +22,7 @@ public function __construct(private OpTaskService $opTaskService
         string $dataFim = null,
     )
     {
-        $query = OpTask::whereIn('categoria', ['rompimento', 'rompimentos'])
+        $query = OpTask::rompimentosPai()
         ->orderBy('updated_at', 'desc')
         ->when($status, fn($q) => $q->where('status', $status))
         ->when($regiao, fn($q) => $q->where('regiao', $regiao))

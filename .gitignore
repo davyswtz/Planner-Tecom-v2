@@ -10,10 +10,17 @@
 /storage/logs/*
 /vendor
 
-# Ambiente e segredos
+# Ambiente e segredos (nunca commitar)
 .env
 .env.*
 !.env.example
+.env.local
+.env.production
+.env.production.local
+.env.backup
+*.env.local
+deploy/env/*.local
+deploy/env/*-secrets.*
 
 # Docker sensível
 docker/mysql/init.sql

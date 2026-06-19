@@ -29,3 +29,7 @@ Route::get('/otimizacao-de-rede', function () {
 Route::get('/atendimento', function () {
     return view('atendimento');
 });
+
+Route::get('/ordem-de-servico', function () {
+    return view('ordem-de-servico');
+});

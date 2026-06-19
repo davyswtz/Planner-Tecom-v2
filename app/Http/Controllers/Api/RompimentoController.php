@@ -31,11 +31,11 @@ class RompimentoController extends Controller
     }
  
     public function show(OpTask $rompimento){
-        if($rompimento->categoria !== 'rompimentos'){
+        if (! $rompimento->isRompimentoPai()) {
             return response()->json(['message' => 'Rompimento não encontrado'], 404);
-        }else{
-            return response()->json(['message' => 'Rompimento encontrado com sucesso', 'rompimento' => $rompimento], 200);
         }
+
+        return response()->json(['message' => 'Rompimento encontrado com sucesso', 'rompimento' => $rompimento], 200);
     }
 
     public function store(Request $request)
@@ -45,17 +45,30 @@ class RompimentoController extends Controller
     }
 
     public function update(Request $request, OpTask $rompimento){
+        if (! $rompimento->isRompimentoPai()) {
+            return response()->json(['message' => 'Rompimento não encontrado'], 404);
+        }
+
         $resultado = $this->rompimentoService->updateRompimento($rompimento, $request->all());
         return response()->json(['message' => 'Rompimento atualizado com sucesso', 'rompimento' => $resultado], 200);
     }
 
     public function destroy(OpTask $rompimento){
-        $resultado = $this->rompimentoService->deleteRompimento($rompimento);
+        if (! $rompimento->isRompimentoPai()) {
+            return response()->json(['message' => 'Rompimento não encontrado'], 404);
+        }
+
+        $this->rompimentoService->deleteRompimento($rompimento);
         return response()->json(['message' => 'Rompimento deletado com sucesso'], 200);
     }
 
     public function listarOS($id)
 {
+    $pai = OpTask::find((int) $id);
+    if (! $pai?->isRompimentoPai()) {
+        return response()->json(['message' => 'Rompimento não encontrado'], 404);
+    }
+
     $os = $this->opTaskService->listarOsVinculadas((int) $id);
 
     return response()->json(['os' => $os], 200);

@@ -13,7 +13,7 @@ class TrocaDePosteService{
 
 
     public function getTrocaDePoste(int $limit = 10, int $offset = 0, string $status = null, string $regiao = null, string $tecnico = null, string $taskCode = null, string $dataInicio = null, string $dataFim = null){
-        $query = OpTask::where('categoria', 'troca-poste')
+        $query = OpTask::tarefasPai('troca-poste')
         ->orderBy('updated_at', 'desc')
         ->when($status, fn($q) => $q->where('status', $status))
         ->when($regiao, fn($q) => $q->where('regiao', $regiao))

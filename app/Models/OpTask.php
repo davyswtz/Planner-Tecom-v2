@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -79,5 +80,34 @@ class OpTask extends Model
     public function osTecnicos(): HasMany
     {
         return $this->hasMany(OsTecnico::class, 'parent_task_id');
+    }
+
+    /** Tarefas de topo de uma categoria (exclui subtarefas/OS filhas). */
+    public function scopeTarefasPai(Builder $query, string|array $categorias): Builder
+    {
+        return $query
+            ->whereIn('categoria', (array) $categorias)
+            ->whereNull('parent_task_id');
+    }
+
+    public function scopeRompimentosPai(Builder $query): Builder
+    {
+        return $query->tarefasPai(['rompimento', 'rompimentos']);
+    }
+
+    public function isTarefaPaiOf(string|array $categorias): bool
+    {
+        return $this->parent_task_id === null
+            && in_array($this->categoria, (array) $categorias, true);
+    }
+
+    public function isRompimentoPai(): bool
+    {
+        return $this->isTarefaPaiOf(['rompimento', 'rompimentos']);
+    }
+
+    public function isTarefaPai(): bool
+    {
+        return $this->parent_task_id === null;
     }
 }
