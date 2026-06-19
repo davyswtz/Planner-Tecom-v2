@@ -622,7 +622,7 @@
 
     <div class="nav-section">
       <div class="nav-section-label">Gestão</div>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
+      <a href="/usuarios" class="nav-item {{ request()->is('usuarios*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
       <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>
     </div>
   </div>
@@ -731,7 +731,7 @@
   $realtimePage = match (true) {
     request()->is('rompimento*') => ['categorias' => ['rompimentos', 'rompimento'], 'reload' => 'carregarRompimentos'],
     request()->is('troca-de-poste*') => ['categorias' => ['troca-poste'], 'reload' => 'carregarTrocas'],
-    request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede'], 'reload' => 'carregarOtimizacoes'],
+    request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede', 'otimizacao de rede', 'otimização de rede', 'OTIMIZACAO DE REDE', 'OTIMIZAÇÃO DE REDE'], 'reload' => 'carregarOtimizacoes'],
     request()->is('atendimento*') => ['categorias' => ['atendimento-cliente'], 'reload' => 'carregarAtendimentos'],
     request()->is('ordem-de-servico*') => ['categorias' => ['ordem-servico'], 'reload' => 'carregarOrdemServicoDashboard'],
     default => null,

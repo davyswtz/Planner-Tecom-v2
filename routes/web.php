@@ -33,3 +33,7 @@ Route::get('/atendimento', function () {
 Route::get('/ordem-de-servico', function () {
     return view('ordem-de-servico');
 });
+
+Route::get('/usuarios', function () {
+    return view('usuarios');
+});

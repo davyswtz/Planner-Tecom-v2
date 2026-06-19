@@ -22,7 +22,7 @@ class OtimizaçãoDeRedeService
         ?string $dataInicio = null,
         ?string $dataFim = null,
     ) {
-        $query = OpTask::tarefasPai('otimizacao-rede')
+        $query = OpTask::otimizacoesRedePai()
             ->orderBy('updated_at', 'desc')
             ->when($status, fn($q) => $q->where('status', $status))
             ->when($regiao, fn($q) => $q->where('regiao', $regiao))
@@ -41,6 +41,7 @@ class OtimizaçãoDeRedeService
     public function createOtimizaçãoDeRede(array $dados): OpTask
     {
         $dados['categoria'] = 'otimizacao-rede';
+        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
 
         return OpTask::create($dados);

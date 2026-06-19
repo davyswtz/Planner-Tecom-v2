@@ -10,6 +10,9 @@
 /storage/logs/*
 /vendor
 
+# Pacote de deploy
+/dist
+
 # Ambiente e segredos (nunca commitar)
 .env
 .env.*

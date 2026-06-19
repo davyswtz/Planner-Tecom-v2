@@ -124,8 +124,22 @@ class OrdemServicoService
       ->groupBy('task_id')
       ->map(fn (Collection $rows) => $rows->first());
 
-    $normalizadas = $tasks->map(function (OpTask $task) use ($osTecnicoPorTask) {
+    $parentIds = $tasks
+      ->pluck('parent_task_id')
+      ->merge($osTecnicoPorTask->pluck('parent_task_id'))
+      ->filter()
+      ->unique()
+      ->values();
+
+    $parentsPorId = OpTask::query()
+      ->whereIn('id', $parentIds)
+      ->get()
+      ->keyBy('id');
+
+    $normalizadas = $tasks->map(function (OpTask $task) use ($osTecnicoPorTask, $parentsPorId) {
       $registro = $osTecnicoPorTask->get($task->id);
+      $parentId = $task->parent_task_id ?: ($registro->parent_task_id ?? null);
+      $parentTask = $parentId ? $parentsPorId->get((int) $parentId) : null;
 
       return [
         'id' => (int) $task->id,
@@ -136,16 +150,26 @@ class OrdemServicoService
         'criadaEm' => $task->criadaEm,
         'data_criacao' => $this->resolverDataCriacao($task, $registro),
         'data_conclusao' => $this->resolverDataConclusao($task, $registro),
-        'titulo' => $task->titulo,
+        'titulo' => trim((string) $task->titulo) ?: trim((string) ($registro->titulo ?? '')),
         'numero_os' => trim((string) ($task->numero_os ?: $task->ordem_servico ?: ($registro->ordem_servico ?? ''))),
-        'taskCode' => $task->taskCode,
-        'categoria_pai' => $task->parentTask?->categoria ?? '',
-        'categoria_pai_label' => $this->rotuloCategoriaPai($task->parentTask?->categoria ?? ''),
-        'task_code_pai' => $task->parentTask?->taskCode ?? '',
-        'prioridade' => $task->prioridade ?: 'Média',
-        'parent_task_id' => $task->parent_task_id ? (int) $task->parent_task_id : null,
+        'ordem_servico' => trim((string) ($task->ordem_servico ?: ($registro->ordem_servico ?? ''))),
+        'taskCode' => trim((string) $task->taskCode) ?: trim((string) ($registro->task_code ?? '')),
+        'categoria' => trim((string) $task->categoria) ?: trim((string) ($registro->categoria ?? '')),
+        'categoria_pai' => $parentTask?->categoria ?? '',
+        'categoria_pai_label' => $this->rotuloCategoriaPai($parentTask?->categoria ?? ''),
+        'task_code_pai' => $parentTask?->taskCode ?? '',
+        'prioridade' => trim((string) $task->prioridade) ?: trim((string) ($registro->prioridade ?? '')) ?: 'Média',
+        'parent_task_id' => $parentId ? (int) $parentId : null,
         'descricao' => $task->descricao,
-        'protocolo' => $task->protocolo,
+        'protocolo' => trim((string) $task->protocolo) ?: trim((string) ($registro->protocolo ?? '')),
+        'localizacao_texto' => $task->localizacao_texto,
+        'coordenadas' => $task->coordenadas,
+        'nome_cliente' => $task->nome_cliente,
+        'sub_processo' => $task->sub_processo,
+        'data_entrada' => $task->data_entrada,
+        'data_instalacao' => $task->data_instalacao,
+        'assinada_por' => $task->assinada_por,
+        'assinada_em' => $task->assinada_em,
       ];
     });
 
@@ -170,7 +194,14 @@ class OrdemServicoService
     }
 
     if (! empty($filtros['prioridade'])) {
-      $query->where('op_tasks.prioridade', $filtros['prioridade']);
+      $prioridade = $filtros['prioridade'];
+      $query->where(function (Builder $q) use ($prioridade) {
+        $q->where('op_tasks.prioridade', $prioridade)
+          ->orWhereIn('op_tasks.id', OsTecnico::query()
+            ->select('task_id')
+            ->where('prioridade', $prioridade)
+            ->whereNotNull('task_id'));
+      });
     }
 
     // Período aplicado em aplicarFiltrosPosQuery (usa data_criacao / data_conclusao unificadas)
@@ -182,13 +213,32 @@ class OrdemServicoService
           ->orWhere('op_tasks.numero_os', 'like', "%{$busca}%")
           ->orWhere('op_tasks.ordem_servico', 'like', "%{$busca}%")
           ->orWhere('op_tasks.titulo', 'like', "%{$busca}%")
-          ->orWhere('op_tasks.responsavel', 'like', "%{$busca}%");
+          ->orWhere('op_tasks.responsavel', 'like', "%{$busca}%")
+          ->orWhere('op_tasks.protocolo', 'like', "%{$busca}%")
+          ->orWhereIn('op_tasks.id', OsTecnico::query()
+            ->select('task_id')
+            ->where(function (Builder $sub) use ($busca) {
+              $sub->where('ordem_servico', 'like', "%{$busca}%")
+                ->orWhere('task_code', 'like', "%{$busca}%")
+                ->orWhere('titulo', 'like', "%{$busca}%")
+                ->orWhere('tecnico_nome', 'like', "%{$busca}%")
+                ->orWhere('protocolo', 'like', "%{$busca}%");
+            })
+            ->whereNotNull('task_id'));
       });
     }
 
     if (! empty($filtros['categoriaPai'])) {
       $categoria = $filtros['categoriaPai'];
-      $query->whereHas('parentTask', fn (Builder $q) => $q->where('categoria', $categoria));
+      $query->where(function (Builder $q) use ($categoria) {
+        $q->whereHas('parentTask', fn (Builder $parent) => $parent->where('categoria', $categoria))
+          ->orWhereIn('op_tasks.id', OsTecnico::query()
+            ->select('task_id')
+            ->whereIn('parent_task_id', OpTask::query()
+              ->select('id')
+              ->where('categoria', $categoria))
+            ->whereNotNull('task_id'));
+      });
     }
   }
 
@@ -273,7 +323,7 @@ class OrdemServicoService
     return match ($categoria) {
       'rompimentos', 'rompimento' => 'Rompimentos',
       'troca-poste' => 'Troca de poste',
-      'otimizacao-rede' => 'Otimização de rede',
+      'otimizacao-rede', 'otimizacao de rede', 'otimização de rede', 'OTIMIZACAO DE REDE', 'OTIMIZAÇÃO DE REDE' => 'Otimização de rede',
       'atendimento-cliente' => 'Atendimento',
       'manutencao-corretiva' => 'Manutenção',
       'correcao-atenuacao' => 'Correção de sinal',

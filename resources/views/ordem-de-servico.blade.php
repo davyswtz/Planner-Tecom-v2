@@ -735,13 +735,23 @@
           <div class="detail-field"><span class="detail-label">Status</span><div class="detail-value">${statusPill(os.status)}</div></div>
           <div class="detail-field"><span class="detail-label">Região</span><div class="detail-value">${esc(os.regiao || '—')}</div></div>
           <div class="detail-field"><span class="detail-label">Número OS</span><div class="detail-value">${esc(os.numero_os || '—')}</div></div>
+          <div class="detail-field"><span class="detail-label">Ordem de serviço</span><div class="detail-value">${esc(os.ordem_servico || '—')}</div></div>
           <div class="detail-field"><span class="detail-label">Código</span><div class="detail-value">${esc(os.taskCode || '—')}</div></div>
+          <div class="detail-field"><span class="detail-label">Categoria</span><div class="detail-value">${esc(os.categoria || '—')}</div></div>
           <div class="detail-field"><span class="detail-label">Prioridade</span><div class="detail-value">${esc(os.prioridade)}</div></div>
           <div class="detail-field span-2"><span class="detail-label">Título</span><div class="detail-value">${esc(os.titulo || '—')}</div></div>
           <div class="detail-field"><span class="detail-label">Origem</span><div class="detail-value">${esc(os.categoria_pai_label)}${os.task_code_pai ? ' · ' + esc(os.task_code_pai) : ''}</div></div>
           <div class="detail-field"><span class="detail-label">Protocolo</span><div class="detail-value">${esc(os.protocolo || '—')}</div></div>
+          <div class="detail-field"><span class="detail-label">Cliente</span><div class="detail-value">${esc(os.nome_cliente || '—')}</div></div>
+          <div class="detail-field"><span class="detail-label">Subprocesso</span><div class="detail-value">${esc(os.sub_processo || '—')}</div></div>
+          <div class="detail-field span-2"><span class="detail-label">Endereço / Localização</span><div class="detail-value">${esc(os.localizacao_texto || '—')}</div></div>
+          <div class="detail-field"><span class="detail-label">Coordenadas</span><div class="detail-value">${esc(os.coordenadas || '—')}</div></div>
           <div class="detail-field"><span class="detail-label">Criada em</span><div class="detail-value">${formatarData(os.data_criacao || os.criadaEm)}</div></div>
+          <div class="detail-field"><span class="detail-label">Data de entrada</span><div class="detail-value">${formatarData(os.data_entrada)}</div></div>
+          <div class="detail-field"><span class="detail-label">Data de instalação</span><div class="detail-value">${formatarData(os.data_instalacao)}</div></div>
           <div class="detail-field"><span class="detail-label">Concluída em</span><div class="detail-value">${formatarData(os.data_conclusao) || '—'}</div></div>
+          <div class="detail-field"><span class="detail-label">Assinada por</span><div class="detail-value">${esc(os.assinada_por || '—')}</div></div>
+          <div class="detail-field"><span class="detail-label">Assinada em</span><div class="detail-value">${formatarData(os.assinada_em)}</div></div>
           <div class="detail-field span-3"><span class="detail-label">Descrição</span><div class="detail-value">${esc(os.descricao || '—')}</div></div>
         </div>`;
     } catch (e) {

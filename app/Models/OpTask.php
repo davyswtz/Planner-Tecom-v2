@@ -13,14 +13,27 @@ class OpTask extends Model
 
     const UPDATED_AT = 'updated_at';
 
+    public const CATEGORIAS_OTIMIZACAO_REDE = [
+        'otimizacao-rede',
+        'otimizacao de rede',
+        'otimização de rede',
+        'OTIMIZACAO DE REDE',
+        'OTIMIZAÇÃO DE REDE',
+    ];
+
     protected $table = 'op_tasks';
 
     protected $primaryKey = 'id';
+
+    protected $appends = [
+        'cto',
+    ];
 
     protected $fillable = [
         'taskCode',
         'titulo',
         'setor',
+        'cto',
         'regiao',
         'responsavel',
         'clientesAfetados',
@@ -82,6 +95,16 @@ class OpTask extends Model
         return $this->hasMany(OsTecnico::class, 'parent_task_id');
     }
 
+    public function getCtoAttribute(): string
+    {
+        return (string) ($this->attributes['setor'] ?? '');
+    }
+
+    public function setCtoAttribute(mixed $value): void
+    {
+        $this->attributes['setor'] = (string) ($value ?? '');
+    }
+
     /** Tarefas de topo de uma categoria (exclui subtarefas/OS filhas). */
     public function scopeTarefasPai(Builder $query, string|array $categorias): Builder
     {
@@ -95,6 +118,17 @@ class OpTask extends Model
         return $query->tarefasPai(['rompimento', 'rompimentos']);
     }
 
+    public function scopeOtimizacoesRedePai(Builder $query): Builder
+    {
+        return $query
+            ->whereNull('parent_task_id')
+            ->where(function (Builder $query) {
+                $query
+                    ->whereIn('categoria', self::CATEGORIAS_OTIMIZACAO_REDE)
+                    ->orWhere('taskCode', 'like', '%-OTM-%');
+            });
+    }
+
     public function isTarefaPaiOf(string|array $categorias): bool
     {
         return $this->parent_task_id === null
@@ -104,6 +138,15 @@ class OpTask extends Model
     public function isRompimentoPai(): bool
     {
         return $this->isTarefaPaiOf(['rompimento', 'rompimentos']);
+    }
+
+    public function isOtimizacaoRedePai(): bool
+    {
+        return $this->isTarefaPai()
+            && (
+                in_array($this->categoria, self::CATEGORIAS_OTIMIZACAO_REDE, true)
+                || str_contains(strtoupper((string) $this->taskCode), '-OTM-')
+            );
     }
 
     public function isTarefaPai(): bool

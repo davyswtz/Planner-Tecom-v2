@@ -16,17 +16,12 @@ if command -v composer >/dev/null 2>&1; then
 elif [[ -f composer.phar ]]; then
   php composer.phar install --no-dev --optimize-autoloader --no-interaction
 else
-  echo "AVISO: composer não encontrado — instale dependências manualmente"
+  echo "AVISO: composer não encontrado — use o ZIP gerado com deploy/build-hostinger-pack.ps1 (já inclui vendor)"
 fi
 
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan hostinger:setup --force
 
 php artisan up 2>/dev/null || true
 
 echo ""
 echo "==> Concluído."
-echo "    Confira no .env: BROADCAST_CONNECTION=pusher + PUSHER_APP_* preenchidos"
-echo "    Teste: duas abas em /rompimento — console deve mostrar tempo real (pusher)"

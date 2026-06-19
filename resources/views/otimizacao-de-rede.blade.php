@@ -1467,8 +1467,7 @@
 
     const campos = [
       { id: 'campo-titulo',          tipo: 'text' },
-      { id: 'campo-cto',             tipo: 'text' },
-      { id: 'campo-tipo',            tipo: 'select', opcoes: ['Fusão', 'Splitter', 'Cabo', 'Conector', 'Outro'] },
+      { id: 'campo-tipo',            tipo: 'textarea' },
       { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
       { id: 'campo-tecnicos',        tipo: 'custom' },
       { id: 'campo-numero-os',       tipo: 'text' },
@@ -1495,6 +1494,10 @@
         el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
         return;
       }
+      if (tipo === 'textarea') {
+        el.innerHTML = `<textarea rows="3" style="${inputStyle};resize:vertical;min-height:72px">${esc(valor)}</textarea>`;
+        return;
+      }
       el.innerHTML = `<input type="text" value="${valor}" style="${inputStyle}"/>`;
     });
   }
@@ -1506,8 +1509,7 @@
 
     const dados = {
       titulo:            getVal('#campo-titulo input'),
-      cto:               getVal('#campo-cto input'),
-      descricao:         getVal('#campo-tipo select'),
+      descricao:         getVal('#campo-tipo textarea'),
       regiao:            getVal('#campo-regiao select'),
       responsavel:       tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
       numero_os:         getVal('#campo-numero-os input'),
@@ -1661,6 +1663,30 @@
     return String(valor).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  function textoSemHtml(valor) {
+    if (valor == null || valor === '') return '';
+    const texto = String(valor);
+    if (!/<\/?[a-z][\s\S]*>/i.test(texto)) return texto;
+
+    const container = document.createElement('div');
+    container.innerHTML = texto
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(div|p|li)>/gi, '\n');
+
+    return (container.textContent || '')
+      .replace(/\u00a0/g, ' ')
+      .split('\n')
+      .map(linha => linha.trim())
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  function textoHtml(valor) {
+    const texto = textoSemHtml(valor);
+    if (!texto) return '—';
+    return esc(texto).replace(/\r?\n/g, '<br>');
+  }
+
   function formatarData(valor) {
     if (!valor) return '—';
     const data = new Date(valor);
@@ -1750,6 +1776,7 @@
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
       : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
+    const descricao = textoSemHtml(r.descricao).replace(/\s+/g, ' ').trim();
     return `
     <div class="kcard"
       data-id="${r.id}"
@@ -1763,7 +1790,7 @@
       <div class="kcard-title">${esc(r.titulo)}</div>
       <div class="kcard-foot" style="margin-top:6px">
         ${r.cto ? `<span class="badge b-cat-otm">${esc(r.cto)}</span>` : ''}
-        ${r.descricao ? `<span class="badge b-cat-gen">${esc(r.descricao)}</span>` : ''}
+        ${descricao ? `<span class="badge b-cat-gen">${esc(descricao)}</span>` : ''}
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
         ${r.responsavel ? `<span style="font-size:10px;color:var(--gray-400);margin-left:auto">${esc(r.responsavel)}</span>` : ''}
       </div>
@@ -1783,11 +1810,7 @@
           ${badgeRegiao(r.regiao)}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Título', esc(r.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('CTO', esc(r.cto), 1, 'campo-cto')}
-        </div>
-        <div class="detail-grid-2">
-          ${campoDetalhe('Tipo de otimização', esc(r.descricao), 1, 'campo-tipo')}
+          ${campoDetalhe('Nome', esc(r.titulo), 1, 'campo-titulo')}
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
         </div>
         <div class="detail-grid-2">
@@ -1795,8 +1818,11 @@
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
+          ${campoDetalhe('Rua / Bairro / Endereço', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
           ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
+        </div>
+        <div class="detail-grid-2">
+          ${campoDetalhe('Descrição', textoHtml(r.descricao), 2, 'campo-tipo')}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
