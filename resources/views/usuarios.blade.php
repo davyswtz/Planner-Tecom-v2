@@ -114,16 +114,26 @@
       <span class="usuario-help">Ao escolher Técnico, o usuário também entra na lista de técnicos.</span>
     </div>
 
-    <div class="usuario-field">
+    <div class="usuario-field" id="usuario-campos-senha">
       <label class="usuario-label" for="usuario-password">Senha</label>
       <input type="password" id="usuario-password" class="usuario-input" autocomplete="new-password"
         placeholder="Mínimo de 4 caracteres"/>
       <span class="usuario-help" id="usuario-password-help">Informe a senha do novo usuário.</span>
     </div>
 
-    <div class="usuario-field">
+    <div class="usuario-field" id="usuario-campo-confirmar-senha">
       <label class="usuario-label" for="usuario-password-confirmation">Confirmar senha</label>
       <input type="password" id="usuario-password-confirmation" class="usuario-input" autocomplete="new-password"/>
+    </div>
+
+    <div class="usuario-field" id="usuario-campo-regiao" style="display:none">
+      <label class="usuario-label" for="usuario-regiao">Região</label>
+      <select id="usuario-regiao" class="usuario-select">
+        <option value="">Selecione a região</option>
+        <option value="Governador Valadares">Governador Valadares</option>
+        <option value="Vale do Aço">Vale do Aço</option>
+      </select>
+      <span class="usuario-help">A região será vinculada ao cadastro do técnico.</span>
     </div>
   </div>
 
@@ -168,24 +178,30 @@
     document.getElementById('usuario-funcao').value = 'projetista';
     document.getElementById('usuario-password').value = '';
     document.getElementById('usuario-password-confirmation').value = '';
+    document.getElementById('usuario-regiao').value = '';
     document.getElementById('usuario-erro').style.display = 'none';
     document.getElementById('usuario-modal-titulo').textContent = 'Novo usuário';
     document.getElementById('usuario-modal-subtitulo').textContent = 'Crie um acesso para o Planner';
     document.getElementById('usuario-password').placeholder = 'Mínimo de 4 caracteres';
     document.getElementById('usuario-password-help').textContent = 'Informe a senha do novo usuário.';
     document.getElementById('btn-salvar-usuario').innerHTML = '<i class="ti ti-user-plus" style="font-size:14px"></i> Criar usuário';
-    atualizarCamposSenha();
+    atualizarCamposFuncao();
   }
 
-  function atualizarCamposSenha() {
+  function atualizarCamposFuncao() {
     const funcao = document.getElementById('usuario-funcao').value;
-    const criandoTecnico = !usuarioEditando && funcao === 'tecnico';
+    const ehTecnico = funcao === 'tecnico';
+
+    document.getElementById('usuario-campos-senha').style.display = ehTecnico ? 'none' : 'flex';
+    document.getElementById('usuario-campo-confirmar-senha').style.display = ehTecnico ? 'none' : 'flex';
+    document.getElementById('usuario-campo-regiao').style.display = ehTecnico ? 'flex' : 'none';
+
     const password = document.getElementById('usuario-password');
     const help = document.getElementById('usuario-password-help');
 
-    if (criandoTecnico) {
-      password.placeholder = 'Opcional para técnico';
-      help.textContent = 'Para técnico, a senha é opcional. Se ficar em branco, o cadastro técnico será criado mesmo assim.';
+    if (ehTecnico) {
+      password.value = '';
+      document.getElementById('usuario-password-confirmation').value = '';
       return;
     }
 
@@ -205,17 +221,16 @@
     setTimeout(() => document.getElementById('usuario-username').focus(), 0);
   };
 
-  window.abrirEditarUsuario = function (username, funcao) {
+  window.abrirEditarUsuario = function (username, funcao, regiao = '') {
     limparFormularioUsuario();
     usuarioEditando = username;
     document.getElementById('usuario-modal-titulo').textContent = 'Editar usuário';
     document.getElementById('usuario-modal-subtitulo').textContent = username;
     document.getElementById('usuario-username').value = username;
     document.getElementById('usuario-funcao').value = funcao === 'tecnico' ? 'tecnico' : 'projetista';
-    document.getElementById('usuario-password').placeholder = 'Deixe em branco para manter a senha atual';
-    document.getElementById('usuario-password-help').textContent = 'Preencha apenas se quiser trocar a senha.';
+    document.getElementById('usuario-regiao').value = regiao || '';
     document.getElementById('btn-salvar-usuario').innerHTML = '<i class="ti ti-device-floppy" style="font-size:14px"></i> Salvar alterações';
-    atualizarCamposSenha();
+    atualizarCamposFuncao();
     document.getElementById('modal-usuario').classList.add('open');
     setTimeout(() => document.getElementById('usuario-username').focus(), 0);
   };
@@ -257,6 +272,7 @@
           <tr>
             <th>Usuário</th>
             <th>Função</th>
+            <th>Região</th>
             <th>Criado em</th>
             <th style="text-align:right">Ações</th>
           </tr>
@@ -269,10 +285,11 @@
                 <div class="usuario-muted">Acesso ao Planner</div>
               </td>
               <td>${usuario.funcao === 'tecnico' ? 'Técnico' : 'Projetista'}</td>
+              <td>${usuario.funcao === 'tecnico' ? esc(usuario.regiao) : '—'}</td>
               <td>${formatarData(usuario.created_at)}</td>
               <td>
                 <div class="usuario-acoes">
-                  <button type="button" class="usuario-action-btn" onclick="abrirEditarUsuario('${esc(usuario.username)}', '${esc(usuario.funcao || 'projetista')}')">
+                  <button type="button" class="usuario-action-btn" onclick="abrirEditarUsuario('${esc(usuario.username)}', '${esc(usuario.funcao || 'projetista')}', '${esc(usuario.regiao || '')}')">
                     <i class="ti ti-pencil"></i> Editar
                   </button>
                   <button type="button" class="usuario-action-btn danger" onclick="excluirUsuario('${esc(usuario.username)}')">
@@ -301,6 +318,7 @@
     const btn = document.getElementById('btn-salvar-usuario');
     const username = document.getElementById('usuario-username').value.trim();
     const funcao = document.getElementById('usuario-funcao').value;
+    const regiao = document.getElementById('usuario-regiao').value;
     const password = document.getElementById('usuario-password').value;
     const passwordConfirmation = document.getElementById('usuario-password-confirmation').value;
 
@@ -313,7 +331,12 @@
       return;
     }
 
-    if (password || passwordConfirmation) {
+    if (funcao === 'tecnico' && !regiao) {
+      mostrarErro('Selecione a região do técnico.');
+      return;
+    }
+
+    if (funcao !== 'tecnico' && (password || passwordConfirmation)) {
       if (!password || !passwordConfirmation) {
         mostrarErro('Preencha senha e confirmação.');
         return;
@@ -332,7 +355,9 @@
     btn.innerHTML = '<i class="ti ti-loader-2" style="font-size:14px"></i> Salvando...';
 
     const payload = { username, funcao };
-    if (password || passwordConfirmation) {
+    if (funcao === 'tecnico') {
+      payload.regiao = regiao;
+    } else if (password || passwordConfirmation) {
       payload.password = password;
       payload.password_confirmation = passwordConfirmation;
     }
@@ -366,7 +391,7 @@
   };
 
   window.abrirNovoItem = window.abrirModalUsuario;
-  document.getElementById('usuario-funcao').addEventListener('change', atualizarCamposSenha);
+  document.getElementById('usuario-funcao').addEventListener('change', atualizarCamposFuncao);
 
   carregarUsuarios();
 </script>

@@ -1016,8 +1016,10 @@
 
       delete osDataMap[osId];
       fecharConfirmacaoExclusaoOs();
-      if (parentId) carregarOS(parentId);
-      if (window.carregarAtendimentos) window.carregarAtendimentos();
+      await window.plannerAposMutacaoLocal(async () => {
+        if (parentId) await carregarOS(parentId);
+        if (window.carregarAtendimentos) await window.carregarAtendimentos();
+      });
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
       alert(err.message || 'Erro ao excluir ordem de serviço.');
@@ -1224,7 +1226,7 @@
 
       fecharConfirmacaoExclusao();
       fecharDetalhe();
-      window.carregarAtendimentos();
+      await window.plannerAposExclusaoTarefa(id, () => window.carregarAtendimentos());
     } catch (err) {
       console.error('Erro ao excluir atendimento:', err.message);
       alert(err.message || 'Erro ao excluir atendimento.');
@@ -1737,6 +1739,7 @@
   }
 
   async function carregarAtendimentos(filtros) {
+    const gen = window.plannerBeginReload?.() ?? 0;
     const filtrosEfetivos = filtros !== undefined
       ? filtros
       : (window.obterFiltrosFormulario ? window.obterFiltrosFormulario() : {});
@@ -1752,6 +1755,8 @@
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
+    if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+
     Object.keys(atendimentosMap).forEach(k => delete atendimentosMap[k]);
     todos.forEach(r => { atendimentosMap[r.id] = r; });
 

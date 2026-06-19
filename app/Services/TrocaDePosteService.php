@@ -84,6 +84,9 @@ class TrocaDePosteService{
     }
 
     public function deleteTrocaDePoste(OpTask $trocadeposte): void {
+        OpTask::where('parent_task_id', $trocadeposte->id)
+            ->where('categoria', 'ordem-servico')
+            ->delete();
         $trocadeposte->delete();
     }
 

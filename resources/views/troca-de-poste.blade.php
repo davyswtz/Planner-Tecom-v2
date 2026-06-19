@@ -859,8 +859,10 @@
 
       delete osDataMap[osId];
       fecharConfirmacaoExclusaoOs();
-      if (parentId) carregarOS(parentId);
-      if (window.carregarTrocas) window.carregarTrocas();
+      await window.plannerAposMutacaoLocal(async () => {
+        if (parentId) await carregarOS(parentId);
+        if (window.carregarTrocas) await window.carregarTrocas();
+      });
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
       alert(err.message || 'Erro ao excluir ordem de serviço.');
@@ -1063,7 +1065,7 @@
 
       fecharConfirmacaoExclusao();
       fecharDetalhe();
-      window.carregarTrocas();
+      await window.plannerAposExclusaoTarefa(id, () => window.carregarTrocas());
     } catch (err) {
       console.error('Erro ao excluir troca de poste:', err.message);
       alert(err.message || 'Erro ao excluir troca de poste.');
@@ -1473,6 +1475,7 @@
   }
 
   async function carregarTrocas(filtros) {
+    const gen = window.plannerBeginReload?.() ?? 0;
     const filtrosEfetivos = filtros !== undefined
       ? filtros
       : (window.obterFiltrosFormulario ? window.obterFiltrosFormulario() : {});
@@ -1488,6 +1491,8 @@
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
+    if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+
     Object.keys(trocasMap).forEach(k => delete trocasMap[k]);
     todos.forEach(r => { trocasMap[r.id] = r; });
 

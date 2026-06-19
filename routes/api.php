@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\RompimentoController;
 use App\Http\Controllers\Api\OtimizaçãoDeRedeController;
 use App\Http\Controllers\Api\AtendimentoController;
 use App\Http\Controllers\Api\OrdemServicoController;
+use App\Http\Controllers\Api\PlannerChangesController;
 use App\Http\Controllers\Api\UsuarioController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -38,4 +39,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('ordem-servico/{id}', [OrdemServicoController::class, 'show'])->whereNumber('id');
     Route::get('ordem-servico', [OrdemServicoController::class, 'index']);
     Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('planner/changes', [PlannerChangesController::class, 'index']);
+    Route::get('planner/changes/wait', [PlannerChangesController::class, 'wait']);
 });

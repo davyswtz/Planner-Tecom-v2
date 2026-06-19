@@ -996,8 +996,10 @@
 
       delete osDataMap[osId];
       fecharConfirmacaoExclusaoOs();
-      if (parentId) carregarOS(parentId);
-      if (window.carregarOtimizacoes) window.carregarOtimizacoes();
+      await window.plannerAposMutacaoLocal(async () => {
+        if (parentId) await carregarOS(parentId);
+        if (window.carregarOtimizacoes) await window.carregarOtimizacoes();
+      });
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
       alert(err.message || 'Erro ao excluir ordem de serviço.');
@@ -1204,7 +1206,7 @@
 
       fecharConfirmacaoExclusao();
       fecharDetalhe();
-      window.carregarOtimizacoes();
+      await window.plannerAposExclusaoTarefa(id, () => window.carregarOtimizacoes());
     } catch (err) {
       console.error('Erro ao excluir otimização:', err.message);
       alert(err.message || 'Erro ao excluir otimização.');
@@ -1736,6 +1738,7 @@
   }
 
   async function carregarOtimizacoes(filtros) {
+    const gen = window.plannerBeginReload?.() ?? 0;
     const filtrosEfetivos = filtros !== undefined
       ? filtros
       : (window.obterFiltrosFormulario ? window.obterFiltrosFormulario() : {});
@@ -1751,6 +1754,8 @@
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
+    if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+
     Object.keys(otimizacoesMap).forEach(k => delete otimizacoesMap[k]);
     todos.forEach(r => { otimizacoesMap[r.id] = r; });
 

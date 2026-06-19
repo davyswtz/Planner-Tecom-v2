@@ -15,18 +15,29 @@ class UsuarioController extends Controller
 {
     private const DEFAULT_ITERATIONS = 200000;
 
+    private const REGIOES_TECNICO = [
+        'Governador Valadares',
+        'Vale do Aço',
+    ];
+
     public function index()
     {
         $tecnicosPorUsername = Schema::hasTable('tecnicos')
-            ? Tecnico::query()->whereNotNull('username')->pluck('username')->all()
-            : [];
+            ? Tecnico::query()->whereNotNull('username')->get()->keyBy('username')
+            : collect();
 
         $usuarios = User::query()
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn (User $user) => array_merge($this->formatarUsuario($user), [
-                'funcao' => in_array($user->username, $tecnicosPorUsername, true) ? 'tecnico' : 'projetista',
-            ]));
+            ->map(function (User $user) use ($tecnicosPorUsername) {
+                $tecnico = $tecnicosPorUsername->get($user->username);
+                $ehTecnico = $tecnico !== null;
+
+                return array_merge($this->formatarUsuario($user), [
+                    'funcao' => $ehTecnico ? 'tecnico' : 'projetista',
+                    'regiao' => $ehTecnico ? ($tecnico->regiao ?? '') : null,
+                ]);
+            });
 
         return response()->json(['usuarios' => $usuarios], 200);
     }
@@ -43,6 +54,7 @@ class UsuarioController extends Controller
             ],
             'password' => [Rule::requiredIf($request->input('funcao') === 'projetista'), 'nullable', 'string', 'min:4', 'confirmed'],
             'funcao' => ['required', Rule::in(['projetista', 'tecnico'])],
+            'regiao' => [Rule::requiredIf($request->input('funcao') === 'tecnico'), 'nullable', 'string', Rule::in(self::REGIOES_TECNICO)],
         ], [
             'username.required' => 'Informe o usuário.',
             'username.regex' => 'Use apenas letras, números, ponto, hífen ou underline.',
@@ -53,6 +65,8 @@ class UsuarioController extends Controller
             'password.confirmed' => 'A confirmação da senha não confere.',
             'funcao.required' => 'Selecione a função do usuário.',
             'funcao.in' => 'Selecione Projetista ou Técnico.',
+            'regiao.required' => 'Selecione a região do técnico.',
+            'regiao.in' => 'Selecione Governador Valadares ou Vale do Aço.',
         ]);
 
         if ($dados['funcao'] === 'tecnico') {
@@ -65,14 +79,14 @@ class UsuarioController extends Controller
                 ...$this->gerarSenha($dados['password'] ?? bin2hex(random_bytes(16))),
             ]);
 
-            $this->sincronizarTecnico($usuario->username, $dados['funcao']);
+            $this->sincronizarTecnico($usuario->username, $dados['funcao'], null, $dados['regiao'] ?? null);
 
             return $usuario;
         });
 
         return response()->json([
             'message' => 'Usuário criado com sucesso',
-            'usuario' => $this->formatarUsuario($usuario),
+            'usuario' => $this->formatarUsuarioComFuncao($usuario),
         ], 201);
     }
 
@@ -94,6 +108,7 @@ class UsuarioController extends Controller
             ],
             'password' => ['nullable', 'string', 'min:4', 'confirmed'],
             'funcao' => ['required', Rule::in(['projetista', 'tecnico'])],
+            'regiao' => [Rule::requiredIf($request->input('funcao') === 'tecnico'), 'nullable', 'string', Rule::in(self::REGIOES_TECNICO)],
         ], [
             'username.required' => 'Informe o usuário.',
             'username.regex' => 'Use apenas letras, números, ponto, hífen ou underline.',
@@ -102,6 +117,8 @@ class UsuarioController extends Controller
             'password.confirmed' => 'A confirmação da senha não confere.',
             'funcao.required' => 'Selecione a função do usuário.',
             'funcao.in' => 'Selecione Projetista ou Técnico.',
+            'regiao.required' => 'Selecione a região do técnico.',
+            'regiao.in' => 'Selecione Governador Valadares ou Vale do Aço.',
         ]);
 
         $usuarioLogado = $request->user()?->username;
@@ -122,12 +139,12 @@ class UsuarioController extends Controller
             }
 
             $user->save();
-            $this->sincronizarTecnico($user->username, $dados['funcao'], $usernameAnterior);
+            $this->sincronizarTecnico($user->username, $dados['funcao'], $usernameAnterior, $dados['regiao'] ?? null);
         });
 
         return response()->json([
             'message' => 'Usuário atualizado com sucesso',
-            'usuario' => $this->formatarUsuario($user->fresh()),
+            'usuario' => $this->formatarUsuarioComFuncao($user->fresh()),
         ], 200);
     }
 
@@ -186,8 +203,24 @@ class UsuarioController extends Controller
         ];
     }
 
-    private function sincronizarTecnico(string $username, string $funcao, ?string $usernameAnterior = null): void
+    private function formatarUsuarioComFuncao(User $user): array
     {
+        $tecnico = Schema::hasTable('tecnicos')
+            ? Tecnico::query()->where('username', $user->username)->first()
+            : null;
+
+        return array_merge($this->formatarUsuario($user), [
+            'funcao' => $tecnico ? 'tecnico' : 'projetista',
+            'regiao' => $tecnico?->regiao,
+        ]);
+    }
+
+    private function sincronizarTecnico(
+        string $username,
+        string $funcao,
+        ?string $usernameAnterior = null,
+        ?string $regiao = null,
+    ): void {
         if (! Schema::hasTable('tecnicos')) {
             return;
         }
@@ -200,6 +233,7 @@ class UsuarioController extends Controller
                 [
                     'username' => $username,
                     'nome' => $username,
+                    'regiao' => $regiao ?? '',
                 ]
             );
             return;

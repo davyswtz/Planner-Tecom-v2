@@ -4,21 +4,36 @@ namespace App\Observers;
 
 use App\Events\OpTaskChanged;
 use App\Models\OpTask;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class OpTaskObserver
 {
     public function created(OpTask $task): void
     {
-        event(OpTaskChanged::fromTask($task, 'created'));
+        $this->broadcastSafely($task, 'created');
     }
 
     public function updated(OpTask $task): void
     {
-        event(OpTaskChanged::fromTask($task, 'updated'));
+        $this->broadcastSafely($task, 'updated');
     }
 
     public function deleted(OpTask $task): void
     {
-        event(OpTaskChanged::fromTask($task, 'deleted'));
+        $this->broadcastSafely($task, 'deleted');
+    }
+
+    private function broadcastSafely(OpTask $task, string $action): void
+    {
+        try {
+            event(OpTaskChanged::fromTask($task, $action));
+        } catch (Throwable $e) {
+            Log::warning('Falha ao transmitir atualização em tempo real.', [
+                'task_id' => $task->id,
+                'action' => $action,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

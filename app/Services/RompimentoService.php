@@ -79,6 +79,7 @@ public function __construct(private OpTaskService $opTaskService
     }
 
     public function deleteRompimento(OpTask $rompimento): void {
+        OpTask::where('parent_task_id', $rompimento->id)->delete();
         $rompimento->delete();
     }
 

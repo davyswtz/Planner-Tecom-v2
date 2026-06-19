@@ -640,6 +640,7 @@
   }
 
   async function carregarOrdemServicoDashboard(resetPagina = true) {
+    const gen = window.plannerBeginReload?.() ?? 0;
     if (resetPagina) offsetAtual = 0;
     const filtros = validarPeriodoFiltros(obterFiltros());
     const qs = filtrosParaQuery(filtros);
@@ -650,6 +651,8 @@
         getUrl('ordem-servico/dashboard' + (qs ? '?' + qs : '')),
         getUrl(`ordem-servico?limit=${PAGE_SIZE}&offset=${offsetAtual}` + (qs ? '&' + qs : '')),
       ]);
+
+      if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
       atualizarMetricas(dashboard.totais);
       renderTabelaTecnicos(dashboard.por_tecnico || []);

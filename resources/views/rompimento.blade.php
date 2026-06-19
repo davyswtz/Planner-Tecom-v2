@@ -951,7 +951,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
       fecharConfirmacaoExclusao();
       fecharDetalhe();
-      window.carregarRompimentos();
+      await window.plannerAposExclusaoTarefa(id, () => window.carregarRompimentos());
     } catch (err) {
       console.error('Erro ao excluir rompimento:', err.message);
       alert(err.message || 'Erro ao excluir rompimento.');
@@ -1406,8 +1406,10 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
       delete osDataMap[osId];
       fecharConfirmacaoExclusaoOs();
-      if (parentId) carregarOS(parentId);
-      if (window.carregarRompimentos) window.carregarRompimentos();
+      await window.plannerAposMutacaoLocal(async () => {
+        if (parentId) await carregarOS(parentId);
+        if (window.carregarRompimentos) await window.carregarRompimentos();
+      });
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
       alert(err.message || 'Erro ao excluir ordem de serviço.');
@@ -1528,7 +1530,9 @@ async function carregarOS(rompimentoId) {
       body: JSON.stringify(dados)
     });
 
-    const resultado = await response.json();
+    const resultado = await response.json().catch(async () => ({
+      message: await response.text().catch(() => 'Erro ao criar rompimento.')
+    }));
     if (response.ok) {
       fecharModal();
       window.carregarRompimentos();
@@ -1772,6 +1776,7 @@ window.toggleColuna = toggleColuna;
 }
 
 async function carregarRompimentos(filtros) {
+  const gen = window.plannerBeginReload?.() ?? 0;
   const filtrosEfetivos = filtros !== undefined
     ? filtros
     : (window.obterFiltrosFormulario ? window.obterFiltrosFormulario() : {});
@@ -1787,6 +1792,8 @@ async function carregarRompimentos(filtros) {
     ]);
 
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
+    if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+
     Object.keys(rompimentosMap).forEach(k => delete rompimentosMap[k]);
     todos.forEach(r => { rompimentosMap[r.id] = r; });
 

@@ -629,10 +629,10 @@
 
   <div class="sidebar-footer">
     <div class="user-card">
-      <div class="avatar">DV</div>
+      <div class="avatar" id="sidebar-user-avatar">--</div>
       <div class="user-info">
-        <div class="user-name">davyibipar</div>
-        <div class="user-role">Desenvolvedor</div>
+        <div class="user-name" id="sidebar-user-name">Usuário</div>
+        <div class="user-role" id="sidebar-user-role">—</div>
       </div>
       <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
         <i class="ti ti-moon" id="theme-icon"></i>
@@ -687,6 +687,47 @@
   updateDate();
   setInterval(updateDate, 60000);
 
+  function iniciaisDeUsuario(username) {
+    if (!username) return '--';
+    const partes = String(username).split(/[._-]/).filter(Boolean);
+    if (partes.length >= 2) {
+      return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+    }
+    return String(username).slice(0, 2).toUpperCase();
+  }
+
+  function rotuloFuncao(funcao) {
+    if (funcao === 'tecnico') return 'Técnico';
+    if (funcao === 'projetista') return 'Projetista';
+    return 'Usuário';
+  }
+
+  function atualizarUsuarioSidebar() {
+    const nomeEl = document.getElementById('sidebar-user-name');
+    const roleEl = document.getElementById('sidebar-user-role');
+    const avatarEl = document.getElementById('sidebar-user-avatar');
+    if (!nomeEl || !roleEl || !avatarEl) return;
+
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('planner_user') || 'null');
+    } catch (_) {}
+
+    const username = user?.username || '';
+    if (!username) {
+      nomeEl.textContent = 'Usuário';
+      roleEl.textContent = '—';
+      avatarEl.textContent = '--';
+      return;
+    }
+
+    nomeEl.textContent = username;
+    roleEl.textContent = rotuloFuncao(user.funcao);
+    avatarEl.textContent = iniciaisDeUsuario(username);
+  }
+
+  atualizarUsuarioSidebar();
+
   function openSidebar() {
     const sidebar = document.getElementById('sidebar');
     sidebar.classList.remove('collapsed');
@@ -738,20 +779,29 @@
   };
 
   $broadcastDriver = config('broadcasting.default');
+  $reverbHost = config('broadcasting.connections.reverb.options.host');
+  $requestHost = request()->getHost();
+  $localHosts = ['localhost', '127.0.0.1', '::1'];
+  $reverbHostIsLocal = in_array($reverbHost, $localHosts, true);
+  $requestHostIsLocal = in_array($requestHost, $localHosts, true);
   $realtimeEnabled = match ($broadcastDriver) {
-    'reverb' => filled(config('broadcasting.connections.reverb.key')),
+    'reverb' => filled(config('broadcasting.connections.reverb.key')) && (! $reverbHostIsLocal || $requestHostIsLocal),
     'pusher' => filled(config('broadcasting.connections.pusher.key')),
     default => false,
   };
 @endphp
 
 @if($realtimePage && $realtimeEnabled)
+<script src="{{ asset('js/planner-reload-guard.js') }}"></script>
+<script src="{{ asset('js/planner-kanban.js') }}"></script>
 <script>
   window.plannerRealtimeCategorias = @json($realtimePage['categorias']);
-  window.plannerRealtimeReload = function () {
+  window.plannerRealtimeReload = async function () {
+    const gen = window.plannerBeginReload?.() ?? 0;
     if (typeof window.{{ $realtimePage['reload'] }} === 'function') {
-      window.{{ $realtimePage['reload'] }}();
+      await window.{{ $realtimePage['reload'] }}();
     }
+    if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
@@ -763,7 +813,7 @@
     key: @json($broadcastDriver === 'pusher'
       ? config('broadcasting.connections.pusher.key')
       : config('broadcasting.connections.reverb.key')),
-    host: @json(config('broadcasting.connections.reverb.options.host')),
+    host: @json($reverbHost),
     port: @json((int) config('broadcasting.connections.reverb.options.port')),
     scheme: @json(config('broadcasting.connections.reverb.options.scheme')),
     cluster: @json(config('broadcasting.connections.pusher.options.cluster')),
@@ -771,6 +821,25 @@
   };
 </script>
 <script src="{{ asset('js/planner-realtime.js') }}"></script>
+@elseif($realtimePage)
+<script src="{{ asset('js/planner-reload-guard.js') }}"></script>
+<script src="{{ asset('js/planner-kanban.js') }}"></script>
+<script>
+  window.plannerRealtimeReload = async function () {
+    const gen = window.plannerBeginReload?.() ?? 0;
+    if (typeof window.{{ $realtimePage['reload'] }} === 'function') {
+      await window.{{ $realtimePage['reload'] }}();
+    }
+    if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+  };
+  window.PLANNER_POLLING = {
+    enabled: true,
+    categorias: @json($realtimePage['categorias']),
+    timeoutSec: 25,
+    fallbackIntervalMs: 1500,
+  };
+</script>
+<script src="{{ asset('js/planner-polling.js') }}"></script>
 @endif
 
 </body>

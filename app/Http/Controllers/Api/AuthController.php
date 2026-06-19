@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 use App\Models\User;
+use App\Models\Tecnico;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
@@ -28,11 +30,16 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        $ehTecnico = Schema::hasTable('tecnicos')
+            && Tecnico::query()->where('username', $user->username)->exists();
+
         return response()->json([
             'token' => $token,
             'user' => [
                 'id' => $user->username,
                 'username' => $user->username,
+                'funcao' => $ehTecnico ? 'tecnico' : 'projetista',
             ],
         ]);
 
