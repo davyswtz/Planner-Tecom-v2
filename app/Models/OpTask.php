@@ -57,6 +57,15 @@ class OpTask extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (OpTask $task) {
+            if ($task->responsavel === null) {
+                $task->responsavel = '';
+            }
+        });
+    }
+
     public function parentTask(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_task_id');

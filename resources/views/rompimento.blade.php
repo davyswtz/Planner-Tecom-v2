@@ -1078,7 +1078,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     }
 
     let tecnicos = await buscarTecnicos(regiao);
-    if (regiao && destino === 'os-input-tecnico' && tecnicos.length === 0) {
+    if (regiao && tecnicos.length === 0 && (destino === 'os-input-tecnico' || destino === 'dropdown-tecnicos')) {
       tecnicos = await buscarTecnicos(null);
     }
 
@@ -1533,6 +1533,7 @@ async function carregarOS(rompimentoId) {
       fecharModal();
       window.carregarRompimentos();
     } else {
+      alert(resultado.message || 'Erro ao criar rompimento.');
       console.error('Erro ao criar rompimento:', resultado.message);
     }
   }

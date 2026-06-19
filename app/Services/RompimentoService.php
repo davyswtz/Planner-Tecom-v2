@@ -42,6 +42,7 @@ public function __construct(private OpTaskService $opTaskService
     {
         $dados['categoria'] = 'rompimentos';
         $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
+        $dados['responsavel'] = trim((string) ($dados['responsavel'] ?? ''));
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
         return OpTask::create($dados);
 

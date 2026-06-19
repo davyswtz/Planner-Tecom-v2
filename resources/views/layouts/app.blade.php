@@ -730,5 +730,50 @@
 
 @yield('scripts')
 
+@php
+  $realtimePage = match (true) {
+    request()->is('rompimento*') => ['categorias' => ['rompimentos', 'rompimento'], 'reload' => 'carregarRompimentos'],
+    request()->is('troca-de-poste*') => ['categorias' => ['troca-poste'], 'reload' => 'carregarTrocas'],
+    request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede'], 'reload' => 'carregarOtimizacoes'],
+    request()->is('atendimento*') => ['categorias' => ['atendimento-cliente'], 'reload' => 'carregarAtendimentos'],
+    default => null,
+  };
+
+  $broadcastDriver = config('broadcasting.default');
+  $realtimeEnabled = match ($broadcastDriver) {
+    'reverb' => filled(config('broadcasting.connections.reverb.key')),
+    'pusher' => filled(config('broadcasting.connections.pusher.key')),
+    default => false,
+  };
+@endphp
+
+@if($realtimePage && $realtimeEnabled)
+<script>
+  window.plannerRealtimeCategorias = @json($realtimePage['categorias']);
+  window.plannerRealtimeReload = function () {
+    if (typeof window.{{ $realtimePage['reload'] }} === 'function') {
+      window.{{ $realtimePage['reload'] }}();
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.19.0/dist/echo.iife.js"></script>
+<script>
+  window.PLANNER_REALTIME = {
+    enabled: true,
+    driver: @json($broadcastDriver),
+    key: @json($broadcastDriver === 'pusher'
+      ? config('broadcasting.connections.pusher.key')
+      : config('broadcasting.connections.reverb.key')),
+    host: @json(config('broadcasting.connections.reverb.options.host')),
+    port: @json((int) config('broadcasting.connections.reverb.options.port')),
+    scheme: @json(config('broadcasting.connections.reverb.options.scheme')),
+    cluster: @json(config('broadcasting.connections.pusher.options.cluster')),
+    authEndpoint: @json(url('/broadcasting/auth')),
+  };
+</script>
+<script src="{{ asset('js/planner-realtime.js') }}"></script>
+@endif
+
 </body>
 </html>
