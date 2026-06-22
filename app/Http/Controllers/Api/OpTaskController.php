@@ -28,13 +28,28 @@ class OpTaskController extends Controller
         $categoria = $request->query('categoria');
         $categoria = is_string($categoria) && $categoria !== '' ? $categoria : null;
 
+        $username = $request->user()?->username;
         $responsavel = null;
         $excluirFinalizadas = false;
+
         if ($request->boolean('minhas')) {
-            $responsavel = $request->user()?->username;
+            if (! $username) {
+                return response()->json([]);
+            }
+
+            $categoria = 'tarefas';
+            $responsavel = $username;
             $excluirFinalizadas = true;
-        } elseif ($categoria === 'tarefas' && ! $this->usuarioPodeAcessarAbaTarefas($request)) {
-            return response()->json(['message' => 'Sem permissão para visualizar a aba de tarefas.'], 403);
+        } elseif ($categoria === 'tarefas') {
+            if (! $this->usuarioPodeAcessarAbaTarefas($request)) {
+                return response()->json(['message' => 'Sem permissão para visualizar a aba de tarefas.'], 403);
+            }
+
+            if (! $username) {
+                return response()->json([]);
+            }
+
+            $responsavel = $username;
         }
 
         $resultado = $this->opTaskService->getOpTasks($limit, 'updated_at', 'desc', $categoria, $responsavel, $excluirFinalizadas);

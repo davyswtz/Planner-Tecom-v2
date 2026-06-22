@@ -425,7 +425,9 @@
   .d-red { background: var(--red); }
   .d-green { background: var(--green); }
   .kcol-count { font-size: 11px; color: var(--gray-400); background: var(--gray-100); padding: 1px 6px; border-radius: 20px; }
-  .kcol-body { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; scrollbar-color: var(--gray-200) transparent; }
+  .kcol-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; scrollbar-color: var(--gray-200) transparent; }
+  .kcol-body > .kcard,
+  .kcol-body > * { flex-shrink: 0; }
   .kcard {
     background: var(--gray-50); border: 1px solid var(--gray-200);
     border-radius: var(--radius-sm); padding: 9px 10px;

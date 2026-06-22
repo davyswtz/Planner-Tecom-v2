@@ -76,6 +76,7 @@
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
   }
   .starefa-item::before {
     content: '';
@@ -688,6 +689,7 @@
 
   function atualizarCardSuasTarefas(tarefa) {
     if (!tarefa?.id) return;
+    if (tarefa.categoria && tarefa.categoria !== 'tarefas') return;
 
     if (tarefaEstaFinalizada(tarefa.status)) {
       removerCardSuasTarefas(tarefa.id);
@@ -716,13 +718,23 @@
     }
   }
 
+  function filtrarTarefasDoUsuario(tarefas) {
+    const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
+    const username = user?.username || '';
+    return (Array.isArray(tarefas) ? tarefas : []).filter((t) => {
+      if (t.categoria && t.categoria !== 'tarefas') return false;
+      if (!username || t.responsavel !== username) return false;
+      return !tarefaEstaFinalizada(t.status);
+    });
+  }
+
   async function carregarSuasTarefas() {
     const container = document.getElementById('suas-tarefas-body');
     if (!container) return;
 
     try {
       const tarefas = await listarTarefas({ categoria: 'tarefas', minhas: true, limit: 50 });
-      const lista = (Array.isArray(tarefas) ? tarefas : []).filter(t => !tarefaEstaFinalizada(t.status));
+      const lista = filtrarTarefasDoUsuario(tarefas);
 
       Object.keys(tarefasMap).forEach(k => delete tarefasMap[k]);
 

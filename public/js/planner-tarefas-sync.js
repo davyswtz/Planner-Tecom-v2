@@ -11,8 +11,19 @@
     channel = null;
   }
 
+  function tarefaPertenceAoUsuario(tarefa) {
+    if (!tarefa?.id || tarefa.categoria !== 'tarefas') return false;
+
+    try {
+      const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
+      return !!(user?.username && tarefa.responsavel === user.username);
+    } catch {
+      return false;
+    }
+  }
+
   function aplicarTarefa(tarefa) {
-    if (!tarefa?.id || tarefa.categoria !== 'tarefas') return;
+    if (!tarefaPertenceAoUsuario(tarefa)) return;
 
     if (typeof window.adicionarCardTarefa === 'function') {
       window.adicionarCardTarefa(tarefa);

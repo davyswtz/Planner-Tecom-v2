@@ -15,8 +15,8 @@ public function __construct(private GoogleChatService $googleChatService){}
     {
         return OpTask::query()
             ->whereNull('parent_task_id')
-            ->when($categoria, fn ($query) => $query->where('categoria', $categoria))
-            ->when($responsavel, fn ($query) => $query->where('responsavel', $responsavel))
+            ->when($categoria !== null, fn ($query) => $query->where('categoria', $categoria))
+            ->when($responsavel !== null && $responsavel !== '', fn ($query) => $query->where('responsavel', $responsavel))
             ->when($excluirFinalizadas, fn ($query) => $query->whereNotIn('status', ['Finalizar', 'Finalizada']))
             ->orderBy($orderBy, $order)
             ->limit($limit)

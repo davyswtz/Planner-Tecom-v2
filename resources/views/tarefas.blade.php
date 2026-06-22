@@ -129,10 +129,29 @@
     border-color: #30363d;
     color: #e6edf3;
   }
+  .tarefas-page-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  .tarefas-kanban-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .tarefas-kanban-card .kanban-cols {
+    min-height: 0;
+  }
+  .tarefas-kanban-card .kcol {
+    min-height: 0;
+  }
 </style>
 @endsection
 
 @section('content')
+<div class="tarefas-page-content">
 
 <!-- MODAL CRIAR -->
 <x-modal id="modal-overlay" titulo="Nova tarefa" subtitulo="Preencha os dados da tarefa">
@@ -215,7 +234,7 @@
 </div>
 
 <!-- KANBAN -->
-<div class="card" style="flex:1">
+<div class="card tarefas-kanban-card">
   <div class="card-header">
     <span class="card-title">Kanban de Tarefas</span>
     <span class="card-action">total: <span id="total-tarefas">0</span></span>
@@ -304,6 +323,7 @@
   </div>
 </div>
 
+</div>
 @endsection
 
 @section('scripts')
@@ -536,6 +556,10 @@
 
   function adicionarCardTarefa(tarefa) {
     if (!tarefa?.id) return;
+    if (tarefa.categoria && tarefa.categoria !== 'tarefas') return;
+
+    const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
+    if (!user?.username || tarefa.responsavel !== user.username) return;
 
     tarefasMap[tarefa.id] = tarefa;
     document.querySelectorAll(`.kcard[data-id="${CSS.escape(String(tarefa.id))}"]`).forEach(card => card.remove());
@@ -549,10 +573,20 @@
     atualizarContadores();
   }
 
+  function filtrarTarefasDoUsuario(tarefas) {
+    const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
+    const username = user?.username || '';
+    return (Array.isArray(tarefas) ? tarefas : []).filter((t) => {
+      if (t.categoria && t.categoria !== 'tarefas') return false;
+      if (!username) return false;
+      return t.responsavel === username;
+    });
+  }
+
   async function carregarTarefas() {
     try {
-      const tarefas = await listarTarefas({ categoria: 'tarefas', limit: 500 });
-      renderKanban(Array.isArray(tarefas) ? tarefas : []);
+      const tarefas = await listarTarefas({ categoria: 'tarefas', minhas: true, limit: 500 });
+      renderKanban(filtrarTarefasDoUsuario(tarefas));
     } catch (err) {
       console.error(err);
     }
