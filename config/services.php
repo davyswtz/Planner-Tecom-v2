@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    'nicon' => [
+        'base_url' => rtrim(env('NICON_BASE_URL', ''), '/'),
+        'email' => env('NICON_EMAIL'),
+        'password' => env('NICON_PASSWORD'),
+        'two_factor' => env('NICON_2FA'),
+        'timeout' => (int) env('NICON_TIMEOUT', 120),
+    ],
+
+    /*
+    | Verificação SSL do cliente HTTP (Google Chat, Nicon, etc.).
+    | Em local no Windows, defina HTTP_VERIFY_SSL=false se aparecer cURL error 60.
+    */
+    'http_verify_ssl' => filter_var(
+        env('HTTP_VERIFY_SSL', env('APP_ENV') === 'production'),
+        FILTER_VALIDATE_BOOL
+    ),
+
 ];

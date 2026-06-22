@@ -34,6 +34,8 @@ class DbSchemaCheckCommand extends Command
     private array $laravelTables = [
         'migrations',
         'personal_access_tokens',
+        'webhooks',
+        'usuario_permissoes',
     ];
 
     public function handle(): int

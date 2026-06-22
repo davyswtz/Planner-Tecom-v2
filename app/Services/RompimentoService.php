@@ -71,8 +71,8 @@ public function __construct(private OpTaskService $opTaskService
                 $dados['status']
             );
             $googleChatService = $this->googleChatService;
-            app()->terminating(function() use ($rompimento, $mensagem, $googleChatService) {
-                $googleChatService->enviarNotificacao($rompimento, $mensagem);
+            app()->terminating(function () use ($rompimento, $mensagem, $googleChatService, $dados) {
+                $googleChatService->enviarNotificacao($rompimento, $mensagem, $dados['status']);
             });
         }
         return $rompimento->fresh();

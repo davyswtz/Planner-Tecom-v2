@@ -71,8 +71,8 @@ class OtimizaçãoDeRedeService
                 $dados['status']
             );
             $googleChatService = $this->googleChatService;
-            app()->terminating(function () use ($tarefaAtualizada, $mensagem, $googleChatService) {
-                $googleChatService->enviarNotificacao($tarefaAtualizada, $mensagem);
+            app()->terminating(function () use ($tarefaAtualizada, $mensagem, $googleChatService, $dados) {
+                $googleChatService->enviarNotificacao($tarefaAtualizada, $mensagem, $dados['status']);
             });
         }
 

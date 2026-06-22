@@ -8,18 +8,17 @@ use Illuminate\Support\Facades\Http;
 
 class GoogleChatService
 {
-    private array $regiaoToConfigKey = [
-        'goval' => 'GOVAL',
-        'vale do aço' => 'VALE_DO_ACO',
-        'vale do aco' => 'VALE_DO_ACO',
-        'caratinga' => 'CARATINGA',
-        'backup' => 'BACKUP',
-    ];
-
-    public function enviarNotificacao(OpTask $rompimento, array $mensagem): void
+    public function __construct(private WebhookService $webhooks)
     {
-        $config = AppConfig::getJson('webhookConfig');
-        $url = $this->resolverWebhookUrl($rompimento->regiao, $config);
+    }
+
+    public function enviarNotificacao(OpTask $rompimento, array $mensagem, ?string $statusNovo = null): void
+    {
+        if ($statusNovo !== null && ! $this->webhooks->deveNotificarStatus($statusNovo)) {
+            return;
+        }
+
+        $url = $this->webhooks->resolverUrlPorRegiao($rompimento->regiao);
 
         if (! $url) {
             return;
@@ -78,17 +77,5 @@ class GoogleChatService
                 '🔑 *Código:* ' . ($rompimento['taskCode'] ?? '—'),
             ]),
         ];
-    }
-
-    private function resolverWebhookUrl(?string $regiao, array $config): ?string
-    {
-        $urlsByRegion = $config['urlsByRegion'] ?? [];
-        $regiaoKey = $this->regiaoToConfigKey[mb_strtolower(trim((string) $regiao))] ?? null;
-
-        if ($regiaoKey && ! empty($urlsByRegion[$regiaoKey])) {
-            return $urlsByRegion[$regiaoKey];
-        }
-
-        return $config['url'] ?? null;
     }
 }

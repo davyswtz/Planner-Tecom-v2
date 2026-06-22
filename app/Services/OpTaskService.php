@@ -11,10 +11,13 @@ class OpTaskService
 
 public function __construct(private GoogleChatService $googleChatService){}
 
-    public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc')
+    public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc', ?string $categoria = null, ?string $responsavel = null, bool $excluirFinalizadas = false)
     {
         return OpTask::query()
             ->whereNull('parent_task_id')
+            ->when($categoria, fn ($query) => $query->where('categoria', $categoria))
+            ->when($responsavel, fn ($query) => $query->where('responsavel', $responsavel))
+            ->when($excluirFinalizadas, fn ($query) => $query->whereNotIn('status', ['Finalizar', 'Finalizada']))
             ->orderBy($orderBy, $order)
             ->limit($limit)
             ->get();
@@ -30,6 +33,46 @@ public function __construct(private GoogleChatService $googleChatService){}
 
         }
         return $task;
+    }
+
+    public function createTarefa(array $dados): OpTask
+    {
+        return $this->createOpTask([
+            'titulo' => $dados['titulo'],
+            'descricao' => $dados['descricao'] ?? '',
+            'responsavel' => $dados['responsavel'] ?? '',
+            'prazo' => $dados['prazo'] ?? null,
+            'categoria' => 'tarefas',
+            'status' => $dados['status'] ?? 'Criada',
+            'regiao' => $dados['regiao'] ?? '',
+        ]);
+    }
+
+    public function updateTarefa(OpTask $opTask, array $dados): OpTask
+    {
+        if ($opTask->categoria !== 'tarefas') {
+            throw new \InvalidArgumentException(
+                'Somente tarefas da categoria "tarefas" podem ser editadas por este método.'
+            );
+        }
+
+        $permitidos = ['titulo', 'descricao', 'responsavel', 'prazo', 'status'];
+        $filtrados = array_intersect_key($dados, array_flip($permitidos));
+
+        return $this->updateOpTask($opTask, $filtrados);
+    }
+
+    public function deleteTarefa(OpTask $opTask): OpTask
+    {
+        if ($opTask->categoria !== 'tarefas') {
+            throw new \InvalidArgumentException(
+                'Somente tarefas da categoria "tarefas" podem ser excluídas por este método.'
+            );
+        }
+
+        $opTask->delete();
+
+        return $opTask;
     }
 
     public function showOpTask(OpTask $opTask){
@@ -69,13 +112,13 @@ public function __construct(private GoogleChatService $googleChatService){}
         if (!empty($opTask->parent_task_id)) {
             $pai = OpTask::find($opTask->parent_task_id);
             if ($pai) {
-                app()->terminating(function() use ($pai, $mensagem, $googleChatService) {
-                    $googleChatService->enviarNotificacao($pai, $mensagem);
+                app()->terminating(function () use ($pai, $mensagem, $googleChatService, $dados) {
+                    $googleChatService->enviarNotificacao($pai, $mensagem, $dados['status']);
                 });
             }
         } else {
-            app()->terminating(function() use ($opTask, $mensagem, $googleChatService) {
-                $googleChatService->enviarNotificacao($opTask, $mensagem);
+            app()->terminating(function () use ($opTask, $mensagem, $googleChatService, $dados) {
+                $googleChatService->enviarNotificacao($opTask, $mensagem, $dados['status']);
             });
         }
     }
@@ -132,6 +175,7 @@ public function __construct(private GoogleChatService $googleChatService){}
         'troca de etiqueta'     => 'ETQ',
         'qualidade-potencia'    => 'QUA',
         'qualidade de potencia' => 'QUA',
+        'tarefas'               => 'TAR',
         'sem-categoria'         => 'GEN',
     ];
 

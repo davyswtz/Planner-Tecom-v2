@@ -43,4 +43,12 @@ class AppConfig extends Model
 
         return is_array($decoded) ? $decoded : $default;
     }
+
+    public static function setJson(string $key, array $value): void
+    {
+        static::updateOrCreate(
+            ['cfg_key' => $key],
+            ['cfg_value' => json_encode($value, JSON_UNESCAPED_UNICODE)]
+        );
+    }
 }

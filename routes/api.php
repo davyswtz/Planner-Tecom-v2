@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\TrocaPosteController;
 use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\NotificacaoController;
 use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\RompimentoController;
 use App\Http\Controllers\Api\OtimizaçãoDeRedeController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Api\AtendimentoController;
 use App\Http\Controllers\Api\OrdemServicoController;
 use App\Http\Controllers\Api\PlannerChangesController;
 use App\Http\Controllers\Api\UsuarioController;
+use App\Http\Controllers\Api\WebhookConfigController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +23,10 @@ Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('me', [AuthController::class, 'me']);
+    Route::get('notificacoes', [NotificacaoController::class, 'index']);
+    Route::post('notificacoes/ler-todas', [NotificacaoController::class, 'marcarTodasLidas']);
+    Route::post('notificacoes/{id}/ler', [NotificacaoController::class, 'marcarLida'])->whereNumber('id');
     Route::apiResource('op-tasks', OpTaskController::class);
     Route::apiResource('rompimentos', RompimentoController::class);
     Route::get('rompimentos/{id}/os', [RompimentoController::class, 'listarOS']);
@@ -38,7 +44,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('ordem-servico/dashboard', [OrdemServicoController::class, 'dashboard']);
     Route::get('ordem-servico/{id}', [OrdemServicoController::class, 'show'])->whereNumber('id');
     Route::get('ordem-servico', [OrdemServicoController::class, 'index']);
-    Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('usuarios/opcoes', [UsuarioController::class, 'opcoes']);
+    Route::middleware('permissao:visualizar_aba_usuarios')->group(function () {
+        Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
+    });
     Route::get('planner/changes', [PlannerChangesController::class, 'index']);
     Route::get('planner/changes/wait', [PlannerChangesController::class, 'wait']);
+
+    Route::middleware('permissao:adicionar_webhook')->group(function () {
+        Route::get('webhook-config', [WebhookConfigController::class, 'show']);
+        Route::put('webhook-config', [WebhookConfigController::class, 'update']);
+        Route::post('webhook-config/{id}/testar', [WebhookConfigController::class, 'testar'])->whereNumber('id');
+    });
 });

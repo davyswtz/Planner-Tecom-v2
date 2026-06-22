@@ -388,11 +388,10 @@
         <label class="os-label">Tipo de rompimento</label>
         <select id="input-tipo" class="os-input">
           <option value="">Selecione...</option>
-          <option>Fibra cortada</option>
-          <option>CTO offline</option>
-          <option>Queda de sinal</option>
-          <option>OLT offline</option>
-          <option>Cabo subterrâneo</option>
+          <option value="Rota ramal">Rota ramal</option>
+          <option value="Backbone">Backbone</option>
+          <option value="Caixa">Caixa</option>
+          <option value="Setor">Setor</option>
         </select>
       </div>
       <div class="os-field">
@@ -1214,7 +1213,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
     const campos = [
       { id: 'campo-cto', tipo: 'cto' },
-      { id: 'campo-tipo', tipo: 'select', opcoes: ['Fibra cortada', 'CTO offline', 'Queda de sinal', 'OLT offline', 'Cabo subterrâneo'] },
+      { id: 'campo-tipo', tipo: 'select', opcoes: ['Rota ramal', 'Backbone', 'Caixa', 'Setor'] },
       { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga'] },
       { id: 'campo-tecnicos', tipo: 'custom' },
       { id: 'campo-clientes', tipo: 'number' },
@@ -1769,10 +1768,12 @@ window.toggleColuna = toggleColuna;
       if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
     });
     const response = await fetch(`/api/rompimentos?${params}`, {
-        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+        cache: 'no-store',
     });
     const data = await response.json();
-    return data.rompimentos || [];
+    const lista = data.rompimentos || [];
+    return window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
 }
 
 async function carregarRompimentos(filtros) {

@@ -1468,10 +1468,12 @@
       if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
     });
     const response = await fetch(`/api/troca-poste?${params}`, {
-      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+      cache: 'no-store',
     });
     const data = await response.json();
-    return data.trocaDePoste || [];
+    const lista = data.trocaDePoste || [];
+    return window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
   }
 
   async function carregarTrocas(filtros) {

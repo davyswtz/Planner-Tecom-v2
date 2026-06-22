@@ -99,7 +99,7 @@
   }
 
   window.plannerNotifyLocalMutation = async function () {
-    pausadoAte = Date.now() + 5000;
+    pausadoAte = Date.now() + 20000;
     recarregando = true;
     if (abortController) abortController.abort();
 
@@ -144,7 +144,7 @@
     try {
       const data = await buscarMudancas(false);
       if (!data) return;
-      await aplicarMudanca({ ...data, changed: true });
+      await aplicarMudanca(data);
     } catch (err) {
       if (err?.name !== 'AbortError') console.warn('[Planner] Falha no fallback de polling.', err);
     }

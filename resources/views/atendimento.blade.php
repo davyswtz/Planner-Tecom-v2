@@ -1732,10 +1732,12 @@
       if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
     });
     const response = await fetch(`/api/atendimento?${params}`, {
-      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+      cache: 'no-store',
     });
     const data = await response.json();
-    return data.atendimentos || [];
+    const lista = data.atendimentos || [];
+    return window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
   }
 
   async function carregarAtendimentos(filtros) {

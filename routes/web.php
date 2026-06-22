@@ -14,6 +14,10 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 });
 
+Route::get('/tarefas', function () {
+    return view('tarefas');
+});
+
 Route::get('/rompimento', function () {
     return view('rompimento');
 });
@@ -36,4 +40,8 @@ Route::get('/ordem-de-servico', function () {
 
 Route::get('/usuarios', function () {
     return view('usuarios');
+});
+
+Route::get('/configuracoes', function () {
+    return view('configuracoes');
 });

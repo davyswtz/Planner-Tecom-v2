@@ -114,12 +114,6 @@
   [data-theme="dark"] .btn-primary { background: #238636; }
   [data-theme="dark"] .btn-primary:hover { background: #2ea043; }
 
-  [data-theme="dark"] .status-pill {
-    background: #0b2215;
-    border-color: #1e4d2e;
-    color: #56d364;
-  }
-
   [data-theme="dark"] .metric-card:hover { border-color: #388bfd; }
   [data-theme="dark"] .mi-blue  { background: #0d2340; color: #58a6ff; }
   [data-theme="dark"] .mi-amber { background: #201800; color: #ffa657; }
@@ -290,21 +284,6 @@
   .page-title { font-size: 15px; font-weight: 600; color: var(--gray-950); letter-spacing: -0.01em; }
   .page-date { font-size: 11px; color: var(--gray-400); }
   .topbar-right { display: flex; align-items: center; gap: 8px; }
-  .status-pill {
-    display: flex; align-items: center; gap: 6px;
-    background: var(--green-bg); border: 1px solid #bbf7d0;
-    border-radius: 20px; padding: 4px 10px;
-    font-size: 11px; font-weight: 500; color: var(--green-text);
-  }
-  .pulse {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--green); position: relative;
-  }
-  .pulse::after {
-    content: ''; position: absolute; inset: -3px; border-radius: 50%;
-    background: var(--green); opacity: 0.3; animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.3} 50%{transform:scale(1.6);opacity:0} }
   .icon-btn {
     width: 34px; height: 34px;
     border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
@@ -317,7 +296,69 @@
     position: absolute; top: 6px; right: 6px;
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--red); border: 1.5px solid var(--white);
+    display: none;
   }
+  .notif-wrap { position: relative; }
+  .notif-count {
+    position: absolute; top: -4px; right: -4px;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 999px; background: var(--red); color: #fff;
+    font-size: 10px; font-weight: 600; line-height: 16px;
+    display: none; align-items: center; justify-content: center;
+    border: 1.5px solid var(--white);
+  }
+  .notif-panel {
+    display: none;
+    position: absolute; top: calc(100% + 8px); right: 0;
+    width: min(360px, calc(100vw - 24px));
+    max-height: 420px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    z-index: 500;
+    overflow: hidden;
+  }
+  .notif-panel.open { display: flex; flex-direction: column; }
+  .notif-panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-bottom: 1px solid var(--gray-200);
+  }
+  .notif-panel-title { font-size: 13px; font-weight: 600; color: var(--gray-950); }
+  .notif-panel-action {
+    border: none; background: transparent; color: var(--blue-600);
+    font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
+  }
+  .notif-panel-action:hover { text-decoration: underline; }
+  .notif-panel-body { overflow-y: auto; max-height: 360px; }
+  .notif-empty {
+    padding: 28px 16px; text-align: center; color: var(--gray-400); font-size: 13px;
+  }
+  .notif-item {
+    width: 100%; text-align: left; border: none; background: transparent;
+    padding: 12px 14px; border-bottom: 1px solid var(--gray-100);
+    cursor: pointer; font-family: inherit;
+    transition: background 0.12s;
+  }
+  .notif-item:hover { background: var(--gray-50); }
+  .notif-item--lida { opacity: 0.72; }
+  .notif-item-title {
+    display: block; font-size: 13px; font-weight: 600; color: var(--gray-950); margin-bottom: 4px;
+  }
+  .notif-item-msg {
+    display: block; font-size: 12px; color: var(--gray-600); line-height: 1.45; margin-bottom: 6px;
+  }
+  .notif-item-time { display: block; font-size: 11px; color: var(--gray-400); }
+  [data-theme="dark"] .notif-panel {
+    background: #161b22; border-color: #30363d;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+  [data-theme="dark"] .notif-panel-head { border-color: #30363d; }
+  [data-theme="dark"] .notif-panel-title { color: #e6edf3; }
+  [data-theme="dark"] .notif-item { border-color: #21262d; }
+  [data-theme="dark"] .notif-item:hover { background: #21262d; }
+  [data-theme="dark"] .notif-item-title { color: #e6edf3; }
+  [data-theme="dark"] .notif-item-msg { color: #8b949e; }
   .btn-primary {
     display: flex; align-items: center; gap: 6px;
     background: #166ac4; color: #fff; border: none;
@@ -538,7 +579,6 @@
     .sidebar.open { left: 0; }
     .main { width: 100%; }
     .topbar { padding: 0 16px; }
-    .status-pill { display: none; }
     .hamburger { display: flex; }
     .btn-primary { display: none; }
     .content { padding: 14px 16px; }
@@ -603,6 +643,7 @@
     <div class="nav-section">
       <div class="nav-section-label">Principal</div>
       <a href="/dashboard" class="nav-item {{ request()->is('dashboard') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></div></a>
+      <a href="/tarefas" id="nav-item-tarefas" data-permissao="visualizar_aba_tarefas" class="nav-item {{ request()->is('tarefas*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-checklist"></i><span>Tarefas</span></div></a>
     </div>
 
     <div class="nav-section">
@@ -622,8 +663,8 @@
 
     <div class="nav-section">
       <div class="nav-section-label">Gestão</div>
-      <a href="/usuarios" class="nav-item {{ request()->is('usuarios*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>
+      <a href="/usuarios" id="nav-item-usuarios" data-permissao="visualizar_aba_usuarios" class="nav-item {{ request()->is('usuarios*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
+      <a href="/configuracoes" id="nav-item-configuracoes" data-permissao="adicionar_webhook" class="nav-item {{ request()->is('configuracoes*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>
     </div>
   </div>
 
@@ -654,18 +695,29 @@
       <div class="page-date" id="current-date"></div>
     </div>
     <div class="topbar-right">
-      <div class="status-pill">
-        <div class="pulse"></div>
-        todos os sistemas ok
+      <div class="notif-wrap">
+        <button class="icon-btn" id="btn-notificacoes" type="button" title="Notificações" aria-label="Notificações">
+          <i class="ti ti-bell"></i>
+          <div class="notif-dot" id="notif-dot"></div>
+          <span class="notif-count" id="notificacoes-badge">0</span>
+        </button>
+        <div class="notif-panel" id="notificacoes-painel">
+          <div class="notif-panel-head">
+            <span class="notif-panel-title">Notificações</span>
+            <button type="button" class="notif-panel-action" id="btn-notificacoes-marcar-todas">Marcar todas como lidas</button>
+          </div>
+          <div class="notif-panel-body">
+            <div class="notif-empty" id="notificacoes-vazio">Nenhuma notificação.</div>
+            <div id="notificacoes-lista"></div>
+          </div>
+        </div>
       </div>
-      <button class="icon-btn">
-        <i class="ti ti-bell"></i>
-        <div class="notif-dot"></div>
-      </button>
       <button class="icon-btn"><i class="ti ti-refresh"></i></button>
+      @unless(View::hasSection('hide-topbar-btn'))
       <button class="btn-primary" onclick="abrirNovoItem()">
         <i class="ti ti-plus"></i> @yield('btn-label', 'Nova tarefa')
       </button>
+      @endunless
     </div>
   </div>
 
@@ -702,6 +754,60 @@
     return 'Usuário';
   }
 
+  function possuiPermissao(key) {
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('planner_user') || 'null');
+    } catch {
+      return false;
+    }
+    const permissoes = user?.permissoes || [];
+    if (permissoes.includes(key)) return true;
+    if (key === 'adicionar_webhook' && permissoes.includes('conectar_webhook')) return true;
+    return false;
+  }
+  window.plannerPossuiPermissao = possuiPermissao;
+
+  function aplicarPermissoesNav() {
+    document.querySelectorAll('[data-permissao]').forEach((el) => {
+      if (possuiPermissao(el.dataset.permissao)) {
+        el.style.removeProperty('display');
+      } else {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  async function sincronizarPermissoesUsuario() {
+    const token = localStorage.getItem('planner_token');
+    if (!token) return;
+
+    try {
+      const response = await fetch('/api/me', {
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+        cache: 'no-store',
+      });
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!data.user) return;
+
+      let stored = null;
+      try {
+        stored = JSON.parse(localStorage.getItem('planner_user') || 'null');
+      } catch {
+        stored = null;
+      }
+
+      const user = {
+        ...(stored && typeof stored === 'object' ? stored : {}),
+        ...data.user,
+        permissoes: data.user.permissoes || [],
+      };
+      localStorage.setItem('planner_user', JSON.stringify(user));
+    } catch (_) {}
+  }
+
   function atualizarUsuarioSidebar() {
     const nomeEl = document.getElementById('sidebar-user-name');
     const roleEl = document.getElementById('sidebar-user-role');
@@ -724,9 +830,15 @@
     nomeEl.textContent = username;
     roleEl.textContent = rotuloFuncao(user.funcao);
     avatarEl.textContent = iniciaisDeUsuario(username);
+    aplicarPermissoesNav();
   }
 
-  atualizarUsuarioSidebar();
+  async function initUsuarioSidebar() {
+    await sincronizarPermissoesUsuario();
+    atualizarUsuarioSidebar();
+  }
+
+  initUsuarioSidebar();
 
   function openSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -766,8 +878,6 @@
   }
 </script>
 
-@yield('scripts')
-
 @php
   $realtimePage = match (true) {
     request()->is('rompimento*') => ['categorias' => ['rompimentos', 'rompimento'], 'reload' => 'carregarRompimentos'],
@@ -775,6 +885,8 @@
     request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede', 'otimizacao de rede', 'otimização de rede', 'OTIMIZACAO DE REDE', 'OTIMIZAÇÃO DE REDE'], 'reload' => 'carregarOtimizacoes'],
     request()->is('atendimento*') => ['categorias' => ['atendimento-cliente'], 'reload' => 'carregarAtendimentos'],
     request()->is('ordem-de-servico*') => ['categorias' => ['ordem-servico'], 'reload' => 'carregarOrdemServicoDashboard'],
+    request()->is('tarefas*') => ['categorias' => ['tarefas'], 'reload' => 'carregarTarefas'],
+    request()->is('dashboard*') => ['categorias' => ['tarefas'], 'reload' => 'carregarSuasTarefas'],
     default => null,
   };
 
@@ -791,9 +903,20 @@
   };
 @endphp
 
-@if($realtimePage && $realtimeEnabled)
+<script src="{{ asset('js/planner-notificacoes.js') }}"></script>
+
+@if($realtimePage)
 <script src="{{ asset('js/planner-reload-guard.js') }}"></script>
 <script src="{{ asset('js/planner-kanban.js') }}"></script>
+@endif
+
+@if(request()->is('tarefas*', 'dashboard*'))
+<script src="{{ asset('js/planner-tarefas-sync.js') }}"></script>
+@endif
+
+@yield('scripts')
+
+@if($realtimePage && $realtimeEnabled)
 <script>
   window.plannerRealtimeCategorias = @json($realtimePage['categorias']);
   window.plannerRealtimeReload = async function () {
@@ -822,8 +945,6 @@
 </script>
 <script src="{{ asset('js/planner-realtime.js') }}"></script>
 @elseif($realtimePage)
-<script src="{{ asset('js/planner-reload-guard.js') }}"></script>
-<script src="{{ asset('js/planner-kanban.js') }}"></script>
 <script>
   window.plannerRealtimeReload = async function () {
     const gen = window.plannerBeginReload?.() ?? 0;

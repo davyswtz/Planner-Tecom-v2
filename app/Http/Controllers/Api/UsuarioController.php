@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Tecnico;
 use App\Models\User;
+use App\Services\UsuarioPermissaoService;
 use Illuminate\Http\Request;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,31 @@ class UsuarioController extends Controller
         'Vale do Aço',
     ];
 
+    public function __construct(
+        private UsuarioPermissaoService $permissoes,
+    ) {}
+
+    public function opcoes()
+    {
+        $tecnicosPorUsername = Schema::hasTable('tecnicos')
+            ? Tecnico::query()->whereNotNull('username')->get()->keyBy('username')
+            : collect();
+
+        $usuarios = User::query()
+            ->orderBy('username')
+            ->get()
+            ->map(function (User $user) use ($tecnicosPorUsername) {
+                $tecnico = $tecnicosPorUsername->get($user->username);
+
+                return [
+                    'username' => $user->username,
+                    'funcao' => $tecnico ? 'tecnico' : 'projetista',
+                ];
+            });
+
+        return response()->json(['usuarios' => $usuarios], 200);
+    }
+
     public function index()
     {
         $tecnicosPorUsername = Schema::hasTable('tecnicos')
@@ -28,18 +54,27 @@ class UsuarioController extends Controller
 
         $usuarios = User::query()
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function (User $user) use ($tecnicosPorUsername) {
+            ->get();
+
+        $permissoesPorUsuario = $this->permissoes->listarPorUsuarios(
+            $usuarios->pluck('username')->all()
+        );
+
+        $usuarios = $usuarios->map(function (User $user) use ($tecnicosPorUsername, $permissoesPorUsuario) {
                 $tecnico = $tecnicosPorUsername->get($user->username);
                 $ehTecnico = $tecnico !== null;
 
                 return array_merge($this->formatarUsuario($user), [
                     'funcao' => $ehTecnico ? 'tecnico' : 'projetista',
                     'regiao' => $ehTecnico ? ($tecnico->regiao ?? '') : null,
+                    'permissoes' => $permissoesPorUsuario[$user->username] ?? [],
                 ]);
             });
 
-        return response()->json(['usuarios' => $usuarios], 200);
+        return response()->json([
+            'usuarios' => $usuarios,
+            'permissoes_disponiveis' => $this->permissoes->catalogo(),
+        ], 200);
     }
 
     public function store(Request $request)
@@ -55,6 +90,8 @@ class UsuarioController extends Controller
             'password' => [Rule::requiredIf($request->input('funcao') === 'projetista'), 'nullable', 'string', 'min:4', 'confirmed'],
             'funcao' => ['required', Rule::in(['projetista', 'tecnico'])],
             'regiao' => [Rule::requiredIf($request->input('funcao') === 'tecnico'), 'nullable', 'string', Rule::in(self::REGIOES_TECNICO)],
+            'permissoes' => ['nullable', 'array'],
+            'permissoes.*' => ['string', Rule::in($this->permissoes->chavesValidas())],
         ], [
             'username.required' => 'Informe o usuário.',
             'username.regex' => 'Use apenas letras, números, ponto, hífen ou underline.',
@@ -80,6 +117,7 @@ class UsuarioController extends Controller
             ]);
 
             $this->sincronizarTecnico($usuario->username, $dados['funcao'], null, $dados['regiao'] ?? null);
+            $this->permissoes->sincronizar($usuario->username, $dados['permissoes'] ?? []);
 
             return $usuario;
         });
@@ -109,6 +147,8 @@ class UsuarioController extends Controller
             'password' => ['nullable', 'string', 'min:4', 'confirmed'],
             'funcao' => ['required', Rule::in(['projetista', 'tecnico'])],
             'regiao' => [Rule::requiredIf($request->input('funcao') === 'tecnico'), 'nullable', 'string', Rule::in(self::REGIOES_TECNICO)],
+            'permissoes' => ['nullable', 'array'],
+            'permissoes.*' => ['string', Rule::in($this->permissoes->chavesValidas())],
         ], [
             'username.required' => 'Informe o usuário.',
             'username.regex' => 'Use apenas letras, números, ponto, hífen ou underline.',
@@ -140,6 +180,10 @@ class UsuarioController extends Controller
 
             $user->save();
             $this->sincronizarTecnico($user->username, $dados['funcao'], $usernameAnterior, $dados['regiao'] ?? null);
+
+            if (array_key_exists('permissoes', $dados)) {
+                $this->permissoes->sincronizar($user->username, $dados['permissoes']);
+            }
         });
 
         return response()->json([
@@ -212,6 +256,7 @@ class UsuarioController extends Controller
         return array_merge($this->formatarUsuario($user), [
             'funcao' => $tecnico ? 'tecnico' : 'projetista',
             'regiao' => $tecnico?->regiao,
+            'permissoes' => $this->permissoes->listarPorUsuario($user->username),
         ]);
     }
 

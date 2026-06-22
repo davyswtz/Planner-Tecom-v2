@@ -60,6 +60,12 @@
 
   function scheduleReload(payload) {
     if (!shouldHandle(payload)) return;
+
+    if (payload?.action === 'deleted' && payload?.id != null) {
+      window.plannerRemoverCardKanban?.(payload.id);
+      return;
+    }
+
     if (typeof window.plannerRealtimeReload !== 'function') return;
 
     const eventKey = [payload.action, payload.id, payload.status, payload.categoria].join(':');

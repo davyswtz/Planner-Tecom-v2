@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn() => null);
+        $middleware->api(append: [
+            \App\Http\Middleware\PreventApiCaching::class,
+        ]);
+        $middleware->alias([
+            'permissao' => \App\Http\Middleware\EnsureUsuarioPermissao::class,
+        ]);
         $middleware->validateCsrfTokens(except: [
             'broadcasting/auth',
         ]);

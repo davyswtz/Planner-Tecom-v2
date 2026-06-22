@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -39,5 +40,10 @@ class User extends Authenticatable
             'created_at' => 'datetime',
             'pass_iterations' => 'integer',
         ];
+    }
+
+    public function permissoes(): HasMany
+    {
+        return $this->hasMany(UsuarioPermissao::class, 'username', 'username');
     }
 }
