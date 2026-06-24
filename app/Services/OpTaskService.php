@@ -101,14 +101,23 @@ public function __construct(private GoogleChatService $googleChatService){}
     $opTask->update($dados);
 
     if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
-        $mensagem = $this->googleChatService->montarMensagemStatus(
-            $opTask->toArray(),
-            $statusAnterior,
-            $dados['status']
-        );
-    
+        $isOs = ($opTask->categoria ?? '') === 'ordem-servico';
+        $statusNovo = $dados['status'] ?? '';
+
+        if ($isOs && $this->googleChatService->isOsEmAndamento($statusNovo)) {
+            $mensagem = $this->googleChatService->montarMensagemOsEmAndamento($opTask->toArray());
+        } elseif ($isOs && $this->googleChatService->isOsFinalizada($statusNovo)) {
+            $mensagem = $this->googleChatService->montarMensagemOsFinalizada($opTask->toArray());
+        } else {
+            $mensagem = $this->googleChatService->montarMensagemStatus(
+                $opTask->toArray(),
+                $statusAnterior,
+                $dados['status']
+            );
+        }
+
         $googleChatService = $this->googleChatService;
-    
+
         if (!empty($opTask->parent_task_id)) {
             $pai = OpTask::find($opTask->parent_task_id);
             if ($pai) {

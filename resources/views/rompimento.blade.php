@@ -568,6 +568,12 @@
       oninput="this.value = this.value.toUpperCase()"/>
   </div>
 
+  <div class="os-field">
+    <label class="os-label">Descrição</label>
+    <textarea id="os-input-descricao" rows="3" placeholder="Descreva a ordem de serviço..." class="os-input"
+      style="height:auto;padding:8px 10px;resize:vertical;min-height:72px"></textarea>
+  </div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="os-field">
       <label class="os-label">Técnico responsável</label>
@@ -810,6 +816,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     document.getElementById('os-btn-icon').className = 'ti ti-clipboard-check';
     document.getElementById('os-btn-label').textContent = 'Criar OS';
     document.getElementById('os-input-tipo').value = '';
+    document.getElementById('os-input-descricao').value = '';
     document.getElementById('os-input-tecnico').value = '';
     document.getElementById('os-input-status').value = 'aberta';
     
@@ -826,6 +833,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
     const tipoValue = (os.titulo || '').replace(/^OS\s*[—\-]\s*/i, '');
     document.getElementById('os-input-tipo').value = tipoValue;
+    document.getElementById('os-input-descricao').value = os.descricao || '';
     document.getElementById('os-input-status').value = os.status || 'aberta';
 
     const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
@@ -1302,6 +1310,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
   async function salvarOs() {
     const rompimentoId = document.getElementById('detalhe-conteudo').dataset.id;
     const tipo      = document.getElementById('os-input-tipo').value;
+    const descricao = document.getElementById('os-input-descricao').value.trim();
     const tecnico   = document.getElementById('os-input-tecnico').value;
     const status    = document.getElementById('os-input-status').value;
     const token     = localStorage.getItem('planner_token');
@@ -1313,6 +1322,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       if (osEditandoId) {
         const dados = {
           titulo:      `OS — ${tipo}`,
+          descricao,
           responsavel: tecnico,
           status,
         };
@@ -1332,6 +1342,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       } else {
         const dados = {
           titulo:         `OS — ${tipo}`,
+          descricao,
           responsavel:    tecnico,
           status,
           categoria:      'ordem-servico',

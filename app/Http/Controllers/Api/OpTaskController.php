@@ -44,12 +44,6 @@ class OpTaskController extends Controller
             if (! $this->usuarioPodeAcessarAbaTarefas($request)) {
                 return response()->json(['message' => 'Sem permissão para visualizar a aba de tarefas.'], 403);
             }
-
-            if (! $username) {
-                return response()->json([]);
-            }
-
-            $responsavel = $username;
         }
 
         $resultado = $this->opTaskService->getOpTasks($limit, 'updated_at', 'desc', $categoria, $responsavel, $excluirFinalizadas);

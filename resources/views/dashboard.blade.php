@@ -292,6 +292,43 @@
 @endsection
 
 @section('content')
+<style>
+  .card-action-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .card-action-btn:hover { color: var(--blue-800); }
+  #mapa-expandido-overlay .modal-box {
+    max-width: min(1200px, 96vw);
+    height: min(88vh, 900px);
+  }
+  #mapa-expandido-overlay .modal-body {
+    padding: 0;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #mapa-calor-expandido {
+    flex: 1;
+    width: 100%;
+    min-height: 420px;
+    background: #1a2744;
+  }
+  #mapa-expandido-overlay .leaflet-pane,
+  #mapa-expandido-overlay .leaflet-top,
+  #mapa-expandido-overlay .leaflet-bottom {
+    z-index: 1 !important;
+  }
+</style>
     <div class="metrics-row">
       <div class="metric-card">
         <div class="metric-top">
@@ -348,7 +385,9 @@
       <div class="card card-mapa">
         <div class="card-header">
           <span class="card-title">Mapa de calor</span>
-          <span class="card-action"><i class="ti ti-arrows-maximize" style="font-size:11px"></i> expandir</span>
+          <button type="button" class="card-action card-action-btn" onclick="abrirMapaExpandido()" title="Expandir mapa">
+            <i class="ti ti-arrows-maximize" style="font-size:11px"></i> expandir
+          </button>
         </div>
         <div class="map-body">
           <div id="mapa-calor" style="width:100%;height:100%;min-height:260px;"></div>
@@ -423,19 +462,67 @@
   </div>
 </div>
 
+<!-- MODAL MAPA EXPANDIDO -->
+<x-modal
+  id="mapa-expandido-overlay"
+  titulo="Mapa de calor"
+  subtitulo="Visualização ampliada"
+  fechar="fecharMapaExpandido()">
+
+  <div id="mapa-calor-expandido"></div>
+
+  <x-slot name="footer">
+    <button type="button" onclick="fecharMapaExpandido()" class="btn-modal btn-modal-ghost">Fechar</button>
+  </x-slot>
+
+</x-modal>
+
 @endsection
 
 @section('scripts')
 <script>
-  function iniciarMapa() {
-    const mapa = L.map('mapa-calor', {
+  const MAPA_CENTER = [-18.8517, -41.9494];
+  const MAPA_ZOOM = 11;
+  let mapaExpandido = null;
+
+  function criarMapa(containerId) {
+    const map = L.map(containerId, {
       zoomControl: true,
-      scrollWheelZoom: true
-    }).setView([-18.8517, -41.9494], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-    window.mapaLeaflet = mapa;
+      scrollWheelZoom: true,
+    }).setView(MAPA_CENTER, MAPA_ZOOM);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+    }).addTo(map);
+
+    return map;
   }
-  iniciarMapa();
+
+  const mapaPreview = criarMapa('mapa-calor');
+  window.mapaLeaflet = mapaPreview;
+
+  window.abrirMapaExpandido = function () {
+    document.getElementById('mapa-expandido-overlay').classList.add('open');
+
+    requestAnimationFrame(() => {
+      if (!mapaExpandido) {
+        mapaExpandido = criarMapa('mapa-calor-expandido');
+      }
+
+      mapaExpandido.setView(mapaPreview.getCenter(), mapaPreview.getZoom());
+      setTimeout(() => mapaExpandido.invalidateSize(), 150);
+    });
+  };
+
+  window.fecharMapaExpandido = function () {
+    document.getElementById('mapa-expandido-overlay').classList.remove('open');
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('mapa-expandido-overlay')?.classList.contains('open')) {
+      fecharMapaExpandido();
+    }
+  });
 </script>
 
 <script type="module">

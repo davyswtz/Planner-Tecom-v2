@@ -66,4 +66,58 @@ class NiconApiService
 
         return $response->json();
     }
+
+    /**
+     * @param  array<int, int|string>  $idsClienteServico
+     * @return array<int, array<string, mixed>>
+     */
+    public function buscarSinaisOnuParalelo(array $idsClienteServico): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $idsClienteServico),
+            fn (int $id) => $id > 0
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $concorrencia = config('services.nicon.sinal_concorrencia', 8);
+        $base = $this->baseUrl();
+        $resultado = [];
+
+        foreach (array_chunk($ids, $concorrencia) as $lote) {
+            $token = $this->token();
+
+            $respostas = Http::pool(function ($pool) use ($lote, $base, $token) {
+                foreach ($lote as $id) {
+                    $pool->as((string) $id)
+                        ->timeout(config('services.nicon.timeout', 120))
+                        ->acceptJson()
+                        ->withToken($token)
+                        ->get("{$base}/api/app-tecnico/cliente-servico/buscar-sinal-onu/{$id}", [
+                            'atualizacao_manual' => 0,
+                        ]);
+                }
+            });
+
+            foreach ($lote as $id) {
+                $response = $respostas[(string) $id] ?? null;
+
+                if ($response?->status() === 401) {
+                    Cache::forget('nicon_api_token');
+                    continue;
+                }
+
+                if ($response && $response->successful()) {
+                    $json = $response->json();
+                    if (is_array($json)) {
+                        $resultado[$id] = $json;
+                    }
+                }
+            }
+        }
+
+        return $resultado;
+    }
 }

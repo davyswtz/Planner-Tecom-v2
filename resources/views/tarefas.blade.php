@@ -558,9 +558,6 @@
     if (!tarefa?.id) return;
     if (tarefa.categoria && tarefa.categoria !== 'tarefas') return;
 
-    const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
-    if (!user?.username || tarefa.responsavel !== user.username) return;
-
     tarefasMap[tarefa.id] = tarefa;
     document.querySelectorAll(`.kcard[data-id="${CSS.escape(String(tarefa.id))}"]`).forEach(card => card.remove());
 
@@ -573,20 +570,10 @@
     atualizarContadores();
   }
 
-  function filtrarTarefasDoUsuario(tarefas) {
-    const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
-    const username = user?.username || '';
-    return (Array.isArray(tarefas) ? tarefas : []).filter((t) => {
-      if (t.categoria && t.categoria !== 'tarefas') return false;
-      if (!username) return false;
-      return t.responsavel === username;
-    });
-  }
-
   async function carregarTarefas() {
     try {
-      const tarefas = await listarTarefas({ categoria: 'tarefas', minhas: true, limit: 500 });
-      renderKanban(filtrarTarefasDoUsuario(tarefas));
+      const tarefas = await listarTarefas({ categoria: 'tarefas', limit: 500 });
+      renderKanban(Array.isArray(tarefas) ? tarefas : []);
     } catch (err) {
       console.error(err);
     }
@@ -908,6 +895,7 @@
       const tarefa = await criarTarefaApi(dados);
       fecharModal();
       adicionarCardTarefa(tarefa);
+      window.plannerSyncTarefa?.(tarefa);
     } catch (err) {
       alert(err.message || 'Erro ao criar tarefa.');
     } finally {

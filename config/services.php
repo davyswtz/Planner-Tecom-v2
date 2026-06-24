@@ -41,6 +41,14 @@ return [
         'password' => env('NICON_PASSWORD'),
         'two_factor' => env('NICON_2FA'),
         'timeout' => (int) env('NICON_TIMEOUT', 120),
+        'status_servico' => array_map('intval', array_filter(explode(',', env('NICON_STATUS_SERVICO', '10,12,11,13')))),
+        'caixas_cache_minutes' => (int) env('NICON_CAIXAS_CACHE_MINUTES', 360),
+        'caixa_resolve_cache_minutes' => (int) env('NICON_CAIXA_RESOLVE_CACHE_MINUTES', 1440),
+        'sinal_concorrencia' => max(1, (int) env('NICON_SINAL_CONCORRENCIA', 4)),
+        'sinal_tentativas' => max(1, (int) env('NICON_SINAL_TENTATIVAS', 3)),
+        'cidades' => [
+            1659 => 'Governador Valadares',
+        ],
     ],
 
     /*

@@ -78,6 +78,11 @@ class OpTask extends Model
                 $task->responsavel = '';
             }
         });
+
+        static::deleting(function (OpTask $task) {
+            OsTecnico::where('parent_task_id', $task->id)->delete();
+            OpTask::where('parent_task_id', $task->id)->delete();
+        });
     }
 
     public function parentTask(): BelongsTo

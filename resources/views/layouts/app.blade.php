@@ -664,6 +664,11 @@
     </div>
 
     <div class="nav-section">
+      <div class="nav-section-label">Ferramentas</div>
+      <a href="/buscar-caixa" class="nav-item {{ request()->is('buscar-caixa*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-box"></i><span>Buscar caixa</span></div></a>
+    </div>
+
+    <div class="nav-section">
       <div class="nav-section-label">Gestão</div>
       <a href="/usuarios" id="nav-item-usuarios" data-permissao="visualizar_aba_usuarios" class="nav-item {{ request()->is('usuarios*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
       <a href="/configuracoes" id="nav-item-configuracoes" data-permissao="adicionar_webhook" class="nav-item {{ request()->is('configuracoes*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>

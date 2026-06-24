@@ -181,9 +181,9 @@ class WebhookService
         ]);
 
         return match ($status) {
-            'Em andamento' => (bool) ($events['andamento'] ?? true),
+            'Em andamento', 'em_andamento' => (bool) ($events['andamento'] ?? true),
             'Concluída' => (bool) ($events['concluida'] ?? true),
-            'Finalizada', 'Finalizar' => (bool) ($events['finalizada'] ?? true),
+            'Finalizada', 'Finalizar', 'finalizada' => (bool) ($events['finalizada'] ?? true),
             default => true,
         };
     }

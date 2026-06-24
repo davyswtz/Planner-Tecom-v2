@@ -45,3 +45,9 @@ Route::get('/usuarios', function () {
 Route::get('/configuracoes', function () {
     return view('configuracoes');
 });
+
+Route::get('/buscar-caixa', function () {
+    return view('buscar-caixa', [
+        'cidadesNicon' => config('services.nicon.cidades', []),
+    ]);
+});

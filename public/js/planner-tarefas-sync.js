@@ -22,14 +22,21 @@
     }
   }
 
-  function aplicarTarefa(tarefa) {
-    if (!tarefaPertenceAoUsuario(tarefa)) return;
+  function podeVerTodasTarefasNoKanban() {
+    return typeof window.plannerPossuiPermissao === 'function'
+      && window.plannerPossuiPermissao('visualizar_aba_tarefas');
+  }
 
-    if (typeof window.adicionarCardTarefa === 'function') {
+  function aplicarTarefa(tarefa) {
+    if (!tarefa?.id || tarefa.categoria !== 'tarefas') return;
+
+    const pertenceAoUsuario = tarefaPertenceAoUsuario(tarefa);
+
+    if (typeof window.adicionarCardTarefa === 'function' && (podeVerTodasTarefasNoKanban() || pertenceAoUsuario)) {
       window.adicionarCardTarefa(tarefa);
     }
 
-    if (typeof window.atualizarCardSuasTarefas === 'function') {
+    if (typeof window.atualizarCardSuasTarefas === 'function' && pertenceAoUsuario) {
       window.atualizarCardSuasTarefas(tarefa);
     }
   }

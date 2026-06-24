@@ -4,20 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\OpTask;
-use App\Services\OtimizaçãoDeRedeService;
+use App\Services\OtimizacaoDeRedeService;
 use App\Services\OpTaskService;
 use Illuminate\Http\Request;
 
-class OtimizaçãoDeRedeController extends Controller
+class OtimizacaoDeRedeController extends Controller
 {
     public function __construct(
-        private OtimizaçãoDeRedeService $otimizaçãoDeRedeService,
+        private OtimizacaoDeRedeService $otimizacaoDeRedeService,
         private OpTaskService $opTaskService,
     ) {}
 
     public function index(Request $request)
     {
-        $resultado = $this->otimizaçãoDeRedeService->getOtimizaçãoDeRede(
+        $resultado = $this->otimizacaoDeRedeService->getOtimizacaoDeRede(
             $request->query('status'),
             (int) $request->query('limit', 10),
             (int) $request->query('offset', 0),
@@ -48,7 +48,7 @@ class OtimizaçãoDeRedeController extends Controller
 
     public function store(Request $request)
     {
-        $otimizacaoDeRede = $this->otimizaçãoDeRedeService->createOtimizaçãoDeRede($request->all());
+        $otimizacaoDeRede = $this->otimizacaoDeRedeService->createOtimizacaoDeRede($request->all());
 
         return response()->json([
             'message' => 'Otimização de rede criada com sucesso',
@@ -62,7 +62,11 @@ class OtimizaçãoDeRedeController extends Controller
             return response()->json(['message' => 'Otimização de rede não encontrada'], 404);
         }
 
-        $resultado = $this->otimizaçãoDeRedeService->updateOtimizaçãoDeRede($otimizacao_rede, $request->all());
+        $resultado = $this->otimizacaoDeRedeService->updateOtimizacaoDeRede(
+            $otimizacao_rede,
+            $request->all(),
+            $request->user()?->username
+        );
 
         return response()->json([
             'message' => 'Otimização de rede atualizada com sucesso',
@@ -76,7 +80,7 @@ class OtimizaçãoDeRedeController extends Controller
             return response()->json(['message' => 'Otimização de rede não encontrada'], 404);
         }
 
-        $this->otimizaçãoDeRedeService->deleteOtimizaçãoDeRede($otimizacao_rede);
+        $this->otimizacaoDeRedeService->deleteOtimizacaoDeRede($otimizacao_rede);
 
         return response()->json(['message' => 'Otimização de rede deletada com sucesso'], 200);
     }
@@ -84,7 +88,7 @@ class OtimizaçãoDeRedeController extends Controller
     public function buscarEndereco(Request $request)
     {
         $coordenada = $request->query('coordenada');
-        $endereco = $this->otimizaçãoDeRedeService->buscarEndereco($coordenada);
+        $endereco = $this->otimizacaoDeRedeService->buscarEndereco($coordenada);
 
         return response()->json([
             'message' => 'Endereço encontrado com sucesso',

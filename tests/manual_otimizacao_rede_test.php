@@ -13,7 +13,7 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use App\Models\OpTask;
 use App\Models\User;
 use App\Services\OpTaskService;
-use App\Services\OtimizaçãoDeRedeService;
+use App\Services\OtimizacaoDeRedeService;
 
 $results = [];
 $pass = function (string $name, bool $ok, string $detail = '') use (&$results) {
@@ -22,12 +22,12 @@ $pass = function (string $name, bool $ok, string $detail = '') use (&$results) {
 
 echo "=== Teste Otimização de Rede — persistência no banco ===\n\n";
 
-$otimizacaoService = app(OtimizaçãoDeRedeService::class);
+$otimizacaoService = app(OtimizacaoDeRedeService::class);
 $opTaskService = app(OpTaskService::class);
 $suffix = (string) time();
 
 // ── 1. Criar tarefa ───────────────────────────────────────────────────────
-$criada = $otimizacaoService->createOtimizaçãoDeRede([
+$criada = $otimizacaoService->createOtimizacaoDeRede([
     'titulo' => "Otimização — TESTE-AUTO-{$suffix}",
     'cto' => 'GVA9999',
     'descricao' => 'Fusão',
@@ -58,7 +58,7 @@ $pass(
 );
 
 // ── 2. Editar tarefa ───────────────────────────────────────────────────────
-$atualizada = $otimizacaoService->updateOtimizaçãoDeRede($noBanco, [
+$atualizada = $otimizacaoService->updateOtimizacaoDeRede($noBanco, [
     'titulo' => "Otimização — EDITADA-{$suffix}",
     'descricao' => 'Splitter',
     'prioridade' => 'Alta',
@@ -115,7 +115,7 @@ $pass(
 // ── 5. Bloquear finalização com OS pendente ─────────────────────────────────
 $bloqueou = false;
 try {
-    $otimizacaoService->updateOtimizaçãoDeRede($editadaNoBanco, ['status' => 'Finalizada']);
+    $otimizacaoService->updateOtimizacaoDeRede($editadaNoBanco, ['status' => 'Finalizada']);
 } catch (Throwable $e) {
     $bloqueou = str_contains($e->getMessage(), 'Finalize todas as OS');
 }
@@ -136,7 +136,7 @@ $osExtra = $opTaskService->createOpTask([
 ]);
 $osExtraId = $osExtra->id;
 
-$otimizacaoService->deleteOtimizaçãoDeRede($editadaNoBanco);
+$otimizacaoService->deleteOtimizacaoDeRede($editadaNoBanco);
 $pass(
     'Excluir otimização e OS vinculadas',
     OpTask::find($parentId) === null && OpTask::find($osExtraId) === null,

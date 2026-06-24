@@ -6,12 +6,13 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\NotificacaoController;
 use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\RompimentoController;
-use App\Http\Controllers\Api\OtimizaçãoDeRedeController;
+use App\Http\Controllers\Api\OtimizacaoDeRedeController;
 use App\Http\Controllers\Api\AtendimentoController;
 use App\Http\Controllers\Api\OrdemServicoController;
 use App\Http\Controllers\Api\PlannerChangesController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\WebhookConfigController;
+use App\Http\Controllers\Api\NiconController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,9 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('troca-poste/coordenada', [TrocaPosteController::class, 'buscarEndereco']);
     Route::get('troca-poste/{id}/os', [TrocaPosteController::class, 'listarOS']);
     Route::apiResource('troca-poste', TrocaPosteController::class);
-    Route::get('otimizacao-rede/coordenada', [OtimizaçãoDeRedeController::class, 'buscarEndereco']);
-    Route::get('otimizacao-rede/{id}/os', [OtimizaçãoDeRedeController::class, 'listarOS']);
-    Route::apiResource('otimizacao-rede', OtimizaçãoDeRedeController::class);
+    Route::get('otimizacao-rede/coordenada', [OtimizacaoDeRedeController::class, 'buscarEndereco']);
+    Route::get('otimizacao-rede/{id}/os', [OtimizacaoDeRedeController::class, 'listarOS']);
+    Route::apiResource('otimizacao-rede', OtimizacaoDeRedeController::class);
     Route::get('atendimento/coordenada', [AtendimentoController::class, 'buscarEndereco']);
     Route::get('atendimento/{id}/os', [AtendimentoController::class, 'listarOS']);
     Route::apiResource('atendimento', AtendimentoController::class);
@@ -45,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('ordem-servico/{id}', [OrdemServicoController::class, 'show'])->whereNumber('id');
     Route::get('ordem-servico', [OrdemServicoController::class, 'index']);
     Route::get('usuarios/opcoes', [UsuarioController::class, 'opcoes']);
+    Route::post('nicon/sinal-caixa', [NiconController::class, 'buscarSinalCaixa']);
+    Route::post('nicon/sinal-atual-cliente', [NiconController::class, 'buscarSinalAtualCliente']);
     Route::middleware('permissao:visualizar_aba_usuarios')->group(function () {
         Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
     });

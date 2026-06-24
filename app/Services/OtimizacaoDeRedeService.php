@@ -5,14 +5,14 @@ namespace App\Services;
 use App\Models\OpTask;
 use Illuminate\Support\Facades\Http;
 
-class OtimizaçãoDeRedeService
+class OtimizacaoDeRedeService
 {
     public function __construct(
         private OpTaskService $opTaskService,
         private GoogleChatService $googleChatService
     ) {}
 
-    public function getOtimizaçãoDeRede(
+    public function getOtimizacaoDeRede(
         ?string $status = null,
         int $limit = 10,
         int $offset = 0,
@@ -38,7 +38,7 @@ class OtimizaçãoDeRedeService
         return $query->limit($limit)->offset($offset)->get();
     }
 
-    public function createOtimizaçãoDeRede(array $dados): OpTask
+    public function createOtimizacaoDeRede(array $dados): OpTask
     {
         $dados['categoria'] = 'otimizacao-rede';
         $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
@@ -47,7 +47,7 @@ class OtimizaçãoDeRedeService
         return OpTask::create($dados);
     }
 
-    public function updateOtimizaçãoDeRede(OpTask $otimizacaoDeRede, array $dados): OpTask
+    public function updateOtimizacaoDeRede(OpTask $otimizacaoDeRede, array $dados, ?string $enviadoPor = null): OpTask
     {
         $statusAnterior = $otimizacaoDeRede->status;
 
@@ -68,7 +68,8 @@ class OtimizaçãoDeRedeService
             $mensagem = $this->googleChatService->montarMensagemStatus(
                 $tarefaAtualizada->toArray(),
                 $statusAnterior,
-                $dados['status']
+                $dados['status'],
+                $enviadoPor
             );
             $googleChatService = $this->googleChatService;
             app()->terminating(function () use ($tarefaAtualizada, $mensagem, $googleChatService, $dados) {
@@ -79,7 +80,7 @@ class OtimizaçãoDeRedeService
         return $otimizacaoDeRede->fresh();
     }
 
-    public function deleteOtimizaçãoDeRede(OpTask $otimizacaoDeRede): void
+    public function deleteOtimizacaoDeRede(OpTask $otimizacaoDeRede): void
     {
         OpTask::where('parent_task_id', $otimizacaoDeRede->id)
             ->where('categoria', 'ordem-servico')
