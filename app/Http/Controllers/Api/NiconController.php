@@ -24,6 +24,9 @@ class NiconController extends Controller
             'clientes_servicos.*' => ['required'],
             'clientesServicos' => ['nullable', 'array', 'min:1'],
             'clientesServicos.*' => ['required'],
+            'clientes' => ['nullable', 'array', 'min:1'],
+            'clientes.*.id_cliente_servico' => ['required'],
+            'clientes.*.serial' => ['nullable', 'string', 'max:64'],
             'completar_sinais' => ['nullable', 'boolean'],
         ]);
 
@@ -31,6 +34,25 @@ class NiconController extends Controller
         $ids = $request->input('clientes_servicos')
             ?? $request->input('clientesServicos')
             ?? [];
+        $seriaisPorId = [];
+
+        if ($request->filled('clientes') && is_array($request->input('clientes'))) {
+            $ids = [];
+            foreach ($request->input('clientes') as $cliente) {
+                if (! is_array($cliente)) {
+                    continue;
+                }
+                $id = (int) ($cliente['id_cliente_servico'] ?? 0);
+                if ($id <= 0) {
+                    continue;
+                }
+                $ids[] = $id;
+                $serial = trim((string) ($cliente['serial'] ?? ''));
+                if ($serial !== '') {
+                    $seriaisPorId[$id] = $serial;
+                }
+            }
+        }
 
         if (! $temCidadeCaixa && $ids === []) {
             return response()->json([
@@ -57,7 +79,7 @@ class NiconController extends Controller
             }
 
             $clientes = $request->boolean('completar_sinais', true)
-                ? $this->niconWeb->buscarSinaisCompletos($ids)
+                ? $this->niconWeb->buscarSinaisCompletos($ids, $seriaisPorId)
                 : $this->niconWeb->buscarSinalClientes($ids);
 
             return response()->json([

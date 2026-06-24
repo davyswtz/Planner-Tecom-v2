@@ -21,6 +21,16 @@ class OpTask extends Model
         'OTIMIZAÇÃO DE REDE',
     ];
 
+    public const CATEGORIAS_ATENDIMENTO = [
+        'atendimento-cliente',
+        'atendimento ao cliente',
+    ];
+
+    public const CATEGORIAS_CORRECAO_SINAL = [
+        'correcao-atenuacao',
+        'correção de atenuação',
+    ];
+
     protected $table = 'op_tasks';
 
     protected $primaryKey = 'id';
@@ -152,6 +162,16 @@ class OpTask extends Model
                 in_array($this->categoria, self::CATEGORIAS_OTIMIZACAO_REDE, true)
                 || str_contains(strtoupper((string) $this->taskCode), '-OTM-')
             );
+    }
+
+    public function isAtendimentoPai(): bool
+    {
+        return $this->isTarefaPaiOf(self::CATEGORIAS_ATENDIMENTO);
+    }
+
+    public function isCorrecaoSinalPai(): bool
+    {
+        return $this->isTarefaPaiOf(self::CATEGORIAS_CORRECAO_SINAL);
     }
 
     public function isTarefaPai(): bool

@@ -36,7 +36,7 @@ class AtendimentoController extends Controller
 
     public function show(OpTask $atendimento)
     {
-        if (! $atendimento->isTarefaPaiOf('atendimento-cliente')) {
+        if (! $atendimento->isAtendimentoPai()) {
             return response()->json(['message' => 'Atendimento não encontrado'], 404);
         }
 
@@ -58,7 +58,7 @@ class AtendimentoController extends Controller
 
     public function update(Request $request, OpTask $atendimento)
     {
-        if (! $atendimento->isTarefaPaiOf('atendimento-cliente')) {
+        if (! $atendimento->isAtendimentoPai()) {
             return response()->json(['message' => 'Atendimento não encontrado'], 404);
         }
 
@@ -72,7 +72,7 @@ class AtendimentoController extends Controller
 
     public function destroy(OpTask $atendimento)
     {
-        if (! $atendimento->isTarefaPaiOf('atendimento-cliente')) {
+        if (! $atendimento->isAtendimentoPai()) {
             return response()->json(['message' => 'Atendimento não encontrado'], 404);
         }
 
@@ -95,7 +95,7 @@ class AtendimentoController extends Controller
     public function listarOS($id)
     {
         $pai = OpTask::find((int) $id);
-        if (! $pai?->isTarefaPaiOf('atendimento-cliente')) {
+        if (! $pai?->isAtendimentoPai()) {
             return response()->json(['message' => 'Atendimento não encontrado'], 404);
         }
 

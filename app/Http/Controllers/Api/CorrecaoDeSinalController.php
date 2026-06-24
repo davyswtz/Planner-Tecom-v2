@@ -11,8 +11,6 @@ use Illuminate\Http\Request;
 
 class CorrecaoDeSinalController extends Controller
 {
-    private const CATEGORIA = 'correcao-atenuacao';
-
     public function __construct(
         private CorrecaoDeSinalService $correcaoDeSinalService,
         private OpTaskService $opTaskService,
@@ -40,13 +38,13 @@ class CorrecaoDeSinalController extends Controller
 
     public function show(OpTask $correcao_sinal): JsonResponse
     {
-        if (! $correcao_sinal->isTarefaPaiOf(self::CATEGORIA)) {
+        if (! $correcao_sinal->isCorrecaoSinalPai()) {
             return response()->json(['message' => 'Correção de sinal não encontrada'], 404);
         }
 
         return response()->json([
             'message' => 'Correção de sinal encontrada com sucesso',
-            'correcaoDeSinal' => $correcao_sinal,
+            'correcaoDeSinal' => $this->correcaoDeSinalService->normalizarParaExibicao($correcao_sinal),
         ]);
     }
 
@@ -56,7 +54,7 @@ class CorrecaoDeSinalController extends Controller
 
         return response()->json([
             'message' => 'Correção de sinal criada com sucesso',
-            'correcaoDeSinal' => $correcao,
+            'correcaoDeSinal' => $this->correcaoDeSinalService->normalizarParaExibicao($correcao),
         ], 201);
     }
 
@@ -77,13 +75,13 @@ class CorrecaoDeSinalController extends Controller
 
         return response()->json([
             'message' => 'Tarefa de correção de sinal criada com sucesso',
-            'correcaoDeSinal' => $correcao,
+            'correcaoDeSinal' => $this->correcaoDeSinalService->normalizarParaExibicao($correcao),
         ], 201);
     }
 
     public function update(Request $request, OpTask $correcao_sinal): JsonResponse
     {
-        if (! $correcao_sinal->isTarefaPaiOf(self::CATEGORIA)) {
+        if (! $correcao_sinal->isCorrecaoSinalPai()) {
             return response()->json(['message' => 'Correção de sinal não encontrada'], 404);
         }
 
@@ -91,13 +89,13 @@ class CorrecaoDeSinalController extends Controller
 
         return response()->json([
             'message' => 'Correção de sinal atualizada com sucesso',
-            'correcaoDeSinal' => $resultado,
+            'correcaoDeSinal' => $this->correcaoDeSinalService->normalizarParaExibicao($resultado),
         ]);
     }
 
     public function destroy(OpTask $correcao_sinal): JsonResponse
     {
-        if (! $correcao_sinal->isTarefaPaiOf(self::CATEGORIA)) {
+        if (! $correcao_sinal->isCorrecaoSinalPai()) {
             return response()->json(['message' => 'Correção de sinal não encontrada'], 404);
         }
 
@@ -120,7 +118,7 @@ class CorrecaoDeSinalController extends Controller
     {
         $pai = OpTask::find($id);
 
-        if (! $pai?->isTarefaPaiOf(self::CATEGORIA)) {
+        if (! $pai?->isCorrecaoSinalPai()) {
             return response()->json(['message' => 'Correção de sinal não encontrada'], 404);
         }
 

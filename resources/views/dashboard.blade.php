@@ -328,6 +328,38 @@
   #mapa-expandido-overlay .leaflet-bottom {
     z-index: 1 !important;
   }
+  .mapa-pin-caixa {
+    background: transparent;
+    border: none;
+  }
+  .mapa-pin-caixa__dot {
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    margin-top: -6px;
+    border-radius: 50% 50% 50% 0;
+    background: #166ac4;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transform: rotate(-45deg);
+  }
+  .mapa-caixas-loading {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 500;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    pointer-events: none;
+  }
+  .mapa-caixas-loading i { animation: spin 0.9s linear infinite; }
+  .card-mapa .map-body { position: relative; }
 </style>
     <div class="metrics-row">
       <div class="metric-card">
@@ -391,12 +423,15 @@
         </div>
         <div class="map-body">
           <div id="mapa-calor" style="width:100%;height:100%;min-height:260px;"></div>
+          <div id="mapa-caixas-loading" class="mapa-caixas-loading" style="display:none">
+            <i class="ti ti-loader"></i> Carregando caixas...
+          </div>
         </div>
         <div class="region-list">
           <div class="region-row">
             <div class="region-name">Goval</div>
-            <div class="region-bar-wrap"><div class="region-bar" style="width:100%"></div></div>
-            <div class="region-n">126</div>
+            <div class="region-bar-wrap"><div class="region-bar" id="region-bar-goval" style="width:100%"></div></div>
+            <div class="region-n" id="region-n-goval">—</div>
           </div>
           <div class="region-row">
             <div class="region-name">Vale do Aço</div>
@@ -480,10 +515,96 @@
 @endsection
 
 @section('scripts')
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
   const MAPA_CENTER = [-18.8517, -41.9494];
   const MAPA_ZOOM = 11;
   let mapaExpandido = null;
+  let caixasGeoGrid = [];
+  const camadasCaixasPorMapa = new WeakMap();
+
+  function criarIconeCaixa() {
+    return L.divIcon({
+      className: 'mapa-pin-caixa',
+      html: '<div class="mapa-pin-caixa__dot"></div>',
+      iconSize: [12, 12],
+      iconAnchor: [6, 12],
+    });
+  }
+
+  function escMapa(valor) {
+    if (valor == null || valor === '') return '';
+    return String(valor).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function plotarCaixasNoMapa(map, caixas) {
+    if (!map || !Array.isArray(caixas) || !caixas.length) return;
+
+    const anterior = camadasCaixasPorMapa.get(map);
+    if (anterior) {
+      map.removeLayer(anterior);
+    }
+
+    const cluster = L.markerClusterGroup({
+      maxClusterRadius: 45,
+      disableClusteringAtZoom: 16,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+    });
+
+    caixas.forEach((caixa) => {
+      const lat = Number(caixa.latitude);
+      const lng = Number(caixa.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const marker = L.marker([lat, lng], { icon: criarIconeCaixa() });
+      const sigla = escMapa(caixa.sigla || 'Caixa');
+      const status = caixa.status ? `<br><span style="color:#6b7280">${escMapa(caixa.status)}</span>` : '';
+      marker.bindPopup(`<strong>${sigla}</strong>${status}`);
+      cluster.addLayer(marker);
+    });
+
+    map.addLayer(cluster);
+    camadasCaixasPorMapa.set(map, cluster);
+  }
+
+  function atualizarContadorGoval(total) {
+    const el = document.getElementById('region-n-goval');
+    if (el) el.textContent = String(total);
+  }
+
+  async function carregarCaixasGeoGrid() {
+    const loading = document.getElementById('mapa-caixas-loading');
+    if (loading) loading.style.display = 'flex';
+
+    const token = localStorage.getItem('planner_token');
+    try {
+      const response = await fetch('/api/geogrid/caixas', {
+        headers: {
+          Authorization: 'Bearer ' + token,
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao carregar caixas.');
+      }
+
+      caixasGeoGrid = Array.isArray(data.caixas) ? data.caixas : [];
+      plotarCaixasNoMapa(mapaPreview, caixasGeoGrid);
+      if (mapaExpandido) {
+        plotarCaixasNoMapa(mapaExpandido, caixasGeoGrid);
+      }
+      atualizarContadorGoval(data.total_com_coordenadas ?? caixasGeoGrid.length);
+    } catch (err) {
+      console.warn('Mapa de calor — caixas GeoGrid:', err.message || err);
+    } finally {
+      if (loading) loading.style.display = 'none';
+    }
+  }
 
   function criarMapa(containerId) {
     const map = L.map(containerId, {
@@ -500,6 +621,7 @@
 
   const mapaPreview = criarMapa('mapa-calor');
   window.mapaLeaflet = mapaPreview;
+  carregarCaixasGeoGrid();
 
   window.abrirMapaExpandido = function () {
     document.getElementById('mapa-expandido-overlay').classList.add('open');
@@ -507,6 +629,7 @@
     requestAnimationFrame(() => {
       if (!mapaExpandido) {
         mapaExpandido = criarMapa('mapa-calor-expandido');
+        plotarCaixasNoMapa(mapaExpandido, caixasGeoGrid);
       }
 
       mapaExpandido.setView(mapaPreview.getCenter(), mapaPreview.getZoom());

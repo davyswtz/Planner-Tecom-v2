@@ -160,8 +160,9 @@ public function __construct(private GoogleChatService $googleChatService){}
     private array $regioes = [
         'Goval' => 'GV',
         'goval' => 'GV',
-        'Vale do Aço' => 'VA',
-        'vale do aco' => 'VA',
+        'Vale do Aço' => 'VL',
+        'vale do aço' => 'VL',
+        'vale do aco' => 'VL',
         'Caratinga' => 'CA',
         'caratinga' => 'CA',
     ];
@@ -174,8 +175,8 @@ public function __construct(private GoogleChatService $googleChatService){}
         'otimização de rede'    => 'OTM',
         'certificacao-cemig'    => 'CER',
         'certificação cemig'    => 'CER',
-        'atendimento-cliente'   => 'ATE',
-        'atendimento ao cliente'=> 'ATE',
+        'atendimento-cliente'   => 'ATD',
+        'atendimento ao cliente'=> 'ATD',
         'manutencao-corretiva'  => 'MAN',
         'manutenção corretiva'  => 'MAN',
         'correcao-atenuacao'    => 'COR',
@@ -192,10 +193,10 @@ public function __construct(private GoogleChatService $googleChatService){}
 
     public function gerarTaskCode(array $dados): string
 {
-    $regiao = strtolower(trim($dados['regiao'] ?? ''));
+    $regiao = $this->normalizarChaveRegiao($dados['regiao'] ?? '');
     $siglaRegiao = $this->regioes[$regiao] ?? 'XX';
-    $categoria = strtolower(trim($dados['categoria'] ?? ''));
-    $siglaCategoria = $this->categorias[$categoria] ?? 'GV';
+    $categoria = $this->normalizarChaveCategoria($dados['categoria'] ?? '');
+    $siglaCategoria = $this->categorias[$categoria] ?? 'GEN';
     $prefixo = $siglaRegiao . '-' . $siglaCategoria;
     $ultimo = OpTask::where('taskCode', 'like', $prefixo . '-%')
         ->orderBy('id', 'desc')
@@ -208,4 +209,18 @@ public function __construct(private GoogleChatService $googleChatService){}
     }
     return $prefixo . '-' . str_pad($numero, 3, '0', STR_PAD_LEFT);
 }
+
+    private function normalizarChaveRegiao(string $regiao): string
+    {
+        $valor = mb_strtolower(trim($regiao));
+        $valor = str_replace(['á', 'ã', 'â', 'à'], 'a', $valor);
+        $valor = str_replace('ç', 'c', $valor);
+
+        return $valor;
+    }
+
+    private function normalizarChaveCategoria(string $categoria): string
+    {
+        return mb_strtolower(trim($categoria));
+    }
 }

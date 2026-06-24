@@ -1715,9 +1715,12 @@
   }
 
   function badgeStatus(status) {
+    const exibicao = status === 'Backlog' ? 'Criada'
+      : status === 'Concluída' ? 'Finalizada'
+      : (status || '—');
     const mapa = { 'Criada':'d-blue', 'Em andamento':'d-amber', 'Impedimento':'d-red', 'Finalizada':'d-green' };
-    const dot = mapa[status] || 'd-blue';
-    return `<span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:var(--gray-100);color:var(--gray-700)"><span class="dot ${dot}"></span>${esc(status || '—')}</span>`;
+    const dot = mapa[exibicao] || 'd-blue';
+    return `<span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:var(--gray-100);color:var(--gray-700)"><span class="dot ${dot}"></span>${esc(exibicao)}</span>`;
   }
 
   function badgeRegiao(regiao) {
@@ -1798,7 +1801,7 @@
     return `
     <div class="kcard"
       data-id="${r.id}"
-      data-status="${r.status}"
+      data-status="${esc(r.status_kanban || r.status)}"
       draggable="true"
       ondragstart="iniciarArrasto(event, ${r.id})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">

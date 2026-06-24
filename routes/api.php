@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PlannerChangesController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\WebhookConfigController;
 use App\Http\Controllers\Api\CorrecaoDeSinalController;
+use App\Http\Controllers\Api\GeoGridController;
 use App\Http\Controllers\Api\NiconController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('usuarios/opcoes', [UsuarioController::class, 'opcoes']);
     Route::post('nicon/sinal-caixa', [NiconController::class, 'buscarSinalCaixa']);
     Route::post('nicon/sinal-atual-cliente', [NiconController::class, 'buscarSinalAtualCliente']);
+    Route::post('geogrid/caixa/buscar', [GeoGridController::class, 'buscarCaixa']);
+    Route::get('geogrid/caixas', [GeoGridController::class, 'listarCaixas']);
+    Route::post('geogrid/itens/mapa', [GeoGridController::class, 'mapaItens']);
     Route::middleware('permissao:visualizar_aba_usuarios')->group(function () {
         Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
     });

@@ -1451,9 +1451,12 @@
   }
 
   function badgeStatus(status) {
+    const exibicao = status === 'Backlog' ? 'Criada'
+      : status === 'Concluída' ? 'Finalizada'
+      : (status || '—');
     const mapa = { 'Criada':'d-blue', 'Em andamento':'d-amber', 'Impedimento':'d-red', 'Finalizada':'d-green' };
-    const dot = mapa[status] || 'd-blue';
-    return `<span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:var(--gray-100);color:var(--gray-700)"><span class="dot ${dot}"></span>${esc(status || '—')}</span>`;
+    const dot = mapa[exibicao] || 'd-blue';
+    return `<span class="badge" style="display:inline-flex;align-items:center;gap:5px;background:var(--gray-100);color:var(--gray-700)"><span class="dot ${dot}"></span>${esc(exibicao)}</span>`;
   }
 
   function badgeRegiao(regiao) {
@@ -1531,18 +1534,21 @@
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
       : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
+    const titulo = r.nome || r.nome_cliente || r.titulo || 'Correção de sinal';
+    const codigo = r.taskCode || r.codigo_exibicao || 'S/C';
     return `
     <div class="kcard"
       data-id="${r.id}"
-      data-status="${r.status}"
+      data-status="${esc(r.status_kanban || r.status)}"
       draggable="true"
       ondragstart="iniciarArrasto(event, ${r.id})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span class="kcard-code" style="font-size:11px">${r.taskCode || 'S/C'}</span>
+        <span class="kcard-code" style="font-size:11px">${esc(codigo)}</span>
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
-      <div class="kcard-title">${esc(r.titulo)}</div>
+      <div class="kcard-title">${esc(titulo)}</div>
       <div class="kcard-foot" style="margin-top:6px">
+        ${r.setor ? `<span class="badge b-cat-gen">${esc(r.setor)}</span>` : ''}
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
         ${r.responsavel ? `<span style="font-size:10px;color:var(--gray-400);margin-left:auto">${esc(r.responsavel)}</span>` : ''}
       </div>
@@ -1551,18 +1557,20 @@
 
   // ─── RENDER DETALHE ───
   function renderDetalhe(r) {
-    document.getElementById('detalhe-titulo').textContent = r.titulo || 'Correção de sinal';
-    document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
+    const titulo = r.nome || r.nome_cliente || r.titulo || 'Correção de sinal';
+    const codigo = r.taskCode || r.codigo_exibicao || '';
+    document.getElementById('detalhe-titulo').textContent = titulo;
+    document.getElementById('detalhe-subtitulo').textContent = codigo ? `Código: ${codigo}` : '';
 
     document.getElementById('detalhe-conteudo').innerHTML = `
       <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
         <div class="detail-badges">
-          ${badgeStatus(r.status)}
+          ${badgeStatus(r.status_exibicao || r.status)}
           ${badgePrioridade(r.prioridade)}
           ${badgeRegiao(r.regiao)}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Título', esc(r.titulo), 1, 'campo-titulo')}
+          ${campoDetalhe('Título', esc(titulo), 1, 'campo-titulo')}
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
         </div>
         <div class="detail-grid-2">
@@ -1583,13 +1591,13 @@
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
-          ${campoDetalhe('Status', esc(r.status), 1, 'campo-status')}
+          ${campoDetalhe('Status', esc(r.status_exibicao || r.status), 1, 'campo-status')}
         </div>
         <div class="detail-grid-2">
           <div class="detail-field">
             <span class="detail-label">Código da tarefa</span>
             <div style="display:flex;align-items:center;gap:6px">
-              <div class="detail-value" id="campo-taskcode" style="flex:1">${esc(r.taskCode) || '—'}</div>
+              <div class="detail-value" id="campo-taskcode" style="flex:1">${esc(codigo) || '—'}</div>
               <button onclick="puxarId()" title="Copiar código"
                 style="flex-shrink:0;height:38px;padding:0 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:var(--white);color:var(--gray-500);cursor:pointer;font-size:14px;display:flex;align-items:center;transition:background 0.15s,color 0.15s"
                 onmouseover="this.style.background='var(--gray-50)';this.style.color='var(--gray-700)'"

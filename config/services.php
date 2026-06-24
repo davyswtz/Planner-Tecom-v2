@@ -35,6 +35,18 @@ return [
         ],
     ],
 
+    'geogrid' => [
+        'base_url' => rtrim(env('GEOGRID_BASE_URL', ''), '/'),
+        'auth_url' => env('GEOGRID_AUTH_URL'),
+        'user' => env('GEOGRID_USER'),
+        'password' => env('GEOGRID_PASSWORD'),
+        'version' => env('GEOGRID_VERSION', '199.5'),
+        'timeout' => (int) env('GEOGRID_TIMEOUT', 120),
+        'pasta_caixas' => (int) env('GEOGRID_PASTA_CAIXAS', 1713),
+        'caixas_cache_minutes' => (int) env('GEOGRID_CAIXAS_CACHE_MINUTES', 360),
+        'caixas_mapa_lote' => (int) env('GEOGRID_CAIXAS_MAPA_LOTE', 60),
+    ],
+
     'nicon' => [
         'base_url' => rtrim(env('NICON_BASE_URL', ''), '/'),
         'email' => env('NICON_EMAIL'),

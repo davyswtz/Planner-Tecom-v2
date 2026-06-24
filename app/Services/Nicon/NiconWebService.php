@@ -44,7 +44,7 @@ class NiconWebService
             return $clientes;
         }
 
-        $sinais = collect($this->buscarSinaisCompletos($ids))->keyBy('id_cliente_servico');
+        $sinais = collect($this->buscarSinaisCompletos($ids, $this->montarMapaSeriais($clientes)))->keyBy('id_cliente_servico');
 
         return array_map(function (array $cliente) use ($sinais) {
             $id = (int) ($cliente['id_cliente_servico'] ?? 0);
@@ -329,7 +329,7 @@ class NiconWebService
      * @param  array<int, string|int>  $idsClienteServico
      * @return array<int, array<string, mixed>>
      */
-    public function buscarSinaisCompletos(array $idsClienteServico): array
+    public function buscarSinaisCompletos(array $idsClienteServico, array $seriaisPorId = []): array
     {
         $ids = array_values(array_map(
             fn ($id) => (int) $id,
@@ -340,22 +340,47 @@ class NiconWebService
             return [];
         }
 
-        $sinaisWeb = $this->buscarSinaisAtuaisParalelo($ids);
+        $sinaisWeb = $this->buscarSinaisAtuaisParalelo($ids, $seriaisPorId);
 
-        return array_map(function (int $id) use ($sinaisWeb) {
+        return array_map(function (int $id) use ($sinaisWeb, $seriaisPorId) {
             return [
                 'id_cliente_servico' => $id,
-                'serial' => '',
+                'serial' => $seriaisPorId[$id] ?? '',
                 'sinal' => $sinaisWeb[$id] ?? null,
             ];
         }, $ids);
     }
 
     /**
+     * @param  array<int, array<string, mixed>>  $clientes
+     * @return array<int, string>
+     */
+    private function montarMapaSeriais(array $clientes): array
+    {
+        $mapa = [];
+
+        foreach ($clientes as $cliente) {
+            if (! is_array($cliente)) {
+                continue;
+            }
+
+            $id = (int) ($cliente['id_cliente_servico'] ?? 0);
+            $serial = trim((string) ($cliente['serial'] ?? ''));
+
+            if ($id > 0 && $serial !== '') {
+                $mapa[$id] = $serial;
+            }
+        }
+
+        return $mapa;
+    }
+
+    /**
      * @param  array<int, int>  $idsClienteServico
+     * @param  array<int, string>  $seriaisPorId
      * @return array<int, array{rx?: string, data_atualizacao?: string}>
      */
-    private function buscarSinaisAtuaisParalelo(array $idsClienteServico): array
+    private function buscarSinaisAtuaisParalelo(array $idsClienteServico, array $seriaisPorId = []): array
     {
         $ids = array_values(array_unique(array_filter(
             array_map('intval', $idsClienteServico),
@@ -378,7 +403,7 @@ class NiconWebService
             $sessaoInvalida = false;
 
             foreach (array_chunk($pendentes, config('services.nicon.sinal_concorrencia', 4)) as $lote) {
-                [$loteOk, $loteSessaoInvalida] = $this->consultarLoteSinaisAtuais($lote);
+                [$loteOk, $loteSessaoInvalida] = $this->consultarLoteSinaisAtuais($lote, $seriaisPorId);
                 $resultado += $loteOk;
                 $sessaoInvalida = $sessaoInvalida || $loteSessaoInvalida;
             }
@@ -389,17 +414,21 @@ class NiconWebService
 
             $pendentes = array_values(array_filter(
                 $pendentes,
-                fn (int $id) => ! isset($resultado[$id])
+                fn (int $id) => ! $this->possuiSinalConfiavel($resultado[$id] ?? null)
             ));
         }
 
         foreach ($pendentes as $id) {
-            if (isset($resultado[$id])) {
+            if ($this->possuiSinalConfiavel($resultado[$id] ?? null)) {
                 continue;
             }
 
             try {
-                $json = $this->buscarSinalAtualCliente($id, null, false);
+                $json = $this->buscarSinalAtualCliente(
+                    $id,
+                    $seriaisPorId[$id] ?? null,
+                    false
+                );
                 if ($this->respostaSinalAtualValida($json)) {
                     $resultado[$id] = $json;
                 }
@@ -408,14 +437,35 @@ class NiconWebService
             }
         }
 
+        $precisamRefresh = array_values(array_filter(
+            $ids,
+            fn (int $id) => ! $this->possuiSinalConfiavel($resultado[$id] ?? null)
+        ));
+
+        foreach ($precisamRefresh as $id) {
+            try {
+                $json = $this->buscarSinalAtualCliente(
+                    $id,
+                    $seriaisPorId[$id] ?? null,
+                    true
+                );
+                if ($this->respostaSinalAtualValida($json)) {
+                    $resultado[$id] = $json;
+                }
+            } catch (RuntimeException) {
+                // Mantém sem sinal após refresh individual.
+            }
+        }
+
         return $resultado;
     }
 
     /**
      * @param  array<int, int>  $lote
+     * @param  array<int, string>  $seriaisPorId
      * @return array{0: array<int, array<string, mixed>>, 1: bool}
      */
-    private function consultarLoteSinaisAtuais(array $lote): array
+    private function consultarLoteSinaisAtuais(array $lote, array $seriaisPorId = []): array
     {
         $resultado = [];
         $sessaoInvalida = false;
@@ -423,7 +473,7 @@ class NiconWebService
         $base = $this->baseUrl();
         $jar = $this->montarCookieJar($sessao);
 
-        $respostas = Http::pool(function ($pool) use ($lote, $sessao, $base, $jar) {
+        $respostas = Http::pool(function ($pool) use ($lote, $sessao, $base, $jar, $seriaisPorId) {
             foreach ($lote as $id) {
                 $pool->as((string) $id)
                     ->timeout(config('services.nicon.timeout', 120))
@@ -435,9 +485,11 @@ class NiconWebService
                         'X-Requested-With' => 'XMLHttpRequest',
                         'Referer' => $base . '/cliente/atendimento',
                     ])
-                    ->post("{$base}/cliente/atendimento/buscar-sinal-atual-cliente", [
-                        'id_cliente_servico' => $id,
-                    ]);
+                    ->post("{$base}/cliente/atendimento/buscar-sinal-atual-cliente", $this->montarPayloadSinalAtualCliente(
+                        $id,
+                        $seriaisPorId[$id] ?? null,
+                        false
+                    ));
             }
         });
 
@@ -476,9 +528,30 @@ class NiconWebService
     {
         return is_array($json)
             && $json !== []
-            && array_key_exists('rx', $json)
-            && $json['rx'] !== null
-            && $json['rx'] !== '';
+            && $this->possuiSinalConfiavel($json);
+    }
+
+    /** @param  mixed  $sinal */
+    private function possuiSinalConfiavel($sinal): bool
+    {
+        if (! is_array($sinal) || ! array_key_exists('rx', $sinal)) {
+            return false;
+        }
+
+        return $this->rxUtil($sinal['rx']);
+    }
+
+    private function rxUtil(mixed $rx): bool
+    {
+        if ($rx === null || $rx === '') {
+            return false;
+        }
+
+        if (is_numeric($rx) && (float) $rx === 0.0) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Http;
 
 class CorrecaoDeSinalService
 {
-    private const CATEGORIA = 'correcao-atenuacao';
-
     public function __construct(
         private OpTaskService $opTaskService,
         private GoogleChatService $googleChatService,
@@ -25,9 +23,9 @@ class CorrecaoDeSinalService
         ?string $dataInicio = null,
         ?string $dataFim = null,
     ) {
-        $query = OpTask::tarefasPai(self::CATEGORIA)
+        $query = OpTask::tarefasPai(OpTask::CATEGORIAS_CORRECAO_SINAL)
             ->orderBy('updated_at', 'desc')
-            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn ($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
             ->when($taskCode, fn ($q) => $q->where('taskCode', $taskCode))
@@ -35,15 +33,79 @@ class CorrecaoDeSinalService
             ->when($dataFim, fn ($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
         if ($status === 'Finalizada') {
-            return $query->limit(1000)->offset($offset)->get();
+            return $query->limit(1000)->offset($offset)->get()
+                ->map(fn (OpTask $item) => $this->normalizarParaExibicao($item));
         }
 
-        return $query->limit($limit)->offset($offset)->get();
+        return $query->limit($limit)->offset($offset)->get()
+            ->map(fn (OpTask $item) => $this->normalizarParaExibicao($item));
+    }
+
+    /**
+     * Mapeia o status do kanban para valores legados gravados no banco.
+     */
+    private function statusParaConsulta(string $status): array
+    {
+        return match ($status) {
+            'Criada' => ['Criada', 'Backlog'],
+            'Finalizada' => ['Finalizada', 'Concluída'],
+            default => [$status],
+        };
+    }
+
+    public function normalizarParaExibicao(OpTask $correcao): array
+    {
+        $dados = $correcao->toArray();
+
+        $nome = trim((string) ($dados['nome_cliente'] ?? ''));
+        $titulo = trim((string) ($dados['titulo'] ?? ''));
+        if ($nome === '') {
+            $nome = $titulo;
+        }
+
+        $setor = trim((string) ($dados['setor'] ?? ''));
+        if ($setor === '') {
+            $setor = trim((string) ($dados['localizacao_texto'] ?? ''));
+        }
+
+        $codigoExibicao = trim((string) ($dados['taskCode'] ?? ''));
+        if ($codigoExibicao === '' && str_contains($titulo, '·')) {
+            $codigoExibicao = trim(explode('·', $titulo, 2)[0]);
+        }
+
+        $status = trim((string) ($dados['status'] ?? ''));
+
+        return array_merge($dados, [
+            'nome' => $nome,
+            'setor' => $setor,
+            'localizacao_texto' => trim((string) ($dados['localizacao_texto'] ?? '')) ?: $setor,
+            'codigo_exibicao' => $codigoExibicao,
+            'status_exibicao' => $this->statusParaExibicao($status),
+            'status_kanban' => $this->statusParaKanban($status),
+        ]);
+    }
+
+    private function statusParaExibicao(string $status): string
+    {
+        return match ($status) {
+            'Backlog' => 'Criada',
+            'Concluída' => 'Finalizada',
+            default => $status,
+        };
+    }
+
+    private function statusParaKanban(string $status): string
+    {
+        return match ($status) {
+            'Backlog' => 'Criada',
+            'Concluída' => 'Finalizada',
+            default => $status,
+        };
     }
 
     public function createCorrecaoDeSinal(array $dados): OpTask
     {
-        $dados['categoria'] = self::CATEGORIA;
+        $dados['categoria'] = 'correcao-atenuacao';
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
 
         return OpTask::create($dados);

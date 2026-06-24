@@ -80,8 +80,16 @@
   .caixa-sinal-retry:disabled { opacity: 0.6; cursor: not-allowed; }
   .caixa-sinal-retry i.spin { animation: caixa-spin 0.9s linear infinite; }
   .caixa-sinal-off { font-size: 11px; color: var(--gray-500); }
+  .caixa-sinal-celula {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 4px; flex-wrap: wrap;
+  }
+  .caixa-sinal-erro {
+    font-size: 15px; color: #dc2626; flex-shrink: 0;
+  }
   .caixa-cliente-linha { display: flex; align-items: flex-start; gap: 6px; }
-  .caixa-cliente-menu { position: relative; flex-shrink: 0; }
+  .caixa-cliente-info { flex: 1; min-width: 0; }
+  .caixa-cliente-menu { position: relative; flex-shrink: 0; margin-top: 1px; }
   .caixa-cliente-menu-btn {
     display: inline-flex; align-items: center; justify-content: center;
     width: 28px; height: 28px; border: 1px solid transparent; border-radius: var(--radius-sm);
@@ -89,7 +97,7 @@
   }
   .caixa-cliente-menu-btn:hover { background: var(--gray-100); color: var(--gray-800); border-color: var(--gray-200); }
   .caixa-cliente-menu-drop {
-    position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; min-width: 240px;
+    position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 20; min-width: 240px;
     background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
     box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 4px;
   }
@@ -232,7 +240,7 @@
       </button>
     </form>
     <div class="caixa-help">
-      Busca os clientes da caixa no Nicon e consulta o sinal RX de cada ONU. A lista de clientes aparece primeiro; os sinais são carregados em seguida. Buscas repetidas na mesma cidade ficam mais rápidas por cache.
+      Busca os clientes da caixa no Nicon e consulta o sinal RX em lotes no servidor. Os sinais vão aparecendo na tabela conforme cada lote termina. Se vier vazio ou 0 dBm, use o botão ↻ na linha para buscar individualmente.
     </div>
     <div class="caixa-resumo" id="caixa-resumo" hidden></div>
     <div class="caixa-table-wrap" id="caixa-resultado-wrap">
@@ -263,15 +271,6 @@
     modalBeta.classList.remove('open');
   }
 
-  abrirModalBeta();
-
-  btnFecharBeta?.addEventListener('click', fecharModalBeta);
-  modalBeta?.addEventListener('click', (event) => {
-    if (event.target === modalBeta) {
-      fecharModalBeta();
-    }
-  });
-
   const form = document.getElementById('form-buscar-caixa');
   const btn = document.getElementById('btn-buscar-caixa');
   const btnIcon = document.getElementById('btn-buscar-caixa-icon');
@@ -279,6 +278,106 @@
   const wrap = document.getElementById('caixa-resultado-wrap');
   const resumo = document.getElementById('caixa-resumo');
   const statusLabel = document.getElementById('caixa-status-label');
+  const cidadeSelect = document.getElementById('caixa-cidade');
+  const caixaInput = document.getElementById('caixa-nome');
+
+  const STORAGE_KEY = 'planner_buscar_caixa_estado';
+  let restaurandoEstado = false;
+  let clientesAtuais = [];
+  let caixaAtual = '';
+
+  function detectarRecarregamentoPagina() {
+    const nav = performance.getEntriesByType('navigation')[0];
+    return nav?.type === 'reload';
+  }
+
+  function limparEstadoBusca() {
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
+
+  function persistirEstadoBusca({ clientes = null, erro = null, sinaisCompletos = true } = {}) {
+    if (restaurandoEstado) return;
+
+    const lista = clientes ?? clientesAtuais;
+    const idCidade = cidadeSelect?.value || '';
+    const nomeCaixa = caixaAtual || caixaInput?.value?.trim() || '';
+
+    if (!idCidade && !nomeCaixa && !lista.length && !erro) {
+      limparEstadoBusca();
+      return;
+    }
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      idCidade,
+      nomeCaixa,
+      clientes: lista,
+      statusText: statusLabel.textContent,
+      erro,
+      sinaisCompletos: erro ? false : sinaisCompletos,
+    }));
+  }
+
+  function restaurarEstadoBusca() {
+    if (detectarRecarregamentoPagina()) {
+      limparEstadoBusca();
+      return false;
+    }
+
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+
+    try {
+      const estado = JSON.parse(raw);
+      restaurandoEstado = true;
+
+      if (estado.idCidade && cidadeSelect) {
+        cidadeSelect.value = estado.idCidade;
+      }
+      if (estado.nomeCaixa && caixaInput) {
+        caixaInput.value = estado.nomeCaixa;
+      }
+
+      caixaAtual = estado.nomeCaixa || '';
+      clientesAtuais = Array.isArray(estado.clientes) ? estado.clientes : [];
+
+      if (estado.sinaisCompletos === false && clientesAtuais.length > 0) {
+        clientesAtuais = clientesAtuais.map((c) => {
+          if (c.sinal_consultado || c.sinal_interrompido) return c;
+          return { ...c, sinal_interrompido: true };
+        });
+      }
+
+      if (estado.erro) {
+        renderErro(estado.erro);
+        statusLabel.textContent = estado.statusText || 'Erro na busca';
+      } else if (clientesAtuais.length > 0) {
+        const comSinal = clientesAtuais.filter((c) => extrairRx(c.sinal) != null).length;
+        const interrompidos = clientesAtuais.filter((c) => c.sinal_interrompido).length;
+        renderClientes(clientesAtuais, caixaAtual, false);
+        if (estado.statusText) {
+          statusLabel.textContent = estado.statusText;
+        } else if (estado.sinaisCompletos === false && interrompidos > 0) {
+          statusLabel.textContent = `${clientesAtuais.length} cliente(s) · ${comSinal} com sinal · ${interrompidos} interrompido(s)`;
+        } else {
+          statusLabel.textContent = `${clientesAtuais.length} cliente(s)${comSinal ? ` · ${comSinal} com sinal` : ''}`;
+        }
+      } else if (estado.nomeCaixa) {
+        resumo.hidden = true;
+        wrap.innerHTML = '<div class="caixa-empty">Nenhum cliente encontrado nesta caixa.</div>';
+        statusLabel.textContent = estado.statusText || '0 clientes';
+      } else {
+        restaurandoEstado = false;
+        return false;
+      }
+
+      restaurandoEstado = false;
+      return true;
+    } catch {
+      limparEstadoBusca();
+      restaurandoEstado = false;
+      return false;
+    }
+  }
 
   function esc(valor) {
     if (valor == null || valor === '') return '';
@@ -291,12 +390,19 @@
 
   function extrairRx(sinal) {
     if (sinal == null) return null;
-    if (typeof sinal === 'number' || typeof sinal === 'string') return sinal;
-    if (typeof sinal === 'object') {
-      if (sinal.rx != null) return sinal.rx;
-      if (sinal.sinal?.rx != null) return sinal.sinal.rx;
+
+    let bruto = null;
+    if (typeof sinal === 'number' || typeof sinal === 'string') {
+      bruto = sinal;
+    } else if (typeof sinal === 'object') {
+      if (sinal.rx != null) bruto = sinal.rx;
+      else if (sinal.sinal?.rx != null) bruto = sinal.sinal.rx;
     }
-    return null;
+
+    if (bruto == null || bruto === '') return null;
+    const valor = Number(bruto);
+    if (!Number.isNaN(valor) && valor === 0) return null;
+    return bruto;
   }
 
   function extrairDataSinal(sinal) {
@@ -330,6 +436,7 @@
   function renderErro(mensagem) {
     resumo.hidden = true;
     wrap.innerHTML = `<div class="caixa-erro"><i class="ti ti-alert-circle"></i> ${esc(mensagem)}</div>`;
+    persistirEstadoBusca({ erro: mensagem });
   }
 
   function sinalPrecisaCorrecao(rx) {
@@ -374,11 +481,11 @@
     return `
       <td>
         <div class="caixa-cliente-linha">
-          ${renderMenuCorrecao(cliente)}
-          <div>
+          <div class="caixa-cliente-info">
             <div>${esc(cliente.nome)}</div>
             <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">#${esc(cliente.codigo_cliente)}</div>
           </div>
+          ${renderMenuCorrecao(cliente)}
         </div>
       </td>
     `;
@@ -396,6 +503,27 @@
     const rx = extrairRx(cliente.sinal);
     const dataSinal = extrairDataSinal(cliente.sinal);
     const consultado = cliente.sinal_consultado === true;
+
+    if (cliente.sinal_interrompido && rx == null) {
+      return `
+        <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
+          <div class="caixa-sinal-celula">
+            <i class="ti ti-alert-circle caixa-sinal-erro" title="Busca interrompida"></i>
+            <span class="caixa-sinal-off">—</span>
+            <button
+              type="button"
+              class="caixa-sinal-retry"
+              data-retry-sinal="${esc(cliente.id_cliente_servico)}"
+              data-retry-serial="${esc(cliente.serial || '')}"
+              title="Buscar sinal novamente"
+              aria-label="Buscar sinal novamente"
+            >
+              <i class="ti ti-refresh"></i>
+            </button>
+          </div>
+        </td>
+      `;
+    }
 
     if (rx == null && consultado) {
       return `
@@ -450,6 +578,10 @@
       resumo.hidden = true;
       wrap.innerHTML = '<div class="caixa-empty">Nenhum cliente encontrado nesta caixa.</div>';
       statusLabel.textContent = '0 clientes';
+      if (!restaurandoEstado) {
+        clientesAtuais = [];
+        persistirEstadoBusca({ clientes: [], sinaisCompletos: true });
+      }
       return;
     }
 
@@ -461,7 +593,7 @@
         : '<span class="caixa-badge caixa-badge--off">Desconectado</span>';
 
       return `
-        <tr>
+        <tr data-cliente-id="${esc(cliente.id_cliente_servico)}">
           ${renderCelulaCliente(cliente)}
           <td class="text-center">${esc(cliente.porta ?? '—')}</td>
           <td class="text-center"><span class="caixa-badge caixa-badge--muted">${esc(cliente.status_servico || '—')}</span></td>
@@ -487,93 +619,276 @@
         <tbody>${linhas}</tbody>
       </table>
     `;
+
+    if (!carregandoSinais && !restaurandoEstado) {
+      clientesAtuais = clientes;
+      persistirEstadoBusca({ clientes, sinaisCompletos: true });
+    }
   }
 
-  function aplicarSinais(clientesComSinal, clientesAtuais, nomeCaixa) {
-    const mapa = new Map(
-      (clientesComSinal || []).map((item) => [Number(item.id_cliente_servico), item.sinal ?? null])
+  function atualizarStatusBuscaSinais() {
+    const total = clientesAtuais.length;
+    if (!total) return;
+
+    const comSinal = clientesAtuais.filter((c) => extrairRx(c.sinal) != null).length;
+    const consultados = clientesAtuais.filter((c) => c.sinal_consultado).length;
+
+    if (consultados < total) {
+      statusLabel.textContent = `${total} cliente(s) · buscando sinais (${comSinal}/${total})...`;
+      return;
+    }
+
+    statusLabel.textContent = `${total} cliente(s) · ${comSinal} com sinal`;
+  }
+
+  function mostrarLoadingSinal(idClienteServico) {
+    const celula = document.querySelector(`[data-sinal-id="${idClienteServico}"]`);
+    if (!celula) return;
+    celula.innerHTML = '<i class="ti ti-loader-2" style="animation:caixa-spin 0.9s linear infinite;font-size:16px;color:var(--gray-400);"></i>';
+  }
+
+  function normalizarSinalApi(sinal) {
+    if (sinal == null) return null;
+    if (extrairRx(sinal) == null) return null;
+    return sinal;
+  }
+
+  function atualizarLinhaCliente(idClienteServico) {
+    const cliente = clientesAtuais.find(
+      (item) => Number(item.id_cliente_servico) === Number(idClienteServico)
     );
+    if (!cliente) return;
 
-    const mesclados = clientesAtuais.map((cliente) => {
-      const id = Number(cliente.id_cliente_servico);
-      const consultado = mapa.has(id);
+    const linha = document.querySelector(`tr[data-cliente-id="${idClienteServico}"]`);
+    if (!linha) return;
 
-      return {
-        ...cliente,
-        sinal: consultado ? mapa.get(id) : cliente.sinal,
-        sinal_consultado: cliente.sinal_consultado || consultado,
-      };
-    });
+    const temp = document.createElement('tbody');
+    temp.innerHTML = `
+      <tr>
+        ${renderCelulaCliente(cliente)}
+        <td></td><td></td><td></td><td></td>
+        ${renderCelulaSinal(cliente, false)}
+      </tr>
+    `;
 
-    renderClientes(mesclados, nomeCaixa, false);
-    return mesclados;
+    const novaCelulaCliente = temp.querySelector('td:first-child');
+    const novaCelulaSinal = temp.querySelector('[data-sinal-id]');
+    const celulaCliente = linha.querySelector('td:first-child');
+    const celulaSinal = linha.querySelector('[data-sinal-id]');
+
+    if (novaCelulaCliente && celulaCliente) {
+      celulaCliente.replaceWith(novaCelulaCliente);
+    }
+    if (novaCelulaSinal && celulaSinal) {
+      celulaSinal.replaceWith(novaCelulaSinal);
+    }
   }
 
-  async function buscarSinaisParaIds(ids) {
-    if (!ids.length) return [];
-    const data = await requestNicon({
-      clientes_servicos: ids,
-      completar_sinais: true,
+  function aplicarSinalNoCliente(idClienteServico, sinal, nomeCaixa, { persistir = true } = {}) {
+    const indice = clientesAtuais.findIndex(
+      (item) => Number(item.id_cliente_servico) === Number(idClienteServico)
+    );
+    if (indice === -1) return;
+
+    clientesAtuais[indice] = {
+      ...clientesAtuais[indice],
+      sinal,
+      sinal_consultado: true,
+      sinal_interrompido: false,
+    };
+
+    atualizarLinhaCliente(idClienteServico);
+    atualizarResumo(clientesAtuais, nomeCaixa);
+    atualizarStatusBuscaSinais();
+
+    if (persistir && !restaurandoEstado) {
+      const todosConsultados = clientesAtuais.every((c) => c.sinal_consultado);
+      persistirEstadoBusca({
+        clientes: clientesAtuais,
+        sinaisCompletos: todosConsultados,
+      });
+    }
+  }
+
+  async function requestSinalAtualCliente(cliente, forcarRefresh = false) {
+    const payload = {
+      id_cliente_servico: Number(cliente.id_cliente_servico),
+      forcar_refresh_tr069: forcarRefresh,
+    };
+
+    if (cliente.serial) {
+      payload.serial = cliente.serial;
+    }
+
+    const response = await fetch('/api/nicon/sinal-atual-cliente', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token(),
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Falha ao buscar sinal.');
+    }
+
+    return data.sinal ?? null;
+  }
+
+  let buscaSinaisToken = 0;
+  let buscaSinaisAtiva = false;
+  let abortControllersSinais = [];
+  const TAMANHO_LOTE_SINAIS = 4;
+  const LOTES_PARALELOS = 2;
+
+  function registrarAbortControllerSinais() {
+    const controller = new AbortController();
+    abortControllersSinais.push(controller);
+    return controller;
+  }
+
+  function abortarRequisicoesSinais() {
+    abortControllersSinais.forEach((controller) => {
+      try { controller.abort(); } catch (_) {}
+    });
+    abortControllersSinais = [];
+  }
+
+  function marcarClientesNaoConsultadosComoInterrompidos() {
+    clientesAtuais = clientesAtuais.map((cliente) => {
+      if (cliente.sinal_consultado) return cliente;
+      return { ...cliente, sinal_interrompido: true };
+    });
+  }
+
+  function cancelarBuscaSinais({ persistir = true } = {}) {
+    if (!buscaSinaisAtiva) return;
+
+    buscaSinaisToken += 1;
+    buscaSinaisAtiva = false;
+    abortarRequisicoesSinais();
+    marcarClientesNaoConsultadosComoInterrompidos();
+
+    const total = clientesAtuais.length;
+    if (total) {
+      const comSinal = clientesAtuais.filter((c) => extrairRx(c.sinal) != null).length;
+      const interrompidos = clientesAtuais.filter((c) => c.sinal_interrompido).length;
+      statusLabel.textContent = `${total} cliente(s) · ${comSinal} com sinal · ${interrompidos} interrompido(s)`;
+    }
+
+    if (persistir && !restaurandoEstado && clientesAtuais.length) {
+      persistirEstadoBusca({ clientes: clientesAtuais, sinaisCompletos: false });
+    }
+  }
+
+  async function buscarSinaisLote(clientesLote, signal = null) {
+    const data = await requestNicon({
+      clientes: clientesLote.map((cliente) => ({
+        id_cliente_servico: cliente.id_cliente_servico,
+        serial: cliente.serial || '',
+      })),
+      completar_sinais: true,
+    }, signal);
     return data.clientes || [];
   }
 
-  async function recarregarSinalIndividual(idClienteServico, serial, clientes, nomeCaixa) {
+  function aplicarResultadosLote(resultados, lote, nomeCaixa) {
+    const mapa = new Map(
+      (resultados || []).map((item) => [Number(item.id_cliente_servico), item.sinal ?? null])
+    );
+
+    lote.forEach((cliente) => {
+      const id = Number(cliente.id_cliente_servico);
+      const sinal = mapa.has(id) ? normalizarSinalApi(mapa.get(id)) : null;
+      aplicarSinalNoCliente(id, sinal, nomeCaixa);
+    });
+  }
+
+  async function processarLoteSinais(lote, nomeCaixa, tokenBusca) {
+    if (tokenBusca !== buscaSinaisToken) return;
+
+    const controller = registrarAbortControllerSinais();
+    lote.forEach((cliente) => mostrarLoadingSinal(Number(cliente.id_cliente_servico)));
+
+    try {
+      const resultados = await buscarSinaisLote(lote, controller.signal);
+      if (tokenBusca !== buscaSinaisToken) return;
+      aplicarResultadosLote(resultados, lote, nomeCaixa);
+    } catch (error) {
+      if (tokenBusca !== buscaSinaisToken || error?.name === 'AbortError') return;
+      lote.forEach((cliente) => {
+        aplicarSinalNoCliente(Number(cliente.id_cliente_servico), null, nomeCaixa);
+      });
+    }
+  }
+
+  async function buscarSinaisProgressivo(clientes, nomeCaixa) {
+    const tokenBusca = ++buscaSinaisToken;
+    abortarRequisicoesSinais();
+    buscaSinaisAtiva = true;
+    const lotes = [];
+
+    for (let i = 0; i < clientes.length; i += TAMANHO_LOTE_SINAIS) {
+      lotes.push(clientes.slice(i, i + TAMANHO_LOTE_SINAIS));
+    }
+
+    atualizarStatusBuscaSinais();
+
+    const fila = [...lotes];
+    const workers = Array.from(
+      { length: Math.min(LOTES_PARALELOS, fila.length) },
+      async () => {
+        while (fila.length > 0) {
+          if (tokenBusca !== buscaSinaisToken) return;
+          const lote = fila.shift();
+          if (!lote) return;
+          await processarLoteSinais(lote, nomeCaixa, tokenBusca);
+        }
+      }
+    );
+
+    await Promise.all(workers);
+
+    if (tokenBusca !== buscaSinaisToken) return;
+
+    buscaSinaisAtiva = false;
+    abortarRequisicoesSinais();
+    persistirEstadoBusca({ clientes: clientesAtuais, sinaisCompletos: true });
+    atualizarStatusBuscaSinais();
+  }
+
+  async function recarregarSinalIndividual(idClienteServico, serial, nomeCaixa) {
+    const cliente = clientesAtuais.find(
+      (item) => Number(item.id_cliente_servico) === Number(idClienteServico)
+    );
+    if (!cliente) return;
+
     const celula = document.querySelector(`[data-sinal-id="${idClienteServico}"]`);
     const botao = celula?.querySelector('[data-retry-sinal]');
 
     if (botao) {
       botao.disabled = true;
       botao.querySelector('i')?.classList.add('spin');
-    } else if (celula) {
-      celula.innerHTML = '<i class="ti ti-loader-2" style="animation:caixa-spin 0.9s linear infinite;font-size:16px;color:var(--gray-400);"></i>';
+    } else {
+      mostrarLoadingSinal(idClienteServico);
     }
 
     try {
-      const payload = {
-        id_cliente_servico: Number(idClienteServico),
-        forcar_refresh_tr069: true,
-      };
-
-      if (serial) {
-        payload.serial = serial;
-      }
-
-      const response = await fetch('/api/nicon/sinal-atual-cliente', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token(),
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Falha ao buscar sinal.');
-      }
-
-      const atualizados = clientes.map((cliente) => (
-        Number(cliente.id_cliente_servico) === Number(idClienteServico)
-          ? { ...cliente, sinal: data.sinal ?? null, sinal_consultado: true }
-          : cliente
-      ));
-
-      return aplicarSinais(
-        [{ id_cliente_servico: Number(idClienteServico), sinal: data.sinal ?? null }],
-        atualizados,
-        nomeCaixa
+      const sinal = normalizarSinalApi(
+        await requestSinalAtualCliente(
+          { ...cliente, serial: serial || cliente.serial || '' },
+          true
+        )
       );
+      aplicarSinalNoCliente(idClienteServico, sinal, nomeCaixa);
     } catch (error) {
+      aplicarSinalNoCliente(idClienteServico, null, nomeCaixa);
       alert(error.message || 'Não foi possível buscar o sinal deste cliente.');
-      renderClientes(clientes, nomeCaixa, false);
-      return clientes;
     }
   }
-
-  let clientesAtuais = [];
-  let caixaAtual = '';
 
   async function criarTarefaCorrecao(idClienteServico) {
     const cliente = clientesAtuais.find(
@@ -585,7 +900,6 @@
       return;
     }
 
-    const cidadeSelect = document.getElementById('caixa-cidade');
     const regiao = cidadeSelect?.options[cidadeSelect.selectedIndex]?.text || 'Governador Valadares';
     const botao = document.querySelector(`[data-criar-correcao="${idClienteServico}"]`);
 
@@ -640,7 +954,7 @@
     }
   }
 
-  async function requestNicon(payload) {
+  async function requestNicon(payload, signal = null) {
     const response = await fetch('/api/nicon/sinal-caixa', {
       method: 'POST',
       headers: {
@@ -649,6 +963,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      signal,
     });
 
     const data = await response.json().catch(() => ({}));
@@ -663,11 +978,15 @@
   async function buscarCaixa(event) {
     event.preventDefault();
 
-    const idCidade = document.getElementById('caixa-cidade').value;
-    const caixa = document.getElementById('caixa-nome').value.trim();
+    const idCidade = cidadeSelect.value;
+    const caixa = caixaInput.value.trim();
 
     if (!idCidade || !caixa) return;
 
+    limparEstadoBusca();
+    buscaSinaisToken += 1;
+    abortarRequisicoesSinais();
+    buscaSinaisAtiva = false;
     setLoading(true);
     wrap.innerHTML = '<div class="caixa-loading"><i class="ti ti-loader-2"></i> Buscando clientes da caixa...</div>';
     resumo.hidden = true;
@@ -689,10 +1008,7 @@
         return;
       }
 
-      statusLabel.textContent = `${clientes.length} cliente(s) · buscando sinais...`;
-
-      const sinais = await buscarSinaisParaIds(clientes.map((c) => c.id_cliente_servico));
-      clientesAtuais = aplicarSinais(sinais, clientes, caixa);
+      void buscarSinaisProgressivo(clientes, caixa);
     } catch (error) {
       renderErro(error.message || 'Falha ao consultar o Nicon.');
       statusLabel.textContent = 'Erro na busca';
@@ -709,7 +1025,7 @@
       const id = Number(botaoRetry.dataset.retrySinal);
       const serial = botaoRetry.dataset.retrySerial || '';
       if (!id || !clientesAtuais.length) return;
-      clientesAtuais = await recarregarSinalIndividual(id, serial, clientesAtuais, caixaAtual);
+      await recarregarSinalIndividual(id, serial, caixaAtual);
       return;
     }
 
@@ -733,5 +1049,31 @@
   });
 
   document.addEventListener('click', () => fecharMenusCliente());
+
+  window.addEventListener('pagehide', () => {
+    cancelarBuscaSinais({ persistir: true });
+  });
+
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    buscaSinaisToken += 1;
+    abortarRequisicoesSinais();
+    buscaSinaisAtiva = false;
+    restaurarEstadoBusca();
+  });
+
+  const estadoRestaurado = restaurarEstadoBusca();
+  if (estadoRestaurado) {
+    fecharModalBeta();
+  } else {
+    abrirModalBeta();
+  }
+
+  btnFecharBeta?.addEventListener('click', fecharModalBeta);
+  modalBeta?.addEventListener('click', (event) => {
+    if (event.target === modalBeta) {
+      fecharModalBeta();
+    }
+  });
 </script>
 @endsection

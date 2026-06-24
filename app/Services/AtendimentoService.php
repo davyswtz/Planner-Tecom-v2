@@ -22,9 +22,9 @@ class AtendimentoService
         ?string $dataInicio = null,
         ?string $dataFim = null,
     ) {
-        $query = OpTask::tarefasPai('atendimento-cliente')
+        $query = OpTask::tarefasPai(OpTask::CATEGORIAS_ATENDIMENTO)
             ->orderBy('updated_at', 'desc')
-            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn ($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
             ->when($taskCode, fn ($q) => $q->where('taskCode', $taskCode))
@@ -38,6 +38,18 @@ class AtendimentoService
 
         return $query->limit($limit)->offset($offset)->get()
             ->map(fn (OpTask $item) => $this->normalizarParaExibicao($item));
+    }
+
+    /**
+     * Mapeia o status do kanban para os valores legados gravados no banco.
+     */
+    private function statusParaConsulta(string $status): array
+    {
+        return match ($status) {
+            'Criada' => ['Criada', 'Backlog'],
+            'Finalizada' => ['Finalizada', 'Concluída'],
+            default => [$status],
+        };
     }
 
     public function normalizarParaExibicao(OpTask $atendimento): array
@@ -74,6 +86,8 @@ class AtendimentoService
             $numeroOs = trim((string) ($dados['ordem_servico'] ?? ''));
         }
 
+        $status = trim((string) ($dados['status'] ?? ''));
+
         return array_merge($dados, [
             'nome' => $nome,
             'protocolo' => trim((string) ($dados['protocolo'] ?? '')),
@@ -84,7 +98,27 @@ class AtendimentoService
             'localizacao_texto' => $endereco,
             'coordenadas' => $coordenadas,
             'descricao' => $descricao,
+            'status_exibicao' => $this->statusParaExibicao($status),
+            'status_kanban' => $this->statusParaKanban($status),
         ]);
+    }
+
+    private function statusParaExibicao(string $status): string
+    {
+        return match ($status) {
+            'Backlog' => 'Criada',
+            'Concluída' => 'Finalizada',
+            default => $status,
+        };
+    }
+
+    private function statusParaKanban(string $status): string
+    {
+        return match ($status) {
+            'Backlog' => 'Criada',
+            'Concluída' => 'Finalizada',
+            default => $status,
+        };
     }
 
     private function pareceCoordenada(string $valor): bool
