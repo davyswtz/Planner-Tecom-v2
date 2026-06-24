@@ -104,6 +104,7 @@ class GoogleChatService
             'troca-poste' => 'TROCA DE POSTE',
             'otimizacao-rede' => 'OTIMIZAÇÃO DE REDE',
             'atendimento-cliente' => 'ATENDIMENTO',
+            'correcao-atenuacao' => 'CORREÇÃO DE SINAL',
             default => strtoupper(str_replace('-', ' ', $categoria ?: 'TAREFA')),
         };
 

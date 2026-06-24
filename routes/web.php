@@ -34,6 +34,10 @@ Route::get('/atendimento', function () {
     return view('atendimento');
 });
 
+Route::get('/correcao-de-sinal', function () {
+    return view('correcao-de-sinal');
+});
+
 Route::get('/ordem-de-servico', function () {
     return view('ordem-de-servico');
 });

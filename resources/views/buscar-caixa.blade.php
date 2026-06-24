@@ -80,6 +80,30 @@
   .caixa-sinal-retry:disabled { opacity: 0.6; cursor: not-allowed; }
   .caixa-sinal-retry i.spin { animation: caixa-spin 0.9s linear infinite; }
   .caixa-sinal-off { font-size: 11px; color: var(--gray-500); }
+  .caixa-cliente-linha { display: flex; align-items: flex-start; gap: 6px; }
+  .caixa-cliente-menu { position: relative; flex-shrink: 0; }
+  .caixa-cliente-menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border: 1px solid transparent; border-radius: var(--radius-sm);
+    background: transparent; color: var(--gray-500); cursor: pointer; padding: 0;
+  }
+  .caixa-cliente-menu-btn:hover { background: var(--gray-100); color: var(--gray-800); border-color: var(--gray-200); }
+  .caixa-cliente-menu-drop {
+    position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; min-width: 240px;
+    background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 4px;
+  }
+  .caixa-cliente-menu-drop button {
+    width: 100%; text-align: left; border: none; background: transparent;
+    padding: 8px 10px; font: inherit; font-size: 12px; color: var(--gray-800);
+    border-radius: 6px; cursor: pointer;
+  }
+  .caixa-cliente-menu-drop button:hover { background: var(--gray-50); color: var(--blue-600); }
+  [data-theme="dark"] .caixa-cliente-menu-drop {
+    background: #21262d; border-color: #30363d;
+  }
+  [data-theme="dark"] .caixa-cliente-menu-drop button { color: #e6edf3; }
+  [data-theme="dark"] .caixa-cliente-menu-drop button:hover { background: #30363d; }
   .caixa-empty, .caixa-loading, .caixa-erro {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     padding: 48px 16px; color: var(--gray-500); font-size: 13px; text-align: center;
@@ -97,14 +121,95 @@
   @media (max-width: 768px) {
     .caixa-filtros { grid-template-columns: 1fr; }
   }
+
+  .caixa-beta-modal-body {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px;
+  }
+  .caixa-beta-modal-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    color: var(--blue-600); display: flex; align-items: center; justify-content: center;
+    font-size: 30px; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+  }
+  .caixa-beta-modal-kicker {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #ca8a04;
+  }
+  .caixa-beta-modal-title {
+    font-size: 22px; font-weight: 700; color: var(--gray-950); line-height: 1.2; margin: 0;
+  }
+  .caixa-beta-modal-feature {
+    font-size: 15px; font-weight: 600; color: var(--blue-600); margin: 0;
+  }
+  .caixa-beta-modal-text {
+    font-size: 13px; color: var(--gray-600); line-height: 1.55; margin: 0; max-width: 420px;
+  }
+  .caixa-beta-modal-obs {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-sm);
+    background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+    font-size: 12px; line-height: 1.5; text-align: left;
+  }
+  .caixa-beta-modal-obs strong { display: block; margin-bottom: 4px; font-size: 12px; }
+  [data-theme="dark"] .caixa-beta-modal-icon {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1f2937 100%);
+    color: #60a5fa;
+  }
+  [data-theme="dark"] .caixa-beta-modal-obs {
+    background: rgba(146, 64, 14, 0.15); border-color: rgba(251, 191, 36, 0.35); color: #fbbf24;
+  }
+  .caixa-beta-modal-foot {
+    justify-content: center;
+  }
+  .caixa-beta-modal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    height: 40px;
+    padding: 0 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: #166ac4;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .caixa-beta-modal-btn:hover { background: #0d5aaa; }
 </style>
 @endsection
 
 @section('content')
+<div id="modal-buscar-caixa-beta" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="caixa-beta-modal-title">
+  <div class="modal-box" style="max-width: 460px;">
+    <div class="modal-body caixa-beta-modal-body">
+      <div class="caixa-beta-modal-icon" aria-hidden="true">
+        <i class="ti ti-box"></i>
+      </div>
+      <div class="caixa-beta-modal-kicker">Função nova desbloqueada</div>
+      <h2 class="caixa-beta-modal-title" id="caixa-beta-modal-title">Buscar caixa</h2>
+      <p class="caixa-beta-modal-text">
+        Consulte clientes e sinais RX de uma caixa direto do Nicon, sem sair do Planner.
+      </p>
+      <div class="caixa-beta-modal-obs">
+        <strong>Observação — versão beta</strong>
+        Esta funcionalidade está em fase de testes. Os resultados podem demorar ou variar conforme a resposta do Nicon.
+      </div>
+    </div>
+    <div class="modal-foot caixa-beta-modal-foot">
+      <button type="button" class="caixa-beta-modal-btn" id="btn-fechar-beta-caixa">
+        Entendi
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="caixa-page">
   <div class="card">
     <div class="card-header">
-      <span class="card-title">Consulta Nicon</span>
+      <span class="card-title">Consulta Nicon <span class="caixa-badge caixa-badge--muted" style="margin-left:6px;font-size:10px;vertical-align:middle;">Beta</span></span>
       <span class="card-action" id="caixa-status-label">Informe cidade e caixa</span>
     </div>
     <form class="caixa-filtros" id="form-buscar-caixa">
@@ -144,6 +249,28 @@
   if (!token()) {
     window.location.replace('/login');
   }
+
+  const modalBeta = document.getElementById('modal-buscar-caixa-beta');
+  const btnFecharBeta = document.getElementById('btn-fechar-beta-caixa');
+
+  function abrirModalBeta() {
+    if (!modalBeta) return;
+    modalBeta.classList.add('open');
+  }
+
+  function fecharModalBeta() {
+    if (!modalBeta) return;
+    modalBeta.classList.remove('open');
+  }
+
+  abrirModalBeta();
+
+  btnFecharBeta?.addEventListener('click', fecharModalBeta);
+  modalBeta?.addEventListener('click', (event) => {
+    if (event.target === modalBeta) {
+      fecharModalBeta();
+    }
+  });
 
   const form = document.getElementById('form-buscar-caixa');
   const btn = document.getElementById('btn-buscar-caixa');
@@ -203,6 +330,58 @@
   function renderErro(mensagem) {
     resumo.hidden = true;
     wrap.innerHTML = `<div class="caixa-erro"><i class="ti ti-alert-circle"></i> ${esc(mensagem)}</div>`;
+  }
+
+  function sinalPrecisaCorrecao(rx) {
+    const valor = Number(rx);
+    if (Number.isNaN(valor)) return false;
+    return valor < -24;
+  }
+
+  function renderMenuCorrecao(cliente) {
+    const rx = extrairRx(cliente.sinal);
+    if (!sinalPrecisaCorrecao(rx)) {
+      return '';
+    }
+
+    return `
+      <div class="caixa-cliente-menu">
+        <button
+          type="button"
+          class="caixa-cliente-menu-btn"
+          data-menu-toggle="${esc(cliente.id_cliente_servico)}"
+          title="Opções"
+          aria-label="Opções do cliente"
+        >
+          <i class="ti ti-dots-vertical"></i>
+        </button>
+        <div class="caixa-cliente-menu-drop" id="menu-cliente-${esc(cliente.id_cliente_servico)}" hidden>
+          <button type="button" data-criar-correcao="${esc(cliente.id_cliente_servico)}">
+            Criar tarefa de correção de sinal
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function fecharMenusCliente() {
+    document.querySelectorAll('.caixa-cliente-menu-drop').forEach((menu) => {
+      menu.hidden = true;
+    });
+  }
+
+  function renderCelulaCliente(cliente) {
+    return `
+      <td>
+        <div class="caixa-cliente-linha">
+          ${renderMenuCorrecao(cliente)}
+          <div>
+            <div>${esc(cliente.nome)}</div>
+            <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">#${esc(cliente.codigo_cliente)}</div>
+          </div>
+        </div>
+      </td>
+    `;
   }
 
   function renderCelulaSinal(cliente, carregandoSinais = false) {
@@ -283,10 +462,7 @@
 
       return `
         <tr>
-          <td>
-            <div>${esc(cliente.nome)}</div>
-            <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">#${esc(cliente.codigo_cliente)}</div>
-          </td>
+          ${renderCelulaCliente(cliente)}
           <td class="text-center">${esc(cliente.porta ?? '—')}</td>
           <td class="text-center"><span class="caixa-badge caixa-badge--muted">${esc(cliente.status_servico || '—')}</span></td>
           <td class="text-center">${badgeConexao}</td>
@@ -399,6 +575,71 @@
   let clientesAtuais = [];
   let caixaAtual = '';
 
+  async function criarTarefaCorrecao(idClienteServico) {
+    const cliente = clientesAtuais.find(
+      (item) => Number(item.id_cliente_servico) === Number(idClienteServico)
+    );
+
+    if (!cliente) {
+      alert('Cliente não encontrado na listagem atual.');
+      return;
+    }
+
+    const cidadeSelect = document.getElementById('caixa-cidade');
+    const regiao = cidadeSelect?.options[cidadeSelect.selectedIndex]?.text || 'Governador Valadares';
+    const botao = document.querySelector(`[data-criar-correcao="${idClienteServico}"]`);
+
+    if (botao) {
+      botao.disabled = true;
+      botao.textContent = 'Criando tarefa...';
+    }
+
+    try {
+      const response = await fetch('/api/correcao-sinal/from-caixa', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token(),
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nome_cliente: cliente.nome,
+          caixa: cliente.caixa || caixaAtual,
+          porta: cliente.porta,
+          serial: cliente.serial,
+          sinal_rx: extrairRx(cliente.sinal),
+          codigo_cliente: cliente.codigo_cliente,
+          id_cliente_servico: cliente.id_cliente_servico,
+          regiao,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Não foi possível criar a tarefa.');
+      }
+
+      fecharMenusCliente();
+
+      const codigo = data.correcaoDeSinal?.taskCode || '';
+      const ir = confirm(
+        `Tarefa criada com sucesso${codigo ? ` (${codigo})` : ''}.\n\nAbrir o kanban de Correção de sinal?`
+      );
+
+      if (ir) {
+        window.location.href = '/correcao-de-sinal';
+      }
+    } catch (error) {
+      alert(error.message || 'Falha ao criar tarefa de correção de sinal.');
+    } finally {
+      if (botao) {
+        botao.disabled = false;
+        botao.textContent = 'Criar tarefa de correção de sinal';
+      }
+    }
+  }
+
   async function requestNicon(payload) {
     const response = await fetch('/api/nicon/sinal-caixa', {
       method: 'POST',
@@ -463,14 +704,34 @@
   form.addEventListener('submit', buscarCaixa);
 
   wrap.addEventListener('click', async (event) => {
-    const botao = event.target.closest('[data-retry-sinal]');
-    if (!botao) return;
+    const botaoRetry = event.target.closest('[data-retry-sinal]');
+    if (botaoRetry) {
+      const id = Number(botaoRetry.dataset.retrySinal);
+      const serial = botaoRetry.dataset.retrySerial || '';
+      if (!id || !clientesAtuais.length) return;
+      clientesAtuais = await recarregarSinalIndividual(id, serial, clientesAtuais, caixaAtual);
+      return;
+    }
 
-    const id = Number(botao.dataset.retrySinal);
-    const serial = botao.dataset.retrySerial || '';
-    if (!id || !clientesAtuais.length) return;
+    const botaoMenu = event.target.closest('[data-menu-toggle]');
+    if (botaoMenu) {
+      event.stopPropagation();
+      const id = botaoMenu.dataset.menuToggle;
+      const menu = document.getElementById(`menu-cliente-${id}`);
+      if (!menu) return;
+      const abrir = menu.hidden;
+      fecharMenusCliente();
+      menu.hidden = !abrir;
+      return;
+    }
 
-    clientesAtuais = await recarregarSinalIndividual(id, serial, clientesAtuais, caixaAtual);
+    const botaoCorrecao = event.target.closest('[data-criar-correcao]');
+    if (botaoCorrecao) {
+      event.stopPropagation();
+      await criarTarefaCorrecao(botaoCorrecao.dataset.criarCorrecao);
+    }
   });
+
+  document.addEventListener('click', () => fecharMenusCliente());
 </script>
 @endsection
