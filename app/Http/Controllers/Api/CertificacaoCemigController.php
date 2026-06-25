@@ -58,7 +58,7 @@ class CertificacaoCemigController extends Controller
             'prazo' => ['nullable', 'date'],
             'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
             'descricao' => ['nullable', 'string'],
-            'protocolo' => ['nullable', 'string', 'max:120'],
+            'numero_os' => ['nullable', 'string', 'max:180'],
         ], [
             'titulo.required' => 'Informe o título ou notificação.',
             'regiao.required' => 'Selecione a região.',

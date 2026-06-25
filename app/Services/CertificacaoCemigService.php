@@ -33,7 +33,7 @@ class CertificacaoCemigService
         ?string $dataFim = null,
         ?string $busca = null,
     ) {
-        $query = OpTask::tarefasPai(self::CATEGORIA)
+        $query = OpTask::tarefasPai(OpTask::CATEGORIAS_CERTIFICACAO_CEMIG)
             ->orderBy('updated_at', 'desc')
             ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
@@ -46,7 +46,7 @@ class CertificacaoCemigService
                 $q->where(function ($sub) use ($termo) {
                     $sub->where('titulo', 'like', $termo)
                         ->orWhere('descricao', 'like', $termo)
-                        ->orWhere('protocolo', 'like', $termo);
+                        ->orWhere('numero_os', 'like', $termo);
                 });
             });
 
@@ -63,7 +63,7 @@ class CertificacaoCemigService
     {
         return match ($status) {
             'Pendente' => ['Pendente', 'Criada', 'Backlog'],
-            'Concluído' => ['Concluído', 'Finalizada', 'Concluída'],
+            'Concluído' => ['Concluído', 'Finalizado', 'Finalizada', 'Concluída'],
             default => [$status],
         };
     }
@@ -83,7 +83,7 @@ class CertificacaoCemigService
     {
         return match ($status) {
             'Criada', 'Backlog' => 'Pendente',
-            'Finalizada', 'Concluída' => 'Concluído',
+            'Finalizado', 'Finalizada', 'Concluída' => 'Concluído',
             default => $status,
         };
     }
@@ -108,7 +108,7 @@ class CertificacaoCemigService
 
         if (isset($dados['status']) && $dados['status'] === 'Concluído') {
             $osPendentes = OpTask::where('parent_task_id', $certificacao->id)
-                ->where('status', '!=', 'Finalizada')
+                ->whereNotIn('status', ['Finalizada', 'Finalizado', 'Concluída', 'Concluído'])
                 ->count();
 
             if ($osPendentes > 0) {

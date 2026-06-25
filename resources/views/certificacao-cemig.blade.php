@@ -200,8 +200,33 @@
   .btn-prio-media  { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
   .btn-prio-alta   { border-color: #fca5a5; background: var(--red-bg); color: var(--red-text); }
   .btn-prio-ativo  { border-width: 2px; }
-  .kanban-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .dot.d-purple { background: #a855f7; }
+  .kanban-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .kanban-cols-5 .kcol {
+    min-width: 0;
+  }
+  .kanban-cols-5 .kcol-head {
+    min-height: 42px;
+    align-items: center;
+    gap: 8px;
+  }
+  .kanban-cols-5 .kcol-name {
+    min-width: 0;
+    flex: 1;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kanban-cols-5 .kcol-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
   @media (max-width: 1200px) { .kanban-cols-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 768px) { .kanban-cols-5 { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { .modal-body { padding: 14px 14px !important; } .modal-head { padding: 14px 16px !important; } .modal-foot { padding: 12px 14px !important; } }
@@ -228,8 +253,8 @@
 
     <div class="detail-grid-2">
       <div class="os-field">
-        <label class="os-label">Protocolo / Referência</label>
-        <input type="text" id="input-protocolo" placeholder="Ex: ER/EE-00202/2026" class="os-input"/>
+        <label class="os-label">Número da OS (Hubsoft)</label>
+        <input type="text" id="input-numero-hubsoft" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
       </div>
       <div class="os-field">
         <label class="os-label">Prazo</label>
@@ -424,48 +449,13 @@
 
 </x-modal>
 
-<div class="metrics-row" id="metrics-row">
-  <div class="metric-card">
-    <div class="metric-top">
-      <div class="metric-label">Criadas</div>
-      <div class="metric-icon mi-blue"><i class="ti ti-plus"></i></div>
-    </div>
-    <div class="metric-value" id="metric-pendente">0</div>
-    <div class="metric-sub">Aguardando início</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-top">
-      <div class="metric-label">Em andamento</div>
-      <div class="metric-icon mi-amber"><i class="ti ti-loader"></i></div>
-    </div>
-    <div class="metric-value" id="metric-andamento">0</div>
-    <div class="metric-sub">Em execução</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-top">
-      <div class="metric-label">Concluídas</div>
-      <div class="metric-icon mi-green"><i class="ti ti-circle-check"></i></div>
-    </div>
-    <div class="metric-value" id="metric-validacao">0</div>
-    <div class="metric-sub">Verificar e finalizar</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-top">
-      <div class="metric-label">Finalizadas</div>
-      <div class="metric-icon mi-blue"><i class="ti ti-clipboard-check"></i></div>
-    </div>
-    <div class="metric-value" id="metric-concluido">0</div>
-    <div class="metric-sub">Encerradas</div>
-  </div>
-</div>
-
 <!-- FILTROS -->
 <div class="card filtros-card">
   <div class="filtros-bar">
 
     <div class="filtro-search">
       <i class="ti ti-search filtro-search-icon"></i>
-      <input type="text" id="filtro-busca" placeholder="Buscar tarefas operacionais..."
+      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
         oninput="aplicarFiltrosDebounce()"
         class="filtro-search-input"/>
     </div>
@@ -483,16 +473,8 @@
     <div class="filtro-divider"></div>
 
     <select id="filtro-tecnico" onchange="aplicarFiltros()" class="filtro-select">
-      <option value="">Filtrar por técnico...</option>
+      <option value="">Todos os técnicos</option>
     </select>
-
-    <div class="filtro-divider"></div>
-
-    <div class="filtro-search" style="min-width:120px;flex:0 1 140px">
-      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
-        oninput="aplicarFiltrosDebounce()"
-        class="filtro-search-input"/>
-    </div>
 
     <div class="filtro-divider"></div>
 
@@ -515,14 +497,14 @@
 <!-- KANBAN -->
 <div class="card" style="flex:1">
   <div class="card-header">
-    <span class="card-title">Kanban de Certificação Cemig</span>
+    <span class="card-title">Kanban de Certificação</span>
     <span class="card-action">total: <span id="total-certificacoes">0</span></span>
   </div>
   <div class="kanban-cols kanban-cols-5">
     <div class="kcol">
       <div class="kcol-head">
-        <div class="kcol-name"><div class="dot d-blue"></div> Pendentes</div>
-        <div style="display:flex;align-items:center;gap:5px">
+        <div class="kcol-name"><div class="dot d-blue"></div> Pendente</div>
+        <div class="kcol-head-actions">
           <span class="kcol-count" id="count-pendente">0</span>
           <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
             <i class="ti ti-chevron-down"></i>
@@ -534,12 +516,15 @@
         <div id="mais-pendente" style="display:none;padding:8px">
           <button onclick="carregarMais('Pendente')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
         </div>
+        <div id="menos-pendente" style="display:none;padding:8px">
+          <button onclick="verMenos('Pendente')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-amber"></div> Em andamento</div>
-        <div style="display:flex;align-items:center;gap:5px">
+        <div class="kcol-head-actions">
           <span class="kcol-count" id="count-andamento">0</span>
           <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
             <i class="ti ti-chevron-down"></i>
@@ -551,12 +536,15 @@
         <div id="mais-andamento" style="display:none;padding:8px">
           <button onclick="carregarMais('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
         </div>
+        <div id="menos-andamento" style="display:none;padding:8px">
+          <button onclick="verMenos('Em andamento')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-purple"></div> Validação</div>
-        <div style="display:flex;align-items:center;gap:5px">
+        <div class="kcol-head-actions">
           <span class="kcol-count" id="count-validacao">0</span>
           <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
             <i class="ti ti-chevron-down"></i>
@@ -568,12 +556,15 @@
         <div id="mais-validacao" style="display:none;padding:8px">
           <button onclick="carregarMais('Validação')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
         </div>
+        <div id="menos-validacao" style="display:none;padding:8px">
+          <button onclick="verMenos('Validação')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
-        <div class="kcol-name"><div class="dot d-red"></div> Precisa de adequação</div>
-        <div style="display:flex;align-items:center;gap:5px">
+        <div class="kcol-name" title="Precisa de adequação"><div class="dot d-red"></div> Adequação</div>
+        <div class="kcol-head-actions">
           <span class="kcol-count" id="count-adequacao">0</span>
           <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
             <i class="ti ti-chevron-down"></i>
@@ -585,12 +576,15 @@
         <div id="mais-adequacao" style="display:none;padding:8px">
           <button onclick="carregarMais('Precisa de adequação')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
         </div>
+        <div id="menos-adequacao" style="display:none;padding:8px">
+          <button onclick="verMenos('Precisa de adequação')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
+        </div>
       </div>
     </div>
     <div class="kcol">
       <div class="kcol-head">
         <div class="kcol-name"><div class="dot d-green"></div> Concluído</div>
-        <div style="display:flex;align-items:center;gap:5px">
+        <div class="kcol-head-actions">
           <span class="kcol-count" id="count-concluido">0</span>
           <button class="btn-kcol-toggle" onclick="toggleColuna(this)" title="Minimizar coluna" aria-label="Minimizar coluna">
             <i class="ti ti-chevron-down"></i>
@@ -601,6 +595,9 @@
         <div class="kcol-body" id="col-concluido" data-status="Concluído"></div>
         <div id="mais-concluido" style="display:none;padding:8px">
           <button onclick="carregarMais('Concluído')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Carregar mais</button>
+        </div>
+        <div id="menos-concluido" style="display:none;padding:8px">
+          <button onclick="verMenos('Concluído')" style="width:100%;padding:6px;border:1px dashed var(--gray-200);border-radius:var(--radius-sm);background:transparent;color:var(--gray-400);font-size:12px;cursor:pointer">Ver menos</button>
         </div>
       </div>
     </div>
@@ -631,12 +628,11 @@
 
   function obterFiltrosFormulario() {
     return {
-      regiao:     document.getElementById('filtro-regiao').value,
-      tecnico:    document.getElementById('filtro-tecnico').value,
+      regiao: document.getElementById('filtro-regiao').value,
+      tecnico: document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
-      dataFim:    document.getElementById('filtro-data-fim').value,
-      taskCode:   document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
-      busca:      document.getElementById('filtro-busca').value.trim(),
+      dataFim: document.getElementById('filtro-data-fim').value,
+      taskCode: document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
     };
   }
 
@@ -661,14 +657,13 @@
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
     document.getElementById('filtro-taskcode').value = '';
-    document.getElementById('filtro-busca').value = '';
     if (window.carregarCertificacoes) window.carregarCertificacoes({});
   }
 
   // ─── MODAIS ───
   function limparFormularioCertificacao() {
     document.getElementById('input-titulo').value = '';
-    document.getElementById('input-protocolo').value = '';
+    document.getElementById('input-numero-hubsoft').value = '';
     document.getElementById('input-prazo').value = '';
     document.getElementById('input-descricao').value = '';
     document.getElementById('input-regiao').value = '';
@@ -1120,6 +1115,14 @@
     if (!id) return;
 
     const token = localStorage.getItem('planner_token');
+    const btn = document.getElementById('btn-confirmar-excluir');
+    btn.disabled = true;
+
+    window.plannerPausarPolling?.(30000);
+    window.plannerMarcarExcluida?.(id);
+    window.plannerRemoverCardKanban?.(id);
+    window.plannerInvalidateReloads?.();
+
     try {
       const response = await fetch(`/api/certificacao-cemig/${id}`, {
         method: 'DELETE',
@@ -1127,6 +1130,7 @@
           'Authorization': 'Bearer ' + token,
           'Accept': 'application/json',
         },
+        cache: 'no-store',
       });
 
       if (!response.ok) {
@@ -1138,8 +1142,12 @@
       fecharDetalhe();
       await window.plannerAposExclusaoTarefa(id, () => window.carregarCertificacoes());
     } catch (err) {
+      window.plannerDesmarcarExcluida?.(id);
+      await window.carregarCertificacoes();
       console.error('Erro ao excluir certificação:', err.message);
       alert(err.message || 'Erro ao excluir certificação.');
+    } finally {
+      btn.disabled = false;
     }
   }
 
@@ -1326,7 +1334,7 @@
 
     const campos = [
       { id: 'campo-titulo',     tipo: 'text' },
-      { id: 'campo-protocolo',  tipo: 'text' },
+      { id: 'campo-numero-os', tipo: 'text' },
       { id: 'campo-prazo',      tipo: 'date' },
       { id: 'campo-regiao',     tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
       { id: 'campo-tecnicos',   tipo: 'custom' },
@@ -1372,7 +1380,7 @@
 
     const dados = {
       titulo:      getVal('#campo-titulo input'),
-      protocolo:   getVal('#campo-protocolo input'),
+      numero_os:   getVal('#campo-numero-os input'),
       prazo:       getVal('#campo-prazo input'),
       regiao:      getVal('#campo-regiao select'),
       responsavel: tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
@@ -1412,7 +1420,7 @@
 
     const dados = {
       titulo,
-      protocolo:   document.getElementById('input-protocolo').value.trim(),
+      numero_os:   document.getElementById('input-numero-hubsoft').value.trim(),
       prazo:       document.getElementById('input-prazo').value || null,
       descricao:   document.getElementById('input-descricao').value.trim(),
       regiao,
@@ -1459,7 +1467,10 @@
     const novos = await buscarColuna(status, limit, offsetMap[status], filtrosAtivos);
     const colId = colIdMap[status];
     const col = document.getElementById(`col-${colId}`);
-    novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); certificacoesMap[r.id] = r; });
+    novos.forEach(r => {
+      col.insertAdjacentHTML('beforeend', renderCard(r));
+      certificacoesMap[r.id] = r;
+    });
     document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
     if (novos.length < limit) document.getElementById(`mais-${colId}`).style.display = 'none';
     document.getElementById(`menos-${colId}`).style.display = 'block';
@@ -1469,7 +1480,9 @@
   async function verMenos(status) {
     const colId = colIdMap[status];
     const col = document.getElementById(`col-${colId}`);
-    col.querySelectorAll('.kcard').forEach((card, index) => { if (index >= 10) card.remove(); });
+    col.querySelectorAll('.kcard').forEach((card, index) => {
+      if (index >= 10) card.remove();
+    });
     offsetMap[status] = 0;
     document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
     document.getElementById(`menos-${colId}`).style.display = 'none';
@@ -1506,7 +1519,7 @@
 
   function badgeStatus(status) {
     const exibicao = status === 'Backlog' || status === 'Criada' ? 'Pendente'
-      : status === 'Concluída' || status === 'Finalizada' ? 'Concluído'
+      : status === 'Concluída' || status === 'Finalizada' || status === 'Finalizado' ? 'Concluído'
       : (status || '—');
     const mapa = {
       'Pendente': 'd-blue',
@@ -1553,7 +1566,11 @@
       cache: 'no-store',
     });
     const data = await response.json();
-    const lista = data.certificacaoCemig || [];
+    if (!response.ok) {
+      console.error('Erro ao carregar certificações:', data.message || response.status);
+      return [];
+    }
+    const lista = Array.isArray(data.certificacaoCemig) ? data.certificacaoCemig : [];
     return window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
   }
 
@@ -1577,6 +1594,7 @@
     const todos = [...pendentes, ...andamento, ...validacao, ...adequacao, ...concluidos];
     if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
+    window.plannerLimparTombstonesConfirmadas?.(todos.map((r) => r.id));
     Object.keys(certificacoesMap).forEach(k => delete certificacoesMap[k]);
     todos.forEach(r => { certificacoesMap[r.id] = r; });
 
@@ -1592,13 +1610,9 @@
     document.getElementById('count-concluido').textContent  = concluidos.length;
     document.getElementById('total-certificacoes').textContent = todos.length;
 
-    document.getElementById('metric-pendente').textContent = pendentes.length;
-    document.getElementById('metric-andamento').textContent = andamento.length;
-    document.getElementById('metric-validacao').textContent = validacao.length + adequacao.length;
-    document.getElementById('metric-concluido').textContent = concluidos.length;
-    const navBadge = document.getElementById('nav-badge-certificacao');
-    if (navBadge) navBadge.textContent = pendentes.length + andamento.length;
-
+    ['pendente', 'andamento', 'validacao', 'adequacao', 'concluido'].forEach((colId) => {
+      document.getElementById(`menos-${colId}`).style.display = 'none';
+    });
     document.getElementById('mais-pendente').style.display   = pendentes.length === 10 ? 'block' : 'none';
     document.getElementById('mais-andamento').style.display  = andamento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-validacao').style.display  = validacao.length === 10 ? 'block' : 'none';
@@ -1612,28 +1626,22 @@
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
       : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
-    const titulo = r.titulo || 'Certificação Cemig';
-    const codigo = r.taskCode || 'S/C';
-    const prazo = formatarPrazo(r.prazo);
-    const tecnico = (r.responsavel || '').split(',')[0]?.trim();
+    const statusKanban = r.status_kanban || r.status;
+
     return `
     <div class="kcard"
       data-id="${r.id}"
-      data-status="${esc(r.status_kanban || r.status)}"
+      data-status="${statusKanban}"
       draggable="true"
       ondragstart="iniciarArrasto(event, ${r.id})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span class="badge ${regiaoClass}">${esc(r.regiao || 'Sem região')}</span>
-        <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
+        <span class="kcard-code" style="font-size:11px">${esc(r.taskCode || 'S/C')}</span>
+        <span class="badge ${prioridadeClass}">${esc(r.prioridade || 'Média')}</span>
       </div>
-      <div class="kcard-title">${esc(titulo)}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:var(--gray-500)">
-        <span class="dot d-green"></span>
-        <span class="kcard-code">${esc(codigo)}</span>
-        ${prazo ? `<span style="margin-left:auto;color:var(--gray-400)">${prazo}</span>` : ''}
-      </div>
+      <div class="kcard-title">${esc(r.titulo || 'Certificação')}</div>
       <div class="kcard-foot" style="margin-top:6px">
-        ${tecnico ? `<span style="font-size:10px;color:var(--gray-500);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-user" style="font-size:11px"></i>${esc(tecnico)}</span>` : ''}
+        <span class="badge ${regiaoClass}">${esc(r.regiao || 'Sem região')}</span>
+        ${r.prazo ? `<span style="font-size:10px;color:var(--gray-500);margin-left:auto">${formatarPrazo(r.prazo)}</span>` : ''}
       </div>
     </div>`;
   }
@@ -1654,7 +1662,7 @@
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Título / Notificação', esc(titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('Protocolo / Referência', esc(r.protocolo), 1, 'campo-protocolo')}
+          ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
@@ -1770,7 +1778,10 @@
       if (card && colOrigem && statusAnterior) { card.dataset.status = statusAnterior; colOrigem.appendChild(card); atualizarContadores(); }
       const erro = await response.json();
       if (response.status === 422) alert(erro.message || 'Não foi possível mover o card.');
+      return;
     }
+
+    if (certificacoesMap[id]) certificacoesMap[id].status = novoStatus;
   }
 
   function initKanbanDragDrop() {
