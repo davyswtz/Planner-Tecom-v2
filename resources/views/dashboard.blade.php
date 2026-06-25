@@ -978,7 +978,6 @@
 
       const base = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(tarefas) : tarefas;
       const lista = filtrarTarefasDoUsuario(base);
-      window.plannerLimparTombstonesConfirmadas?.((Array.isArray(tarefas) ? tarefas : []).map((t) => t.id));
 
       Object.keys(tarefasMap).forEach(k => delete tarefasMap[k]);
 
@@ -1217,7 +1216,8 @@
       fecharDetalhe();
       delete tarefasMap[id];
       window.plannerSyncExclusaoTarefa?.(id);
-      await window.plannerAposExclusaoTarefa?.(id, () => carregarSuasTarefas());
+      window.plannerPausarPolling?.(60000);
+      await window.plannerNotifyLocalMutation?.();
     } catch (err) {
       window.plannerDesmarcarExcluida?.(id);
       await carregarSuasTarefas();

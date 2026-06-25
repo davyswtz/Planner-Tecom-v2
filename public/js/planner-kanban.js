@@ -104,9 +104,13 @@
   };
 
   window.plannerAposExclusaoTarefa = async function (id, reloadFn) {
-    window.plannerPausarPolling?.(30000);
+    window.plannerMarcarExcluida(id);
     window.plannerRemoverCardKanban(id);
-    await window.plannerAposMutacaoLocal(reloadFn);
+    window.plannerPausarPolling?.(60000);
+    await window.plannerNotifyLocalMutation?.();
+    if (typeof reloadFn === 'function') {
+      await reloadFn();
+    }
   };
 
   window.plannerAposMutacaoLocal = async function (reloadFn) {

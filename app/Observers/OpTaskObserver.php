@@ -26,14 +26,18 @@ class OpTaskObserver
 
     private function broadcastSafely(OpTask $task, string $action): void
     {
-        try {
-            event(OpTaskChanged::fromTask($task, $action));
-        } catch (Throwable $e) {
-            Log::warning('Falha ao transmitir atualização em tempo real.', [
-                'task_id' => $task->id,
-                'action' => $action,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        $event = OpTaskChanged::fromTask($task, $action);
+
+        dispatch(static function () use ($event): void {
+            try {
+                event($event);
+            } catch (Throwable $e) {
+                Log::warning('Falha ao transmitir atualização em tempo real.', [
+                    'task_id' => $event->id,
+                    'action' => $event->action,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        })->afterResponse();
     }
 }

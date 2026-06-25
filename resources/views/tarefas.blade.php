@@ -660,7 +660,6 @@
 
       const lista = Array.isArray(tarefas) ? tarefas : [];
       const filtradas = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
-      window.plannerLimparTombstonesConfirmadas?.(lista.map((t) => t.id));
       renderKanban(filtradas);
     } catch (err) {
       console.error(err);
@@ -918,7 +917,8 @@
       fecharDetalhe();
       delete tarefasMap[id];
       window.plannerSyncExclusaoTarefa?.(id);
-      await window.plannerAposExclusaoTarefa?.(id, () => carregarTarefas());
+      window.plannerPausarPolling?.(60000);
+      await window.plannerNotifyLocalMutation?.();
     } catch (err) {
       window.plannerDesmarcarExcluida?.(id);
       await carregarTarefas();

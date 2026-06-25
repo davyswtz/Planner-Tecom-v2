@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Events\OpTaskChanged;
 use App\Models\AppNotification;
 use App\Models\OpTask;
 use App\Models\OsTecnico;
 use App\Services\GoogleChatService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class OpTaskService
 {
@@ -74,17 +78,49 @@ public function __construct(private GoogleChatService $googleChatService){}
         }
 
         $id = (int) $opTask->id;
+        $broadcastEvent = OpTaskChanged::fromTask($opTask, 'deleted');
 
-        if (Schema::hasTable('app_notification')) {
-            AppNotification::query()
-                ->where('ref_type', 'op_task')
-                ->where('ref_id', $id)
-                ->delete();
-        }
+        DB::transaction(function () use ($id): void {
+            if (Schema::hasTable('app_notification')) {
+                AppNotification::query()
+                    ->where('ref_type', 'op_task')
+                    ->where('ref_id', $id)
+                    ->delete();
+            }
 
-        if (! $opTask->delete() || OpTask::whereKey($id)->exists()) {
+            if (Schema::hasTable('op_task_image')) {
+                DB::table('op_task_image')->where('op_task_id', $id)->delete();
+            }
+
+            OsTecnico::where('parent_task_id', $id)->delete();
+            OpTask::where('parent_task_id', $id)->delete();
+
+            $deleted = OpTask::withoutEvents(
+                fn () => OpTask::query()
+                    ->whereKey($id)
+                    ->where('categoria', 'tarefas')
+                    ->delete()
+            );
+
+            if ($deleted === 0) {
+                throw new \RuntimeException('Não foi possível excluir a tarefa do banco de dados.');
+            }
+        });
+
+        if (OpTask::whereKey($id)->exists()) {
             throw new \RuntimeException('Não foi possível excluir a tarefa do banco de dados.');
         }
+
+        dispatch(static function () use ($broadcastEvent): void {
+            try {
+                event($broadcastEvent);
+            } catch (Throwable $e) {
+                Log::warning('Falha ao transmitir exclusão em tempo real.', [
+                    'task_id' => $broadcastEvent->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        })->afterResponse();
 
         return $opTask;
     }
