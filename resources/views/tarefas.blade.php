@@ -179,9 +179,9 @@
 
     <div class="detail-grid-2">
       <div class="tarefa-field">
-        <label class="tarefa-label" for="input-responsavel">Responsável</label>
+        <label class="tarefa-label" for="input-responsavel">Responsável <span style="font-weight:400;color:var(--gray-400)">(opcional)</span></label>
         <select id="input-responsavel" class="tarefa-input">
-          <option value="">Selecione o responsável...</option>
+          <option value="">Nenhum (opcional)</option>
         </select>
       </div>
       <div class="tarefa-field">
@@ -465,6 +465,11 @@
       </div>`;
   }
 
+  function textoResponsavel(responsavel) {
+    const valor = (responsavel || '').trim();
+    return valor ? esc(valor) : 'Não tem responsável pela tarefa';
+  }
+
   function renderCard(t) {
     return `
       <div class="kcard" data-id="${t.id}" data-status="${esc(normalizarStatus(t.status))}" draggable="true">
@@ -476,7 +481,7 @@
         <div class="kcard-foot" style="margin-top:6px">
           <span class="badge b-cat-gen">Tarefa</span>
           ${badgePrioridade(t.prioridade)}
-          ${t.responsavel ? `<span class="badge b-regiao-gv">${esc(t.responsavel)}</span>` : ''}
+          ${t.responsavel ? `<span class="badge b-regiao-gv">${esc(t.responsavel)}</span>` : `<span style="font-size:10px;color:var(--gray-400)">Sem responsável</span>`}
         </div>
       </div>`;
   }
@@ -659,7 +664,7 @@
     const select = document.getElementById(selectId);
     if (!select) return;
     const valorAtual = select.value;
-    select.innerHTML = '<option value="">Selecione o responsável...</option>'
+    select.innerHTML = '<option value="">Nenhum (opcional)</option>'
       + usuariosSistema.map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`).join('');
     if (usuariosSistema.some(u => u.username === valorAtual)) {
       select.value = valorAtual;
@@ -686,7 +691,7 @@
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Título', esc(t.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('Responsável', esc(t.responsavel), 1, 'campo-responsavel')}
+          ${campoDetalhe('Responsável', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
           ${campoDetalhe('Descrição', esc(t.descricao), 3, 'campo-descricao')}
@@ -793,11 +798,12 @@
 
     const respEl = document.getElementById('campo-responsavel');
     if (respEl) {
-      const valor = respEl.textContent.trim() === '—' ? '' : respEl.textContent.trim();
+      const bruto = respEl.textContent.trim();
+      const valor = (bruto === '—' || bruto === 'Não tem responsável pela tarefa') ? '' : bruto;
       const opcoes = usuariosSistema.map(u =>
         `<option value="${esc(u.username)}" ${u.username === valor ? 'selected' : ''}>${esc(u.username)}</option>`
       ).join('');
-      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Selecione...</option>${opcoes}</select>`;
+      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Nenhum (opcional)</option>${opcoes}</select>`;
     }
 
     const prazoEl = document.getElementById('campo-prazo');
@@ -828,10 +834,6 @@
 
     if (!titulo) {
       alert('Informe o título da tarefa.');
-      return;
-    }
-    if (!responsavel) {
-      alert('Selecione o responsável.');
       return;
     }
 
@@ -943,10 +945,6 @@
 
     if (!titulo) {
       alert('Informe o título da tarefa.');
-      return;
-    }
-    if (!responsavel) {
-      alert('Selecione o responsável.');
       return;
     }
 

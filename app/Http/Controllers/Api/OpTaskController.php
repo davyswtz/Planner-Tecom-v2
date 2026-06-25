@@ -131,13 +131,12 @@ class OpTaskController extends Controller
                 $request->validate([
                     'titulo' => ['sometimes', 'required', 'string', 'max:255'],
                     'descricao' => ['nullable', 'string'],
-                    'responsavel' => ['sometimes', 'required', 'string', 'max:120'],
+                    'responsavel' => ['nullable', 'string', 'max:120'],
                     'prazo' => ['nullable', 'date'],
                     'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
                     'status' => ['nullable', 'string', 'max:64'],
                 ], [
                     'titulo.required' => 'Informe o título da tarefa.',
-                    'responsavel.required' => 'Selecione o responsável.',
                     'prazo.date' => 'Informe uma data de prazo válida.',
                 ]);
 
