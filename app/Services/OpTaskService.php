@@ -42,6 +42,7 @@ public function __construct(private GoogleChatService $googleChatService){}
             'descricao' => $dados['descricao'] ?? '',
             'responsavel' => $dados['responsavel'] ?? '',
             'prazo' => $dados['prazo'] ?? null,
+            'prioridade' => $dados['prioridade'] ?? 'Média',
             'categoria' => 'tarefas',
             'status' => $dados['status'] ?? 'Criada',
             'regiao' => $dados['regiao'] ?? '',
@@ -56,7 +57,7 @@ public function __construct(private GoogleChatService $googleChatService){}
             );
         }
 
-        $permitidos = ['titulo', 'descricao', 'responsavel', 'prazo', 'status'];
+        $permitidos = ['titulo', 'descricao', 'responsavel', 'prazo', 'prioridade', 'status'];
         $filtrados = array_intersect_key($dados, array_flip($permitidos));
 
         return $this->updateOpTask($opTask, $filtrados);
