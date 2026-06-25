@@ -31,6 +31,11 @@ class OpTask extends Model
         'correção de atenuação',
     ];
 
+    public const CATEGORIAS_CERTIFICACAO_CEMIG = [
+        'certificacao-cemig',
+        'certificação cemig',
+    ];
+
     protected $table = 'op_tasks';
 
     protected $primaryKey = 'id';
@@ -172,6 +177,11 @@ class OpTask extends Model
     public function isCorrecaoSinalPai(): bool
     {
         return $this->isTarefaPaiOf(self::CATEGORIAS_CORRECAO_SINAL);
+    }
+
+    public function isCertificacaoCemigPai(): bool
+    {
+        return $this->isTarefaPaiOf(self::CATEGORIAS_CERTIFICACAO_CEMIG);
     }
 
     public function isTarefaPai(): bool
