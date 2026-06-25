@@ -67,6 +67,7 @@ class OpTaskController extends Controller
             'descricao' => ['nullable', 'string'],
             'responsavel' => ['nullable', 'string', 'max:120'],
             'prazo' => ['nullable', 'date'],
+            'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
             'status' => ['nullable', 'string', 'max:64'],
         ], [
             'titulo.required' => 'Informe o título da tarefa.',
@@ -129,16 +130,16 @@ class OpTaskController extends Controller
                 $request->validate([
                     'titulo' => ['sometimes', 'required', 'string', 'max:255'],
                     'descricao' => ['nullable', 'string'],
-                    'responsavel' => ['sometimes', 'required', 'string', 'max:120'],
+                    'responsavel' => ['nullable', 'string', 'max:120'],
                     'prazo' => ['nullable', 'date'],
+                    'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
                     'status' => ['nullable', 'string', 'max:64'],
                 ], [
                     'titulo.required' => 'Informe o título da tarefa.',
-                    'responsavel.required' => 'Selecione o responsável.',
                     'prazo.date' => 'Informe uma data de prazo válida.',
                 ]);
 
-                $dados = $request->only(['titulo', 'descricao', 'responsavel', 'prazo', 'status']);
+                $dados = $request->only(['titulo', 'descricao', 'responsavel', 'prazo', 'prioridade', 'status']);
                 $opTask = $this->opTaskService->updateTarefa($opTask, $dados);
             } else {
                 $opTask = $this->opTaskService->updateOpTask($opTask, $request->all());

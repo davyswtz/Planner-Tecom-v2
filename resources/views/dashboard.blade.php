@@ -664,6 +664,11 @@
     return String(valor).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  function textoResponsavel(responsavel) {
+    const valor = (responsavel || '').trim();
+    return valor ? esc(valor) : 'Não tem responsável pela tarefa';
+  }
+
   function formatarPrazo(valor) {
     if (!valor) return '';
     const data = new Date(valor);
@@ -1021,7 +1026,7 @@
         ${renderStatusChecks(t)}
         <div class="detail-grid-2">
           ${campoDetalhe('Título', esc(t.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('Responsável', esc(t.responsavel), 1, 'campo-responsavel')}
+          ${campoDetalhe('Responsável', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
           ${campoDescricaoDetalhe('Descrição', t.descricao)}
@@ -1126,11 +1131,12 @@
 
     const respEl = document.getElementById('campo-responsavel');
     if (respEl) {
-      const valor = respEl.textContent.trim() === '—' ? '' : respEl.textContent.trim();
+      const bruto = respEl.textContent.trim();
+      const valor = (bruto === '—' || bruto === 'Não tem responsável pela tarefa') ? '' : bruto;
       const opcoes = usuariosSistema.map(u =>
         `<option value="${esc(u.username)}" ${u.username === valor ? 'selected' : ''}>${esc(u.username)}</option>`
       ).join('');
-      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Selecione...</option>${opcoes}</select>`;
+      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Nenhum (opcional)</option>${opcoes}</select>`;
     }
 
     const prazoEl = document.getElementById('campo-prazo');
@@ -1153,10 +1159,6 @@
 
     if (!titulo) {
       alert('Informe o título da tarefa.');
-      return;
-    }
-    if (!responsavel) {
-      alert('Selecione o responsável.');
       return;
     }
 

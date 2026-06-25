@@ -149,6 +149,17 @@
   .tarefas-kanban-card .kcol {
     min-height: 0;
   }
+  .prioridade-wrap { display: flex; gap: 8px; }
+  .btn-prioridade {
+    flex: 1; padding: 8px 0; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: inherit; transition: filter 0.15s, transform 0.1s;
+    border-width: 1px; border-style: solid;
+  }
+  .btn-prioridade:active { transform: scale(0.97); }
+  .btn-prio-baixa  { border-color: #86efac; background: #f0fdf4; color: #166534; }
+  .btn-prio-media  { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
+  .btn-prio-alta   { border-color: #fca5a5; background: var(--red-bg); color: var(--red-text); }
+  .btn-prio-ativo  { border-width: 2px; }
 </style>
 @endsection
 
@@ -170,14 +181,23 @@
 
     <div class="detail-grid-2">
       <div class="tarefa-field">
-        <label class="tarefa-label" for="input-responsavel">Responsável</label>
+        <label class="tarefa-label" for="input-responsavel">Responsável <span style="font-weight:400;color:var(--gray-400)">(opcional)</span></label>
         <select id="input-responsavel" class="tarefa-input">
-          <option value="">Selecione o responsável...</option>
+          <option value="">Nenhum (opcional)</option>
         </select>
       </div>
       <div class="tarefa-field">
         <label class="tarefa-label" for="input-prazo">Prazo</label>
         <input type="date" id="input-prazo" class="tarefa-input"/>
+      </div>
+    </div>
+
+    <div class="tarefa-field">
+      <label class="tarefa-label">Prioridade</label>
+      <div class="prioridade-wrap" id="prioridade-criar-wrap">
+        <button type="button" onclick="selecionarPrioridadeCriar(this,'Baixa')" class="btn-prioridade btn-prio-baixa">Baixa</button>
+        <button type="button" onclick="selecionarPrioridadeCriar(this,'Média')" class="btn-prioridade btn-prio-media btn-prio-ativo">Média ✓</button>
+        <button type="button" onclick="selecionarPrioridadeCriar(this,'Alta')" class="btn-prioridade btn-prio-alta">Alta</button>
       </div>
     </div>
   </div>
@@ -345,6 +365,10 @@
 
   let tarefasMap = {};
   let usuariosSistema = [];
+  let prioridadeSelecionada = 'Média';
+  let prioridadeEdicao = 'Média';
+
+  const NIVEIS_PRIORIDADE = ['Baixa', 'Média', 'Alta'];
 
   const colunasPorStatus = {
     'Criada': 'col-criada',
@@ -393,6 +417,41 @@
     return data.toISOString().slice(0, 10);
   }
 
+  function badgePrioridade(prioridade) {
+    const nivel = prioridade?.toLowerCase();
+    const cls = nivel === 'alta' ? 'b-alta' : nivel === 'baixa' ? 'b-baixa' : 'b-media';
+    return `<span class="badge ${cls}">${esc(prioridade || 'Média')}</span>`;
+  }
+
+  function atualizarBotoesPrioridade(container, nivelAtivo) {
+    if (!container) return;
+    container.querySelectorAll('.btn-prioridade').forEach(btn => {
+      const nivel = btn.dataset.nivel || btn.textContent.replace(' ✓', '').trim();
+      const ativo = nivel === nivelAtivo;
+      btn.textContent = ativo ? `${nivel} ✓` : nivel;
+      btn.style.borderWidth = ativo ? '2px' : '1px';
+      btn.classList.toggle('btn-prio-ativo', ativo);
+    });
+  }
+
+  function htmlBotoesPrioridade(nivelAtivo, onclickFn) {
+    const classes = { Baixa: 'btn-prio-baixa', Média: 'btn-prio-media', Alta: 'btn-prio-alta' };
+    return NIVEIS_PRIORIDADE.map(nivel => {
+      const ativo = nivel === (nivelAtivo || 'Média');
+      return `<button type="button" data-nivel="${nivel}" onclick="${onclickFn}(this,'${nivel}')" class="btn-prioridade ${classes[nivel]}${ativo ? ' btn-prio-ativo' : ''}" style="border-width:${ativo ? '2px' : '1px'}">${nivel}${ativo ? ' ✓' : ''}</button>`;
+    }).join('');
+  }
+
+  window.selecionarPrioridadeCriar = function (btn, nivel) {
+    prioridadeSelecionada = nivel;
+    atualizarBotoesPrioridade(document.getElementById('prioridade-criar-wrap'), nivel);
+  };
+
+  window.selecionarPrioridadeEdicao = function (btn, nivel) {
+    prioridadeEdicao = nivel;
+    atualizarBotoesPrioridade(document.getElementById('campo-prioridade'), nivel);
+  };
+
   function badgeStatus(status) {
     const normalizado = normalizarStatus(status);
     const mapa = {
@@ -422,6 +481,11 @@
       </div>`;
   }
 
+  function textoResponsavel(responsavel) {
+    const valor = (responsavel || '').trim();
+    return valor ? esc(valor) : 'Não tem responsável pela tarefa';
+  }
+
   function renderCard(t) {
     return `
       <div class="kcard" data-id="${t.id}" data-status="${esc(normalizarStatus(t.status))}" draggable="true">
@@ -432,7 +496,8 @@
         <div class="kcard-title">${esc(t.titulo)}</div>
         <div class="kcard-foot" style="margin-top:6px">
           <span class="badge b-cat-gen">Tarefa</span>
-          ${t.responsavel ? `<span class="badge b-regiao-gv">${esc(t.responsavel)}</span>` : ''}
+          ${badgePrioridade(t.prioridade)}
+          ${t.responsavel ? `<span class="badge b-regiao-gv">${esc(t.responsavel)}</span>` : `<span style="font-size:10px;color:var(--gray-400)">Sem responsável</span>`}
         </div>
       </div>`;
   }
@@ -622,7 +687,7 @@
     const select = document.getElementById(selectId);
     if (!select) return;
     const valorAtual = select.value;
-    select.innerHTML = '<option value="">Selecione o responsável...</option>'
+    select.innerHTML = '<option value="">Nenhum (opcional)</option>'
       + usuariosSistema.map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`).join('');
     if (usuariosSistema.some(u => u.username === valorAtual)) {
       select.value = valorAtual;
@@ -645,10 +710,11 @@
         <div class="detail-badges">
           ${badgeStatus(t.status)}
           <span class="badge b-cat-gen">Tarefa</span>
+          ${badgePrioridade(t.prioridade)}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Título', esc(t.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('Responsável', esc(t.responsavel), 1, 'campo-responsavel')}
+          ${campoDetalhe('Responsável', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
           ${campoDescricaoDetalhe('Descrição', t.descricao)}
@@ -658,13 +724,16 @@
           ${campoDetalhe('Criado em', formatarData(t.criadaEm))}
         </div>
         <div class="detail-grid-2">
-          <div class="detail-field">
-            <span class="detail-label">Código da tarefa</span>
-            <div class="detail-value">${esc(t.taskCode) || '—'}</div>
-          </div>
+          ${campoDetalhe('Prioridade', esc(t.prioridade || 'Média'), 1, 'campo-prioridade')}
           <div class="detail-field">
             <span class="detail-label">Atualizado em</span>
             <div class="detail-value">${formatarData(t.updated_at)}</div>
+          </div>
+        </div>
+        <div class="detail-grid-2">
+          <div class="detail-field">
+            <span class="detail-label">Código da tarefa</span>
+            <div class="detail-value">${esc(t.taskCode) || '—'}</div>
           </div>
         </div>
       </div>`;
@@ -755,11 +824,12 @@
 
     const respEl = document.getElementById('campo-responsavel');
     if (respEl) {
-      const valor = respEl.textContent.trim() === '—' ? '' : respEl.textContent.trim();
+      const bruto = respEl.textContent.trim();
+      const valor = (bruto === '—' || bruto === 'Não tem responsável pela tarefa') ? '' : bruto;
       const opcoes = usuariosSistema.map(u =>
         `<option value="${esc(u.username)}" ${u.username === valor ? 'selected' : ''}>${esc(u.username)}</option>`
       ).join('');
-      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Selecione...</option>${opcoes}</select>`;
+      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Nenhum (opcional)</option>${opcoes}</select>`;
     }
 
     const prazoEl = document.getElementById('campo-prazo');
@@ -768,6 +838,14 @@
       const tarefa = id ? tarefasMap[id] : null;
       const valor = prazoParaInput(tarefa?.prazo) || (prazoEl.textContent.trim() !== '—' ? '' : '');
       prazoEl.innerHTML = `<input type="date" value="${valor}" style="${inputStyle}"/>`;
+    }
+
+    const prioEl = document.getElementById('campo-prioridade');
+    if (prioEl) {
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      const tarefa = id ? tarefasMap[id] : null;
+      prioridadeEdicao = tarefa?.prioridade || 'Média';
+      prioEl.innerHTML = `<div class="prioridade-wrap">${htmlBotoesPrioridade(prioridadeEdicao, 'selecionarPrioridadeEdicao')}</div>`;
     }
   }
 
@@ -784,15 +862,11 @@
       alert('Informe o título da tarefa.');
       return;
     }
-    if (!responsavel) {
-      alert('Selecione o responsável.');
-      return;
-    }
 
     const btn = document.getElementById('btn-salvar');
     btn.disabled = true;
 
-    const dados = { titulo, descricao, responsavel, categoria: 'tarefas' };
+    const dados = { titulo, descricao, responsavel, prioridade: prioridadeEdicao, categoria: 'tarefas' };
     if (prazo) dados.prazo = prazo;
 
     try {
@@ -872,6 +946,8 @@
     resetDescricaoEditor(document.getElementById('input-descricao-wrap'));
     document.getElementById('input-responsavel').value = '';
     document.getElementById('input-prazo').value = '';
+    prioridadeSelecionada = 'Média';
+    atualizarBotoesPrioridade(document.getElementById('prioridade-criar-wrap'), 'Média');
   }
 
   window.abrirModal = async function () {
@@ -899,10 +975,6 @@
       alert('Informe o título da tarefa.');
       return;
     }
-    if (!responsavel) {
-      alert('Selecione o responsável.');
-      return;
-    }
 
     const btn = document.getElementById('btn-criar-tarefa');
     btn.disabled = true;
@@ -911,6 +983,7 @@
       titulo,
       descricao: getDescricaoEditorValue(document.getElementById('input-descricao-wrap')),
       responsavel,
+      prioridade: prioridadeSelecionada,
       categoria: 'tarefas',
       status: 'Criada',
     };
