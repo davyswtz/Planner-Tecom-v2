@@ -83,6 +83,7 @@ async function destroyUrl(url){
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json',
         },
+        cache: 'no-store',
     });
 
     const payload = await parseJsonResponse(response);

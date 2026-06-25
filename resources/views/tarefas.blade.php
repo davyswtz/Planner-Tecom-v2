@@ -119,6 +119,8 @@
   }
   .tarefa-input { height: 38px; }
   .tarefa-textarea { min-height: 80px; resize: vertical; }
+  .tarefa-field--descricao { min-width: 0; }
+  .tarefa-descricao-mount { width: 100%; min-width: 0; }
   .tarefa-input:focus, .tarefa-textarea:focus {
     border-color: #166ac4;
     box-shadow: 0 0 0 3px rgba(22,106,196,0.12);
@@ -161,9 +163,9 @@
       <input type="text" id="input-titulo" class="tarefa-input" placeholder="Ex: Verificar equipamento na CTO"/>
     </div>
 
-    <div class="tarefa-field">
-      <label class="tarefa-label" for="input-descricao">Descrição</label>
-      <textarea id="input-descricao" class="tarefa-textarea" placeholder="Detalhes da tarefa (opcional)"></textarea>
+    <div class="tarefa-field tarefa-field--descricao">
+      <label class="tarefa-label" for="input-descricao-editor">Descrição</label>
+      <div id="input-descricao-wrap" class="tarefa-descricao-mount"></div>
     </div>
 
     <div class="detail-grid-2">
@@ -334,6 +336,12 @@
 </script>
 <script type="module">
   import { listarTarefas, criarTarefa as criarTarefaApi, atualizarTarefa as atualizarTarefaApi, deletarTarefa as deletarTarefaApi } from '{{ asset("js/modules/opTask.js") }}';
+  import {
+    renderDescricaoView,
+    mountDescricaoEditor,
+    getDescricaoEditorValue,
+    resetDescricaoEditor,
+  } from '{{ asset("js/planner-descricao-editor.js") }}';
 
   let tarefasMap = {};
   let usuariosSistema = [];
@@ -394,6 +402,14 @@
       'Finalizar': 'b-baixa',
     };
     return `<span class="badge ${mapa[normalizado] || 'b-cat-gen'}">${esc(normalizado) || '—'}</span>`;
+  }
+
+  function campoDescricaoDetalhe(label, valor, id = 'campo-descricao') {
+    return `
+      <div class="detail-field span-3">
+        <span class="detail-label">${label}</span>
+        <div class="detail-value descricao-field" id="${id}">${renderDescricaoView(valor)}</div>
+      </div>`;
   }
 
   function campoDetalhe(label, valor, span = 1, id = '') {
@@ -557,6 +573,7 @@
   function adicionarCardTarefa(tarefa) {
     if (!tarefa?.id) return;
     if (tarefa.categoria && tarefa.categoria !== 'tarefas') return;
+    if (window.plannerEstaExcluida?.(tarefa.id)) return;
 
     tarefasMap[tarefa.id] = tarefa;
     document.querySelectorAll(`.kcard[data-id="${CSS.escape(String(tarefa.id))}"]`).forEach(card => card.remove());
@@ -571,9 +588,15 @@
   }
 
   async function carregarTarefas() {
+    const gen = window.plannerBeginReload?.() ?? 0;
     try {
       const tarefas = await listarTarefas({ categoria: 'tarefas', limit: 500 });
-      renderKanban(Array.isArray(tarefas) ? tarefas : []);
+      if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+
+      const lista = Array.isArray(tarefas) ? tarefas : [];
+      const filtradas = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
+      window.plannerLimparTombstonesConfirmadas?.(lista.map((t) => t.id));
+      renderKanban(filtradas);
     } catch (err) {
       console.error(err);
     }
@@ -628,7 +651,7 @@
           ${campoDetalhe('Responsável', esc(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
-          ${campoDetalhe('Descrição', esc(t.descricao), 3, 'campo-descricao')}
+          ${campoDescricaoDetalhe('Descrição', t.descricao)}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Prazo', t.prazo ? formatarPrazo(t.prazo) : '—', 1, 'campo-prazo')}
@@ -723,8 +746,11 @@
 
     const descEl = document.getElementById('campo-descricao');
     if (descEl) {
-      const valor = descEl.textContent.trim() === '—' ? '' : descEl.textContent.trim();
-      descEl.innerHTML = `<textarea style="${inputStyle};min-height:80px;resize:vertical">${esc(valor)}</textarea>`;
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      const tarefa = id ? tarefasMap[id] : null;
+      const html = tarefa?.descricao || '';
+      descEl.className = 'detail-value descricao-field';
+      mountDescricaoEditor(descEl, { html, placeholder: 'Detalhes da tarefa (opcional)' });
     }
 
     const respEl = document.getElementById('campo-responsavel');
@@ -751,7 +777,7 @@
 
     const titulo = document.querySelector('#campo-titulo input')?.value?.trim() || '';
     const responsavel = document.querySelector('#campo-responsavel select')?.value || '';
-    const descricao = document.querySelector('#campo-descricao textarea')?.value?.trim() || '';
+    const descricao = getDescricaoEditorValue(document.getElementById('campo-descricao')) || '';
     const prazo = document.querySelector('#campo-prazo input')?.value || '';
 
     if (!titulo) {
@@ -807,19 +833,21 @@
     const btn = document.getElementById('btn-confirmar-excluir');
     btn.disabled = true;
 
+    window.plannerPausarPolling?.(30000);
+    window.plannerMarcarExcluida?.(id);
+    window.plannerRemoverCardKanban?.(id);
+    window.plannerInvalidateReloads?.();
+
     try {
       await deletarTarefaApi(id);
       fecharConfirmacaoExclusao();
       fecharDetalhe();
       delete tarefasMap[id];
-      if (window.plannerAposExclusaoTarefa) {
-        await window.plannerAposExclusaoTarefa(id);
-      } else {
-        document.querySelectorAll(`.kcard[data-id="${CSS.escape(String(id))}"]`).forEach(card => card.remove());
-        delete tarefasMap[id];
-        atualizarContadores();
-      }
+      window.plannerSyncExclusaoTarefa?.(id);
+      await window.plannerAposExclusaoTarefa?.(id, () => carregarTarefas());
     } catch (err) {
+      window.plannerDesmarcarExcluida?.(id);
+      await carregarTarefas();
       alert(err.message || 'Erro ao excluir tarefa.');
     } finally {
       btn.disabled = false;
@@ -841,7 +869,7 @@
 
   function limparFormulario() {
     document.getElementById('input-titulo').value = '';
-    document.getElementById('input-descricao').value = '';
+    resetDescricaoEditor(document.getElementById('input-descricao-wrap'));
     document.getElementById('input-responsavel').value = '';
     document.getElementById('input-prazo').value = '';
   }
@@ -881,7 +909,7 @@
 
     const dados = {
       titulo,
-      descricao: document.getElementById('input-descricao').value.trim(),
+      descricao: getDescricaoEditorValue(document.getElementById('input-descricao-wrap')),
       responsavel,
       categoria: 'tarefas',
       status: 'Criada',
@@ -927,6 +955,9 @@
   });
 
   initKanbanDragDrop();
+  mountDescricaoEditor(document.getElementById('input-descricao-wrap'), {
+    placeholder: 'Detalhes da tarefa (opcional)',
+  });
   carregarTarefas();
 </script>
 @endsection

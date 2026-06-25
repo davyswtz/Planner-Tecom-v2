@@ -230,7 +230,7 @@
 
     <div class="os-field">
       <label class="os-label">Região</label>
-      <select id="input-regiao" onchange="carregarTecnicos(this.value)" class="os-input">
+      <select id="input-regiao" class="os-input">
         <option value="">Selecione...</option>
         <option>Goval</option>
         <option>Vale do Aço</option>
@@ -239,21 +239,9 @@
       </select>
     </div>
 
-    <div class="detail-grid-2">
-      <div class="os-field">
-        <label class="os-label">Técnico(s) responsável(is)</label>
-        <div id="tecnicos-wrap" style="position:relative;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;min-height:38px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text">
-          <span id="tecnicos-tags"></span>
-          <input id="input-tec" type="text" placeholder="Selecione uma região primeiro..." readonly
-            style="border:none;outline:none;font-size:12px;background:transparent;flex:1;min-width:80px;box-shadow:none;height:24px;font-family:inherit;cursor:pointer"
-            onclick="toggleDropdownTecnicos()"/>
-          <div id="dropdown-tecnicos" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
-        </div>
-      </div>
-      <div class="os-field">
-        <label class="os-label">Número da OS (Hubsoft)</label>
-        <input type="text" id="input-numero-os" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
-      </div>
+    <div class="os-field">
+      <label class="os-label">Número da OS (Hubsoft)</label>
+      <input type="text" id="input-numero-os" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
     </div>
 
     <div class="os-field">
@@ -390,7 +378,7 @@
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="os-field">
-      <label class="os-label">Técnico responsável</label>
+      <label class="os-label">Vincular técnico responsável</label>
       <select id="os-input-tecnico" class="os-input">
         <option value="">Selecione...</option>
       </select>
@@ -555,8 +543,6 @@
 @section('scripts')
 <script>
   let prioridadeSelecionada = 'Média';
-  let tecnicosSelecionados = [];
-  let tecnicosSelecionadosEdicao = [];
   let osEditandoId = null;
   /** ID da OS aguardando confirmação no modal de exclusão (null = nenhuma pendente) */
   let osExclusaoPendenteId = null;
@@ -612,8 +598,6 @@
     document.getElementById('input-numero-os').value = '';
     document.getElementById('input-localizacao-texto').value = '';
     document.getElementById('input-coordenadas').value = '';
-    document.getElementById('input-tec').placeholder = 'Selecione uma região primeiro...';
-    document.getElementById('dropdown-tecnicos').innerHTML = '';
     prioridadeSelecionada = 'Média';
     document.querySelectorAll('.btn-prioridade').forEach(b => {
       b.textContent = b.textContent.replace(' ✓', '');
@@ -627,8 +611,6 @@
   }
 
   window.abrirModal = function() {
-    tecnicosSelecionados = [];
-    renderizarTags();
     limparFormularioTroca();
     document.getElementById('modal-overlay').classList.add('open');
   }
@@ -1032,12 +1014,10 @@
     document.getElementById('detalhe-overlay').classList.remove('open');
     trocarAba('detalhes');
     resetBotoesDetalhe();
-    tecnicosSelecionadosEdicao = [];
   }
 
   function cancelarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    tecnicosSelecionadosEdicao = [];
     resetBotoesDetalhe();
     if (id) window.abrirDetalhe(id);
   }
@@ -1121,9 +1101,10 @@
     prioridadeSelecionada = nivel;
   }
 
-  // ─── TÉCNICOS (MODAL CRIAR) ───
-  async function carregarTecnicos(regiao, destino = 'dropdown-tecnicos') {
-    if (!regiao && destino === 'dropdown-tecnicos') return;
+  async function carregarTecnicos(regiao, destino = 'os-input-tecnico') {
+    const el = document.getElementById(destino);
+    if (!el || el.tagName !== 'SELECT') return;
+
     const token = localStorage.getItem('planner_token');
     const headers = { 'Authorization': 'Bearer ' + token };
 
@@ -1137,125 +1118,16 @@
     }
 
     let tecnicos = await buscarTecnicos(regiao);
-    if (regiao && destino === 'os-input-tecnico' && tecnicos.length === 0) {
+    if (regiao && tecnicos.length === 0 && destino === 'os-input-tecnico') {
       tecnicos = await buscarTecnicos(null);
     }
 
-    const el = document.getElementById(destino);
-    if (!el) return;
-    if (el.tagName === 'SELECT') {
-      const placeholder = destino === 'filtro-tecnico'
-        ? '<option value="">Todos os técnicos</option>'
-        : '<option value="">Selecione...</option>';
-      el.innerHTML = placeholder
-        + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
-      return;
-    }
-    el.innerHTML = tecnicos.length
-      ? tecnicos.map(t => `<div onclick="selecionarTecnico(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-              style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-              onmouseover="this.style.background='var(--gray-50)'"
-              onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('')
-      : '<div style="padding:8px 12px;font-size:13px;color:var(--gray-400)">Nenhum técnico nessa região</div>';
-    document.getElementById('input-tec').placeholder = tecnicos.length ? 'Selecionar técnico...' : 'Nenhum técnico';
+    const placeholder = destino === 'filtro-tecnico'
+      ? '<option value="">Todos os técnicos</option>'
+      : '<option value="">Selecione...</option>';
+    el.innerHTML = placeholder
+      + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
   }
-
-  function toggleDropdownTecnicos() {
-    const d = document.getElementById('dropdown-tecnicos');
-    d.style.display = d.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function selecionarTecnico(id, nome) {
-    if (tecnicosSelecionados.find(t => t.id === id)) return;
-    tecnicosSelecionados.push({ id, nome });
-    renderizarTags();
-    document.getElementById('dropdown-tecnicos').style.display = 'none';
-  }
-
-  function removerTecnico(id) {
-    tecnicosSelecionados = tecnicosSelecionados.filter(t => t.id !== id);
-    renderizarTags();
-  }
-
-  function renderizarTags() {
-    document.getElementById('tecnicos-tags').innerHTML = tecnicosSelecionados.map(t => `
-      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
-        ${t.nome}
-        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="removerTecnico(${t.id})"></i>
-      </span>`).join('');
-  }
-
-  // ─── TÉCNICOS (MODAL EDIÇÃO) ───
-  async function inicializarSeletorTecnicosEdicao(el, valorAtual) {
-    tecnicosSelecionadosEdicao = [];
-    el.innerHTML = `
-      <div id="edicao-tec-wrap" style="position:relative">
-        <div id="edicao-tec-tags" onclick="toggleDropdownTecnicosEdicao()"
-          style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;cursor:pointer;
-                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;background:var(--white)">
-          <span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px">Carregando...</span>
-        </div>
-        <div id="dropdown-tec-edicao"
-          style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);
-                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;
-                 max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
-        </div>
-      </div>`;
-    const token = localStorage.getItem('planner_token');
-    const res = await fetch('/api/tecnicos', { headers: { 'Authorization': 'Bearer ' + token } });
-    const tecnicos = await res.json();
-    if (valorAtual) {
-      valorAtual.split(',').map(n => n.trim()).filter(Boolean).forEach(nome => {
-        const tec = tecnicos.find(t => t.nome === nome);
-        if (tec) tecnicosSelecionadosEdicao.push({ id: tec.id, nome: tec.nome });
-      });
-    }
-    document.getElementById('dropdown-tec-edicao').innerHTML = tecnicos.map(t => `
-      <div onclick="adicionarTecnicoEdicao(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-        style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-        onmouseover="this.style.background='var(--gray-50)'"
-        onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('');
-    renderizarTagsEdicao();
-  }
-
-  function toggleDropdownTecnicosEdicao() {
-    const d = document.getElementById('dropdown-tec-edicao');
-    if (!d) return;
-    d.style.display = d.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function adicionarTecnicoEdicao(id, nome) {
-    if (tecnicosSelecionadosEdicao.find(t => t.id === id)) return;
-    tecnicosSelecionadosEdicao.push({ id, nome });
-    renderizarTagsEdicao();
-    document.getElementById('dropdown-tec-edicao').style.display = 'none';
-  }
-
-  function removerTecnicoEdicao(id) {
-    tecnicosSelecionadosEdicao = tecnicosSelecionadosEdicao.filter(t => t.id !== id);
-    renderizarTagsEdicao();
-  }
-
-  function renderizarTagsEdicao() {
-    const container = document.getElementById('edicao-tec-tags');
-    if (!container) return;
-    const vazio = tecnicosSelecionadosEdicao.length === 0;
-    container.innerHTML = tecnicosSelecionadosEdicao.map(t => `
-      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
-        ${t.nome}
-        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="event.stopPropagation();removerTecnicoEdicao(${t.id})"></i>
-      </span>`).join('')
-      + `<span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px;${vazio ? '' : 'display:none'}">Selecionar técnico...</span>`;
-  }
-
-  document.addEventListener('click', function(e) {
-    const wrap = document.getElementById('tecnicos-wrap');
-    const dropdown = document.getElementById('dropdown-tecnicos');
-    if (wrap && dropdown && !wrap.contains(e.target)) dropdown.style.display = 'none';
-    const wrapEd = document.getElementById('edicao-tec-wrap');
-    const dropdownEd = document.getElementById('dropdown-tec-edicao');
-    if (wrapEd && dropdownEd && !wrapEd.contains(e.target)) dropdownEd.style.display = 'none';
-  });
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
@@ -1267,7 +1139,6 @@
     const campos = [
       { id: 'campo-titulo',          tipo: 'text' },
       { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
-      { id: 'campo-tecnicos',        tipo: 'custom' },
       { id: 'campo-numero-os',       tipo: 'text' },
       { id: 'campo-localizacao-texto', tipo: 'text' },
       { id: 'campo-coordenadas',     tipo: 'text' },
@@ -1283,10 +1154,6 @@
       const valorAtual = el.textContent.trim();
       const valor = valorAtual === '—' ? '' : valorAtual;
 
-      if (tipo === 'custom') {
-        inicializarSeletorTecnicosEdicao(el, valor);
-        return;
-      }
       if (tipo === 'select') {
         const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
         el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
@@ -1304,7 +1171,7 @@
     const dados = {
       titulo:            getVal('#campo-titulo input'),
       regiao:            getVal('#campo-regiao select'),
-      responsavel:       tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
+      responsavel:       '',
       numero_os:         getVal('#campo-numero-os input'),
       localizacao_texto: document.querySelector('#campo-localizacao-texto input')?.value ?? document.getElementById('campo-localizacao-texto')?.textContent ?? '',
       coordenadas:       getVal('#campo-coordenadas input'),
@@ -1342,7 +1209,7 @@
       coordenadas:       document.getElementById('input-coordenadas').value.trim(),
       localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
       regiao:            regiao,
-      responsavel:       tecnicosSelecionados.map(t => t.nome).join(', '),
+      responsavel:       '',
       prioridade:        prioridadeSelecionada,
       numero_os:         numeroOs,
       status:            'Criada',
@@ -1566,11 +1433,10 @@
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Técnico(s) responsável(is)', esc(r.responsavel), 1, 'campo-tecnicos')}
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
+          ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
           ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
         </div>
         <div class="detail-grid-2">

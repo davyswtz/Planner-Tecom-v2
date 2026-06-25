@@ -14,6 +14,10 @@ class GoogleChatService
 
     public function enviarNotificacao(OpTask $rompimento, array $mensagem, ?string $statusNovo = null): void
     {
+        if (($rompimento->categoria ?? '') === 'tarefas') {
+            return;
+        }
+
         if ($statusNovo !== null && ! $this->webhooks->deveNotificarStatus($statusNovo)) {
             return;
         }
@@ -68,7 +72,6 @@ class GoogleChatService
     {
         $nome = trim($os['titulo'] ?? '') ?: '—';
         $status = $this->formatarStatusOs($os['status'] ?? '');
-        $tecnico = trim($os['responsavel'] ?? '') ?: '—';
 
         $linhas = [
             $titulo,
@@ -81,8 +84,6 @@ class GoogleChatService
             $descricao = trim($os['descricao'] ?? '') ?: '—';
             $linhas[] = "📝 *Descrição:* {$descricao}";
         }
-
-        $linhas[] = "👨‍🔧 *Téc. responsável:* {$tecnico}";
 
         return ['text' => implode("\n", $linhas)];
     }
@@ -147,7 +148,6 @@ class GoogleChatService
         $caixa = trim($task['cto'] ?? $task['setor'] ?? '') ?: '—';
         $endereco = trim($task['localizacao_texto'] ?? '') ?: '—';
         $coordenadas = trim($task['coordenadas'] ?? '') ?: '—';
-        $tecnico = trim($task['responsavel'] ?? '') ?: '—';
         $osHubspot = trim($task['numero_os'] ?? $task['ordem_servico'] ?? '') ?: '—';
         $clientes = trim((string) ($task['clientesAfetados'] ?? '')) !== ''
             ? (string) $task['clientesAfetados']
@@ -160,7 +160,6 @@ class GoogleChatService
                 '',
                 "🗺️ *Endereço:* {$endereco}",
                 "📍 *Localização inicial:* {$coordenadas}",
-                "👨‍🔧 *Técnico Responsável:* {$tecnico}",
                 '',
                 "🧾 *OS HubSpot:* {$osHubspot}",
                 "👥 *Clientes afetados:* {$clientes}",
@@ -174,7 +173,6 @@ class GoogleChatService
         $titulo = trim($task['titulo'] ?? '') ?: '—';
         $localizacao = $this->formatarLocalizacao($task);
         $descricao = trim($task['descricao'] ?? '') ?: '—';
-        $tecnico = trim($task['responsavel'] ?? '') ?: '—';
         $enviado = trim($enviadoPor ?? '') ?: '—';
         $id = trim($task['taskCode'] ?? '') ?: (string) ($task['id'] ?? '—');
 
@@ -185,7 +183,6 @@ class GoogleChatService
                 "📍 Localização: {$localizacao}",
                 "📝 Descrição: {$descricao}",
                 '',
-                "👨‍🔧 Técnico Responsável: {$tecnico}",
                 "👤 Enviado por: {$enviado}",
                 '',
                 "🆔 {$id}",

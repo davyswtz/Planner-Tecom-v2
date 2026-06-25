@@ -650,6 +650,11 @@
 
 <script type="module">
   import { listarTarefas, atualizarTarefa as atualizarTarefaApi, deletarTarefa as deletarTarefaApi } from '{{ asset("js/modules/opTask.js") }}';
+  import {
+    renderDescricaoView,
+    mountDescricaoEditor,
+    getDescricaoEditorValue,
+  } from '{{ asset("js/planner-descricao-editor.js") }}';
 
   let tarefasMap = {};
   let usuariosSistema = [];
@@ -695,6 +700,24 @@
       'Finalizar': 'b-baixa',
     };
     return `<span class="badge ${mapa[normalizado] || 'b-cat-gen'}">${esc(normalizado) || '—'}</span>`;
+  }
+
+  function resumoDescricao(valor) {
+    if (!valor) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = String(valor);
+    const texto = (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!texto && String(valor).includes('<img')) return 'Contém imagem anexada';
+    if (!texto) return '';
+    return texto.length > 140 ? `${texto.slice(0, 140)}…` : texto;
+  }
+
+  function campoDescricaoDetalhe(label, valor, id = 'campo-descricao') {
+    return `
+      <div class="detail-field span-3">
+        <span class="detail-label">${label}</span>
+        <div class="detail-value descricao-field" id="${id}">${renderDescricaoView(valor)}</div>
+      </div>`;
   }
 
   function campoDetalhe(label, valor, span = 1, id = '') {
@@ -824,7 +847,7 @@
     const statusLabel = normalizarStatus(t.status);
     const statusClass = statusClasseItem(t.status);
     const prazo = prazoInfo(t.prazo);
-    const descricao = (t.descricao || '').trim();
+    const descricao = resumoDescricao(t.descricao);
 
     return `
       <article class="starefa-item starefa-item--${statusClass}" data-id="${t.id}">
@@ -900,6 +923,7 @@
   function atualizarCardSuasTarefas(tarefa) {
     if (!tarefa?.id) return;
     if (tarefa.categoria && tarefa.categoria !== 'tarefas') return;
+    if (window.plannerEstaExcluida?.(tarefa.id)) return;
 
     if (tarefaEstaFinalizada(tarefa.status)) {
       removerCardSuasTarefas(tarefa.id);
@@ -942,9 +966,14 @@
     const container = document.getElementById('suas-tarefas-body');
     if (!container) return;
 
+    const gen = window.plannerBeginReload?.() ?? 0;
     try {
       const tarefas = await listarTarefas({ categoria: 'tarefas', minhas: true, limit: 50 });
-      const lista = filtrarTarefasDoUsuario(tarefas);
+      if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
+
+      const base = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(tarefas) : tarefas;
+      const lista = filtrarTarefasDoUsuario(base);
+      window.plannerLimparTombstonesConfirmadas?.((Array.isArray(tarefas) ? tarefas : []).map((t) => t.id));
 
       Object.keys(tarefasMap).forEach(k => delete tarefasMap[k]);
 
@@ -995,7 +1024,7 @@
           ${campoDetalhe('Responsável', esc(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
-          ${campoDetalhe('Descrição', esc(t.descricao), 3, 'campo-descricao')}
+          ${campoDescricaoDetalhe('Descrição', t.descricao)}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Prazo', t.prazo ? formatarPrazo(t.prazo) : '—', 1, 'campo-prazo')}
@@ -1090,8 +1119,9 @@
 
     const descEl = document.getElementById('campo-descricao');
     if (descEl) {
-      const valor = descEl.textContent.trim() === '—' ? '' : descEl.textContent.trim();
-      descEl.innerHTML = `<textarea style="${inputStyle};min-height:80px;resize:vertical">${esc(valor)}</textarea>`;
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      const tarefa = id ? tarefasMap[id] : null;
+      mountDescricaoEditor(descEl, { html: tarefa?.descricao || '', placeholder: 'Detalhes da tarefa (opcional)' });
     }
 
     const respEl = document.getElementById('campo-responsavel');
@@ -1118,7 +1148,7 @@
 
     const titulo = document.querySelector('#campo-titulo input')?.value?.trim() || '';
     const responsavel = document.querySelector('#campo-responsavel select')?.value || '';
-    const descricao = document.querySelector('#campo-descricao textarea')?.value?.trim() || '';
+    const descricao = getDescricaoEditorValue(document.getElementById('campo-descricao')) || '';
     const prazo = document.querySelector('#campo-prazo input')?.value || '';
 
     if (!titulo) {
@@ -1174,13 +1204,21 @@
     const btn = document.getElementById('btn-confirmar-excluir');
     btn.disabled = true;
 
+    window.plannerPausarPolling?.(30000);
+    window.plannerMarcarExcluida?.(id);
+    window.plannerRemoverCardKanban?.(id);
+    window.plannerInvalidateReloads?.();
+
     try {
       await deletarTarefaApi(id);
       fecharConfirmacaoExclusao();
       fecharDetalhe();
       delete tarefasMap[id];
-      await carregarSuasTarefas();
+      window.plannerSyncExclusaoTarefa?.(id);
+      await window.plannerAposExclusaoTarefa?.(id, () => carregarSuasTarefas());
     } catch (err) {
+      window.plannerDesmarcarExcluida?.(id);
+      await carregarSuasTarefas();
       alert(err.message || 'Erro ao excluir tarefa.');
     } finally {
       btn.disabled = false;

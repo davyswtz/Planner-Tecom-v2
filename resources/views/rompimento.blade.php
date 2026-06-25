@@ -396,7 +396,7 @@
       </div>
       <div class="os-field">
         <label class="os-label">Região</label>
-        <select id="input-regiao" onchange="carregarTecnicos(this.value)" class="os-input">
+        <select id="input-regiao" class="os-input">
           <option value="">Selecione...</option>
           <option>Goval</option>
           <option>Vale do Aço</option>
@@ -407,16 +407,6 @@
     </div>
 
     <div class="detail-grid-2">
-      <div class="os-field">
-        <label class="os-label">Técnico(s) responsável(is)</label>
-        <div id="tecnicos-wrap" style="position:relative;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;min-height:38px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text">
-          <span id="tecnicos-tags"></span>
-          <input id="input-tec" type="text" placeholder="Selecione uma região primeiro..." readonly
-            style="border:none;outline:none;font-size:12px;background:transparent;flex:1;min-width:80px;box-shadow:none;height:24px;font-family:inherit;cursor:pointer"
-            onclick="toggleDropdownTecnicos()"/>
-          <div id="dropdown-tecnicos" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
-        </div>
-      </div>
       <div class="os-field">
         <label class="os-label">Cliente(s) afetado(s)</label>
         <input type="number" id="input-clientes" placeholder="0" min="0" class="os-input"/>
@@ -576,7 +566,7 @@
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="os-field">
-      <label class="os-label">Técnico responsável</label>
+      <label class="os-label">Vincular técnico responsável</label>
       <select id="os-input-tecnico" class="os-input">
         <option value="">Selecione...</option>
       </select>
@@ -742,8 +732,6 @@
 @section('scripts')
 <script>
   let prioridadeSelecionada = 'Média';
-  let tecnicosSelecionados = [];
-  let tecnicosSelecionadosEdicao = [];
   let osDataMap = {};
   let osEditandoId = null;
   /** ID da OS aguardando confirmação no modal de exclusão (null = nenhuma pendente) */
@@ -797,8 +785,6 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
   // ─── MODAIS ───
   window.abrirModal = function() {
-    tecnicosSelecionados = [];
-    renderizarTags();
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -914,12 +900,10 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     document.getElementById('detalhe-overlay').classList.remove('open');
     trocarAba('detalhes');
     resetBotoesDetalhe();
-    tecnicosSelecionadosEdicao = [];
   }
 
   function cancelarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    tecnicosSelecionadosEdicao = [];
     resetBotoesDetalhe();
     if (id) window.abrirDetalhe(id);
   }
@@ -1068,9 +1052,9 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     }
   }
 
-  // ─── TÉCNICOS (MODAL CRIAR) ───
-  async function carregarTecnicos(regiao, destino = 'dropdown-tecnicos') {
-    if (!regiao && destino === 'dropdown-tecnicos') return;
+  async function carregarTecnicos(regiao, destino = 'os-input-tecnico') {
+    const el = document.getElementById(destino);
+    if (!el || el.tagName !== 'SELECT') return;
 
     const token = localStorage.getItem('planner_token');
     const headers = { 'Authorization': 'Bearer ' + token };
@@ -1085,132 +1069,16 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     }
 
     let tecnicos = await buscarTecnicos(regiao);
-    if (regiao && tecnicos.length === 0 && (destino === 'os-input-tecnico' || destino === 'dropdown-tecnicos')) {
+    if (regiao && tecnicos.length === 0 && destino === 'os-input-tecnico') {
       tecnicos = await buscarTecnicos(null);
     }
 
-    const el = document.getElementById(destino);
-    if (!el) return;
-
-    if (el.tagName === 'SELECT') {
-        const placeholder = destino === 'filtro-tecnico'
-          ? '<option value="">Todos os técnicos</option>'
-          : '<option value="">Selecione...</option>';
-        el.innerHTML = placeholder
-            + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
-        return;
-    }
-
-    el.innerHTML = tecnicos.length
-        ? tecnicos.map(t => `<div onclick="selecionarTecnico(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-                style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-                onmouseover="this.style.background='var(--gray-50)'"
-                onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('')
-        : '<div style="padding:8px 12px;font-size:13px;color:var(--gray-400)">Nenhum técnico nessa região</div>';
-
-    document.getElementById('input-tec').placeholder = tecnicos.length ? 'Selecionar técnico...' : 'Nenhum técnico';
-}
-  function toggleDropdownTecnicos() {
-    const d = document.getElementById('dropdown-tecnicos');
-    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+    const placeholder = destino === 'filtro-tecnico'
+      ? '<option value="">Todos os técnicos</option>'
+      : '<option value="">Selecione...</option>';
+    el.innerHTML = placeholder
+      + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
   }
-
-  function selecionarTecnico(id, nome) {
-    if (tecnicosSelecionados.find(t => t.id === id)) return;
-    tecnicosSelecionados.push({ id, nome });
-    renderizarTags();
-    document.getElementById('dropdown-tecnicos').style.display = 'none';
-  }
-
-  function removerTecnico(id) {
-    tecnicosSelecionados = tecnicosSelecionados.filter(t => t.id !== id);
-    renderizarTags();
-  }
-
-  function renderizarTags() {
-    document.getElementById('tecnicos-tags').innerHTML = tecnicosSelecionados.map(t => `
-      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
-        ${t.nome}
-        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="removerTecnico(${t.id})"></i>
-      </span>`).join('');
-  }
-
-  // ─── TÉCNICOS (MODAL EDIÇÃO) ───
-  async function inicializarSeletorTecnicosEdicao(el, valorAtual) {
-    tecnicosSelecionadosEdicao = [];
-    el.innerHTML = `
-      <div id="edicao-tec-wrap" style="position:relative">
-        <div id="edicao-tec-tags" onclick="toggleDropdownTecnicosEdicao()"
-          style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;cursor:pointer;
-                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;background:var(--white)">
-          <span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px">Carregando...</span>
-        </div>
-        <div id="dropdown-tec-edicao"
-          style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);
-                 border:1px solid var(--gray-200);border-radius:var(--radius-sm);z-index:200;
-                 max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
-        </div>
-      </div>`;
-
-    const token = localStorage.getItem('planner_token');
-    const res = await fetch('/api/tecnicos', { headers: { 'Authorization': 'Bearer ' + token } });
-    const tecnicos = await res.json();
-
-    if (valorAtual) {
-      valorAtual.split(',').map(n => n.trim()).filter(Boolean).forEach(nome => {
-        const tec = tecnicos.find(t => t.nome === nome);
-        if (tec) tecnicosSelecionadosEdicao.push({ id: tec.id, nome: tec.nome });
-      });
-    }
-
-    document.getElementById('dropdown-tec-edicao').innerHTML = tecnicos.map(t => `
-      <div onclick="adicionarTecnicoEdicao(${t.id}, '${t.nome.replace(/'/g, "\\'")}')"
-        style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--gray-950)"
-        onmouseover="this.style.background='var(--gray-50)'"
-        onmouseout="this.style.background='transparent'">${t.nome}</div>`).join('');
-
-    renderizarTagsEdicao();
-  }
-
-  function toggleDropdownTecnicosEdicao() {
-    const d = document.getElementById('dropdown-tec-edicao');
-    if (!d) return;
-    d.style.display = d.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function adicionarTecnicoEdicao(id, nome) {
-    if (tecnicosSelecionadosEdicao.find(t => t.id === id)) return;
-    tecnicosSelecionadosEdicao.push({ id, nome });
-    renderizarTagsEdicao();
-    document.getElementById('dropdown-tec-edicao').style.display = 'none';
-  }
-
-  function removerTecnicoEdicao(id) {
-    tecnicosSelecionadosEdicao = tecnicosSelecionadosEdicao.filter(t => t.id !== id);
-    renderizarTagsEdicao();
-  }
-
-  function renderizarTagsEdicao() {
-    const container = document.getElementById('edicao-tec-tags');
-    if (!container) return;
-    const vazio = tecnicosSelecionadosEdicao.length === 0;
-    container.innerHTML = tecnicosSelecionadosEdicao.map(t => `
-      <span style="background:#e8f2fc;color:#0c447c;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
-        ${t.nome}
-        <i class="ti ti-x" style="font-size:10px;cursor:pointer" onclick="event.stopPropagation();removerTecnicoEdicao(${t.id})"></i>
-      </span>`).join('')
-      + `<span id="edicao-tec-placeholder" style="color:var(--gray-400);font-size:13px;${vazio ? '' : 'display:none'}">Selecionar técnico...</span>`;
-  }
-
-  document.addEventListener('click', function(e) {
-    const wrap = document.getElementById('tecnicos-wrap');
-    const dropdown = document.getElementById('dropdown-tecnicos');
-    if (wrap && dropdown && !wrap.contains(e.target)) dropdown.style.display = 'none';
-
-    const wrapEd = document.getElementById('edicao-tec-wrap');
-    const dropdownEd = document.getElementById('dropdown-tec-edicao');
-    if (wrapEd && dropdownEd && !wrapEd.contains(e.target)) dropdownEd.style.display = 'none';
-  });
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
@@ -1223,7 +1091,6 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       { id: 'campo-cto', tipo: 'cto' },
       { id: 'campo-tipo', tipo: 'select', opcoes: ['Rota ramal', 'Backbone', 'Caixa', 'Setor'] },
       { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga'] },
-      { id: 'campo-tecnicos', tipo: 'custom' },
       { id: 'campo-clientes', tipo: 'number' },
       { id: 'campo-coordenadas', tipo: 'coords' },
       { id: 'campo-endereco', tipo: 'text' },
@@ -1239,11 +1106,6 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       if (!el) return;
       const valorAtual = el.textContent.trim();
       const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'custom') {
-        inicializarSeletorTecnicosEdicao(el, valor);
-        return;
-      }
 
       if (tipo === 'cto') {
         el.innerHTML = `<input type="text" value="${valor}"
@@ -1278,7 +1140,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       titulo:            `Rompimento — ${getVal('#campo-cto input')}`,
       descricao:         getVal('#campo-tipo select'),
       regiao:            getVal('#campo-regiao select'),
-      responsavel:       tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
+      responsavel:       '',
       clientesAfetados:  getVal('#campo-clientes input'),
       coordenadas:       getVal('#campo-coordenadas input') || getVal('#campo-coordenadas-input'),
       localizacao_texto: document.querySelector('#campo-endereco input')?.value ?? document.getElementById('campo-endereco')?.textContent ?? '',
@@ -1519,7 +1381,7 @@ async function carregarOS(rompimentoId) {
       cto:               document.getElementById('input-cto').value,
       descricao:         document.getElementById('input-tipo').value,
       regiao:            document.getElementById('input-regiao').value,
-      responsavel:       tecnicosSelecionados.map(t => t.nome).join(', '),
+      responsavel:       '',
       clientesAfetados:  document.getElementById('input-clientes').value,
       prioridade:        prioridadeSelecionada,
       coordenadas:       document.getElementById('input-coords').value,
@@ -1856,8 +1718,6 @@ window.carregarRompimentos = carregarRompimentos;
     document.getElementById('detalhe-titulo').textContent = r.titulo || 'Rompimento';
     document.getElementById('detalhe-subtitulo').textContent = r.taskCode ? `Código: ${r.taskCode}` : '';
 
-    const tecnicos = r.responsavel || '—';
-
     document.getElementById('detalhe-conteudo').innerHTML = `
       <div style="display:flex;flex-direction:column;gap:16px" class="detail-enter">
         <div class="detail-badges">
@@ -1871,7 +1731,6 @@ window.carregarRompimentos = carregarRompimentos;
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
         </div>
         <div class="detail-grid-2">
-          ${campoDetalhe('Técnico(s) responsável(is)', esc(tecnicos), 1, 'campo-tecnicos')}
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
           ${campoDetalhe('Clientes afetados', esc(r.clientesAfetados ?? '0'), 1, 'campo-clientes')}
         </div>

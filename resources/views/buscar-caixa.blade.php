@@ -240,7 +240,7 @@
       </button>
     </form>
     <div class="caixa-help">
-      Busca os clientes da caixa no Nicon e consulta o sinal RX em lotes no servidor. Os sinais vão aparecendo na tabela conforme cada lote termina. Se vier vazio ou 0 dBm, use o botão ↻ na linha para buscar individualmente.
+      Busca os clientes da caixa no Nicon e consulta o sinal RX de cada cliente individualmente. Se vier vazio ou 0 dBm, a consulta é repetida automaticamente uma vez; se ainda assim não retornar, use o botão ↻ na linha.
     </div>
     <div class="caixa-resumo" id="caixa-resumo" hidden></div>
     <div class="caixa-table-wrap" id="caixa-resultado-wrap">
@@ -528,17 +528,19 @@
     if (rx == null && consultado) {
       return `
         <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
-          <span class="caixa-sinal-off">—</span>
-          <button
-            type="button"
-            class="caixa-sinal-retry"
-            data-retry-sinal="${esc(cliente.id_cliente_servico)}"
-            data-retry-serial="${esc(cliente.serial || '')}"
-            title="Atualizar sinal"
-            aria-label="Atualizar sinal"
-          >
-            <i class="ti ti-refresh"></i>
-          </button>
+          <div class="caixa-sinal-celula">
+            <span class="caixa-sinal-off">—</span>
+            <button
+              type="button"
+              class="caixa-sinal-retry"
+              data-retry-sinal="${esc(cliente.id_cliente_servico)}"
+              data-retry-serial="${esc(cliente.serial || '')}"
+              title="Atualizar sinal"
+              aria-label="Atualizar sinal"
+            >
+              <i class="ti ti-refresh"></i>
+            </button>
+          </div>
         </td>
       `;
     }
@@ -634,7 +636,7 @@
     const consultados = clientesAtuais.filter((c) => c.sinal_consultado).length;
 
     if (consultados < total) {
-      statusLabel.textContent = `${total} cliente(s) · buscando sinais (${comSinal}/${total})...`;
+      statusLabel.textContent = `${total} cliente(s) · consultando sinal (${consultados + 1}/${total})...`;
       return;
     }
 
@@ -710,7 +712,7 @@
     }
   }
 
-  async function requestSinalAtualCliente(cliente, forcarRefresh = false) {
+  async function requestSinalAtualCliente(cliente, forcarRefresh = false, signal = null) {
     const payload = {
       id_cliente_servico: Number(cliente.id_cliente_servico),
       forcar_refresh_tr069: forcarRefresh,
@@ -728,6 +730,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      signal,
     });
     const data = await response.json().catch(() => ({}));
 
@@ -741,8 +744,6 @@
   let buscaSinaisToken = 0;
   let buscaSinaisAtiva = false;
   let abortControllersSinais = [];
-  const TAMANHO_LOTE_SINAIS = 4;
-  const LOTES_PARALELOS = 2;
 
   function registrarAbortControllerSinais() {
     const controller = new AbortController();
@@ -784,73 +785,63 @@
     }
   }
 
-  async function buscarSinaisLote(clientesLote, signal = null) {
-    const data = await requestNicon({
-      clientes: clientesLote.map((cliente) => ({
-        id_cliente_servico: cliente.id_cliente_servico,
-        serial: cliente.serial || '',
-      })),
-      completar_sinais: true,
-    }, signal);
-    return data.clientes || [];
-  }
-
-  function aplicarResultadosLote(resultados, lote, nomeCaixa) {
-    const mapa = new Map(
-      (resultados || []).map((item) => [Number(item.id_cliente_servico), item.sinal ?? null])
+  async function buscarSinalClienteIndividual(cliente, signal = null) {
+    let sinal = normalizarSinalApi(
+      await requestSinalAtualCliente(cliente, false, signal)
     );
 
-    lote.forEach((cliente) => {
-      const id = Number(cliente.id_cliente_servico);
-      const sinal = mapa.has(id) ? normalizarSinalApi(mapa.get(id)) : null;
-      aplicarSinalNoCliente(id, sinal, nomeCaixa);
-    });
+    if (sinal != null) return sinal;
+    if (signal?.aborted) return null;
+
+    mostrarLoadingSinal(Number(cliente.id_cliente_servico));
+
+    sinal = normalizarSinalApi(
+      await requestSinalAtualCliente(cliente, true, signal)
+    );
+
+    return sinal;
   }
 
-  async function processarLoteSinais(lote, nomeCaixa, tokenBusca) {
+  async function processarClienteSinal(cliente, nomeCaixa, tokenBusca) {
     if (tokenBusca !== buscaSinaisToken) return;
 
+    const id = Number(cliente.id_cliente_servico);
+    mostrarLoadingSinal(id);
+
     const controller = registrarAbortControllerSinais();
-    lote.forEach((cliente) => mostrarLoadingSinal(Number(cliente.id_cliente_servico)));
 
     try {
-      const resultados = await buscarSinaisLote(lote, controller.signal);
+      const sinal = await buscarSinalClienteIndividual(cliente, controller.signal);
       if (tokenBusca !== buscaSinaisToken) return;
-      aplicarResultadosLote(resultados, lote, nomeCaixa);
+      aplicarSinalNoCliente(id, sinal, nomeCaixa);
     } catch (error) {
       if (tokenBusca !== buscaSinaisToken || error?.name === 'AbortError') return;
-      lote.forEach((cliente) => {
-        aplicarSinalNoCliente(Number(cliente.id_cliente_servico), null, nomeCaixa);
-      });
+
+      try {
+        mostrarLoadingSinal(id);
+        const sinal = normalizarSinalApi(
+          await requestSinalAtualCliente(cliente, true, controller.signal)
+        );
+        if (tokenBusca !== buscaSinaisToken) return;
+        aplicarSinalNoCliente(id, sinal, nomeCaixa);
+      } catch (retryError) {
+        if (tokenBusca !== buscaSinaisToken || retryError?.name === 'AbortError') return;
+        aplicarSinalNoCliente(id, null, nomeCaixa);
+      }
     }
   }
 
-  async function buscarSinaisProgressivo(clientes, nomeCaixa) {
+  async function buscarSinaisClientePorCliente(clientes, nomeCaixa) {
     const tokenBusca = ++buscaSinaisToken;
     abortarRequisicoesSinais();
     buscaSinaisAtiva = true;
-    const lotes = [];
-
-    for (let i = 0; i < clientes.length; i += TAMANHO_LOTE_SINAIS) {
-      lotes.push(clientes.slice(i, i + TAMANHO_LOTE_SINAIS));
-    }
-
     atualizarStatusBuscaSinais();
 
-    const fila = [...lotes];
-    const workers = Array.from(
-      { length: Math.min(LOTES_PARALELOS, fila.length) },
-      async () => {
-        while (fila.length > 0) {
-          if (tokenBusca !== buscaSinaisToken) return;
-          const lote = fila.shift();
-          if (!lote) return;
-          await processarLoteSinais(lote, nomeCaixa, tokenBusca);
-        }
-      }
-    );
-
-    await Promise.all(workers);
+    for (const cliente of clientes) {
+      if (tokenBusca !== buscaSinaisToken) return;
+      if (cliente.sinal_consultado) continue;
+      await processarClienteSinal(cliente, nomeCaixa, tokenBusca);
+    }
 
     if (tokenBusca !== buscaSinaisToken) return;
 
@@ -877,16 +868,18 @@
     }
 
     try {
-      const sinal = normalizarSinalApi(
-        await requestSinalAtualCliente(
-          { ...cliente, serial: serial || cliente.serial || '' },
-          true
-        )
+      const sinal = await buscarSinalClienteIndividual(
+        { ...cliente, serial: serial || cliente.serial || '' }
       );
       aplicarSinalNoCliente(idClienteServico, sinal, nomeCaixa);
     } catch (error) {
       aplicarSinalNoCliente(idClienteServico, null, nomeCaixa);
       alert(error.message || 'Não foi possível buscar o sinal deste cliente.');
+    } finally {
+      if (botao) {
+        botao.disabled = false;
+        botao.querySelector('i')?.classList.remove('spin');
+      }
     }
   }
 
@@ -1008,7 +1001,7 @@
         return;
       }
 
-      void buscarSinaisProgressivo(clientes, caixa);
+      void buscarSinaisClientePorCliente(clientes, caixa);
     } catch (error) {
       renderErro(error.message || 'Falha ao consultar o Nicon.');
       statusLabel.textContent = 'Erro na busca';

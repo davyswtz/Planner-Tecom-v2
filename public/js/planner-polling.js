@@ -6,14 +6,16 @@
   if (!config?.enabled) return;
 
   const timeoutSeg = config.timeoutSec || 25;
-  const intervaloFallbackMs = config.fallbackIntervalMs || 1500;
+  const intervaloFallbackMs = config.fallbackIntervalMs || 5000;
+  const debounceFocusMs = config.debounceFocusMs || 2500;
 
   let ultimaVersao = null;
   let recarregando = false;
-  let ativo = true;
+  let ativo = false;
   let abortController = null;
   let fallbackTimer = null;
   let pausadoAte = 0;
+  let focusDebounceTimer = null;
 
   function fingerprintDe(data) {
     if (data?.fingerprint) return data.fingerprint;
@@ -98,8 +100,13 @@
     }
   }
 
+  window.plannerPausarPolling = function (duracaoMs = 20000) {
+    pausadoAte = Date.now() + Math.max(0, duracaoMs);
+    if (abortController) abortController.abort();
+  };
+
   window.plannerNotifyLocalMutation = async function () {
-    pausadoAte = Date.now() + 20000;
+    window.plannerPausarPolling(20000);
     recarregando = true;
     if (abortController) abortController.abort();
 
@@ -152,15 +159,34 @@
 
   window.plannerPollingTick = verificarMudancas;
 
+  function agendarVerificacaoPorFoco() {
+    clearTimeout(focusDebounceTimer);
+    focusDebounceTimer = setTimeout(() => {
+      if (!devePausar()) verificarMudancas();
+    }, debounceFocusMs);
+  }
+
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !devePausar()) verificarMudancas();
+    if (!document.hidden) agendarVerificacaoPorFoco();
     if (document.hidden && abortController) abortController.abort();
   });
 
-  window.addEventListener('focus', () => {
-    if (!devePausar()) verificarMudancas();
-  });
+  window.addEventListener('focus', agendarVerificacaoPorFoco);
 
-  cicloLongPoll();
-  console.info('[Planner] Atualização em tempo real ativa (long polling, sem limites).');
+  function iniciarPolling() {
+    if (ativo) return;
+    ativo = true;
+    cicloLongPoll();
+    console.info('[Planner] Atualização em tempo real ativa (long polling).');
+  }
+
+  window.plannerAtivarPollingFallback = function () {
+    if (ativo || !config?.enabled) return;
+    console.warn('[Planner] Tempo real indisponível — usando polling como fallback.');
+    iniciarPolling();
+  };
+
+  if (!config.defer) {
+    iniciarPolling();
+  }
 })();

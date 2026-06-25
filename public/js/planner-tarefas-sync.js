@@ -29,6 +29,7 @@
 
   function aplicarTarefa(tarefa) {
     if (!tarefa?.id || tarefa.categoria !== 'tarefas') return;
+    if (typeof window.plannerEstaExcluida === 'function' && window.plannerEstaExcluida(tarefa.id)) return;
 
     const pertenceAoUsuario = tarefaPertenceAoUsuario(tarefa);
 
@@ -41,25 +42,43 @@
     }
   }
 
+  function publicarSync(payload) {
+    try {
+      channel?.postMessage(payload);
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ t: Date.now(), ...payload }));
+    } catch {
+      /* ignore */
+    }
+  }
+
   window.plannerSyncTarefa = function (tarefa) {
     if (!tarefa?.id) return;
-
-    try {
-      channel?.postMessage({ type: 'tarefa-updated', tarefa });
-    } catch {
-      /* ignore */
-    }
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ t: Date.now(), tarefa }));
-    } catch {
-      /* ignore */
-    }
+    publicarSync({ type: 'tarefa-updated', tarefa });
   };
+
+  window.plannerSyncExclusaoTarefa = function (id) {
+    if (id == null || id === '') return;
+    publicarSync({ type: 'tarefa-deleted', id: String(id) });
+  };
+
+  function aplicarExclusao(id) {
+    if (id == null || id === '') return;
+    window.plannerMarcarExcluida?.(id);
+    window.plannerRemoverCardKanban?.(id);
+  }
 
   channel?.addEventListener('message', (event) => {
     if (event.data?.type === 'tarefa-updated') {
       aplicarTarefa(event.data.tarefa);
+      return;
+    }
+    if (event.data?.type === 'tarefa-deleted') {
+      aplicarExclusao(event.data.id);
     }
   });
 
@@ -68,6 +87,10 @@
 
     try {
       const payload = JSON.parse(event.newValue);
+      if (payload?.type === 'tarefa-deleted') {
+        aplicarExclusao(payload.id);
+        return;
+      }
       aplicarTarefa(payload?.tarefa);
     } catch {
       /* ignore */

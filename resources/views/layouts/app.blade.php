@@ -559,6 +559,231 @@
   .detail-field.span-3 { grid-column: span 3; }
   .detail-label { font-size: 12px; font-weight: 500; color: var(--gray-500); }
   .detail-value { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 8px 10px; min-height: 38px; font-size: 13px; color: var(--gray-950); background: var(--gray-50); line-height: 1.4; word-break: break-word; }
+  .detail-field.span-3 { min-width: 0; }
+  .detail-value.descricao-field {
+    min-height: 80px;
+    max-height: 360px;
+    overflow: hidden;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+  .detail-value.descricao-field:not(:has(.descricao-editor-wrap)) {
+    border: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .descricao-view-shell {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+    overflow: hidden;
+    min-width: 0;
+  }
+  .detail-value.descricao-field .descricao-view-shell {
+    max-height: 320px;
+  }
+  .descricao-view {
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--gray-950);
+  }
+  .descricao-view:empty::before {
+    content: '—';
+    color: var(--gray-400);
+  }
+  .descricao-view img,
+  .descricao-editor img,
+  .descricao-img-inline {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  }
+  .descricao-editor-wrap {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .descricao-editor-shell {
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    background: var(--white);
+    overflow: hidden;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .descricao-editor-shell.is-focused {
+    border-color: #166ac4;
+    box-shadow: 0 0 0 3px rgba(22, 106, 196, 0.12);
+  }
+  .descricao-editor-shell.is-dragover {
+    border-color: #166ac4;
+    box-shadow: 0 0 0 3px rgba(22, 106, 196, 0.16);
+  }
+  .descricao-editor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gray-200);
+    background: linear-gradient(180deg, var(--gray-50) 0%, var(--white) 100%);
+  }
+  .descricao-toolbar-left { display: flex; align-items: center; gap: 8px; }
+  .descricao-toolbar-hints { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .descricao-btn-anexo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--gray-700);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+  }
+  .descricao-btn-anexo i { font-size: 15px; color: #166ac4; }
+  .descricao-btn-anexo:hover {
+    background: var(--blue-50);
+    border-color: #93c5fd;
+    color: #0d5aaa;
+  }
+  .descricao-btn-anexo:active { transform: scale(0.98); }
+  .descricao-hint-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--gray-100);
+    color: var(--gray-500);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .descricao-hint-chip i { font-size: 12px; opacity: 0.85; }
+  .descricao-editor-body {
+    position: relative;
+    min-height: 132px;
+  }
+  .descricao-editor-dropzone {
+    position: absolute;
+    inset: 8px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 2px dashed #166ac4;
+    border-radius: 8px;
+    background: rgba(22, 106, 196, 0.08);
+    color: #166ac4;
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+  }
+  .descricao-editor-dropzone i { font-size: 22px; }
+  .descricao-editor {
+    width: 100%;
+    min-height: 132px;
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: none;
+    border-radius: 0;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    line-height: 1.6;
+    outline: none;
+    background: transparent;
+    color: var(--gray-950);
+    box-sizing: border-box;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
+  }
+  .descricao-editor::-webkit-scrollbar { width: 6px; }
+  .descricao-editor::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 999px;
+  }
+  .descricao-view::-webkit-scrollbar { width: 6px; }
+  .descricao-view::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 999px;
+  }
+  .descricao-editor:empty::before {
+    content: attr(data-placeholder);
+    color: var(--gray-400);
+    pointer-events: none;
+    display: block;
+    line-height: 1.6;
+  }
+  [data-theme="dark"] .descricao-view-shell,
+  [data-theme="dark"] .detail-value.descricao-field:not(:has(.descricao-editor-wrap)) {
+    background: #161b22;
+    border-color: #30363d;
+  }
+  [data-theme="dark"] .descricao-view { color: #e6edf3; }
+  [data-theme="dark"] .descricao-editor-shell {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+  [data-theme="dark"] .descricao-editor-shell.is-focused,
+  [data-theme="dark"] .descricao-editor-shell.is-dragover {
+    border-color: #388bfd;
+    box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.18);
+  }
+  [data-theme="dark"] .descricao-editor-toolbar {
+    background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+    border-bottom-color: #30363d;
+  }
+  [data-theme="dark"] .descricao-btn-anexo {
+    background: #21262d;
+    border-color: #30363d;
+    color: #c9d1d9;
+  }
+  [data-theme="dark"] .descricao-btn-anexo:hover {
+    background: #1f2d42;
+    border-color: #388bfd;
+    color: #e6edf3;
+  }
+  [data-theme="dark"] .descricao-hint-chip {
+    background: #21262d;
+    color: #8b949e;
+  }
+  [data-theme="dark"] .descricao-editor { color: #e6edf3; }
+  [data-theme="dark"] .descricao-editor-dropzone {
+    background: rgba(56, 139, 253, 0.12);
+    border-color: #388bfd;
+    color: #79c0ff;
+  }
+  [data-theme="dark"] .descricao-view img,
+  [data-theme="dark"] .descricao-editor img {
+    border-color: #30363d;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
   .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 38px; }
   .detail-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px 0; color: var(--gray-500); font-size: 13px; }
   .detail-loading i { animation: spin 0.9s linear infinite; }
@@ -934,6 +1159,14 @@
     }
     if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
   };
+  window.PLANNER_POLLING = {
+    enabled: true,
+    defer: true,
+    categorias: @json($realtimePage['categorias']),
+    timeoutSec: 20,
+    fallbackIntervalMs: 5000,
+    debounceFocusMs: 2500,
+  };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.19.0/dist/echo.iife.js"></script>
@@ -951,6 +1184,7 @@
     authEndpoint: @json(url('/broadcasting/auth')),
   };
 </script>
+<script src="{{ asset('js/planner-polling.js') }}"></script>
 <script src="{{ asset('js/planner-realtime.js') }}"></script>
 @elseif($realtimePage)
 <script>
@@ -964,8 +1198,9 @@
   window.PLANNER_POLLING = {
     enabled: true,
     categorias: @json($realtimePage['categorias']),
-    timeoutSec: 25,
-    fallbackIntervalMs: 1500,
+    timeoutSec: 20,
+    fallbackIntervalMs: 5000,
+    debounceFocusMs: 2500,
   };
 </script>
 <script src="{{ asset('js/planner-polling.js') }}"></script>

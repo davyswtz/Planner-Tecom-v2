@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 
-use App\Services\GoogleChatService;
 use App\Services\NotificacaoService;
 use App\Services\OpTaskService;
 use App\Services\UsuarioPermissaoService;
@@ -175,6 +174,8 @@ class OpTaskController extends Controller
             return response()->json(['message' => 'Ordem de serviço excluída com sucesso'], 200);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 

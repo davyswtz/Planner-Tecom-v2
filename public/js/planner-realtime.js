@@ -85,7 +85,15 @@
     })
     .error((err) => {
       console.error('[Planner] Falha ao conectar tempo real:', err);
+      window.plannerAtivarPollingFallback?.();
     });
+
+  setTimeout(() => {
+    const estado = echo.connector?.pusher?.connection?.state;
+    if (estado && estado !== 'connected' && estado !== 'connecting') {
+      window.plannerAtivarPollingFallback?.();
+    }
+  }, 8000);
 
   console.info(`[Planner] Tempo real ativo (${config.driver}) — canal planner.tasks`);
   window.plannerEcho = echo;

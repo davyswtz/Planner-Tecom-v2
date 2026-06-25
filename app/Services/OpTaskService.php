@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\AppNotification;
 use App\Models\OpTask;
 use App\Models\OsTecnico;
 use App\Services\GoogleChatService;
+use Illuminate\Support\Facades\Schema;
 
 class OpTaskService
 {
@@ -70,7 +72,18 @@ public function __construct(private GoogleChatService $googleChatService){}
             );
         }
 
-        $opTask->delete();
+        $id = (int) $opTask->id;
+
+        if (Schema::hasTable('app_notification')) {
+            AppNotification::query()
+                ->where('ref_type', 'op_task')
+                ->where('ref_id', $id)
+                ->delete();
+        }
+
+        if (! $opTask->delete() || OpTask::whereKey($id)->exists()) {
+            throw new \RuntimeException('Não foi possível excluir a tarefa do banco de dados.');
+        }
 
         return $opTask;
     }
@@ -100,7 +113,7 @@ public function __construct(private GoogleChatService $googleChatService){}
     $statusAnterior = $opTask->status;
     $opTask->update($dados);
 
-    if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
+    if (isset($dados['status']) && $dados['status'] !== $statusAnterior && ($opTask->categoria ?? '') !== 'tarefas') {
         $isOs = ($opTask->categoria ?? '') === 'ordem-servico';
         $statusNovo = $dados['status'] ?? '';
 
