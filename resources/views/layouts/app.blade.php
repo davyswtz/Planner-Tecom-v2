@@ -224,12 +224,6 @@
   .nav-item.active { background: rgba(255,255,255,0.13); color: #fff; font-weight: 500; }
   .nav-left { display: flex; align-items: center; gap: 9px; }
   .nav-left i { font-size: 15px; flex-shrink: 0; }
-  .nav-badge {
-    font-size: 10px; font-weight: 500; padding: 1px 6px;
-    border-radius: 20px; background: rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.7); min-width: 20px; text-align: center;
-  }
-  .nav-badge.crit { background: var(--red); color: #fff; }
   .sidebar-footer {
     padding: 10px 8px;
     border-top: 1px solid rgba(255,255,255,0.08);
@@ -260,7 +254,6 @@
   .sidebar.collapsed { width: 60px; }
   .sidebar.collapsed .sidebar-logo,
   .sidebar.collapsed .nav-section-label,
-  .sidebar.collapsed .nav-badge,
   .sidebar.collapsed .user-info,
   .sidebar.collapsed .nav-left span,
   .sidebar.collapsed .theme-toggle { display: none; }
@@ -424,6 +417,7 @@
   .d-amber { background: var(--amber); }
   .d-red { background: var(--red); }
   .d-green { background: var(--green); }
+  .d-purple { background: #a855f7; }
   .kcol-count { font-size: 11px; color: var(--gray-400); background: var(--gray-100); padding: 1px 6px; border-radius: 20px; }
   .kcol-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; scrollbar-color: var(--gray-200) transparent; }
   .kcol-body > .kcard,
@@ -877,14 +871,13 @@
       <div class="nav-section-label">Categorias</div>
       <a href="/rompimento" class="nav-item {{ request()->is('rompimento*') ? 'active' : '' }}">
         <div class="nav-left"><i class="ti ti-bolt"></i><span>Rompimentos</span></div>
-        <span class="nav-badge crit">2</span>
       </a>
-      <a href="/troca-de-poste" class="nav-item {{ request()->is('troca-de-poste*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-tools"></i><span>Troca de poste</span></div><span class="nav-badge">2</span></a>
-      <a href="/otimizacao-de-rede" class="nav-item {{ request()->is('otimizacao-de-rede*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-wifi"></i><span>Otimização de rede</span></div><span class="nav-badge">4</span></a>
-      <a href="/atendimento" class="nav-item {{ request()->is('atendimento*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-headset"></i><span>Atendimento</span></div><span class="nav-badge">49</span></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div><span class="nav-badge">3</span></a>
-      <a href="/ordem-de-servico" class="nav-item {{ request()->is('ordem-de-servico*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-file-check"></i><span>Ordem de serviço</span></div><span class="nav-badge" id="nav-badge-os">—</span></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-certificate"></i><span>Certificação</span></div><span class="nav-badge">5</span></a>
+      <a href="/troca-de-poste" class="nav-item {{ request()->is('troca-de-poste*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-tools"></i><span>Troca de poste</span></div></a>
+      <a href="/otimizacao-de-rede" class="nav-item {{ request()->is('otimizacao-de-rede*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-wifi"></i><span>Otimização de rede</span></div></a>
+      <a href="/atendimento" class="nav-item {{ request()->is('atendimento*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-headset"></i><span>Atendimento</span></div></a>
+      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div></a>
+      <a href="/ordem-de-servico" class="nav-item {{ request()->is('ordem-de-servico*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-file-check"></i><span>Ordem de serviço</span></div></a>
+      <a href="/certificacao-cemig" class="nav-item {{ request()->is('certificacao-cemig*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-certificate"></i><span>Certificação</span></div></a>
       <a href="/correcao-de-sinal" class="nav-item {{ request()->is('correcao-de-sinal*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-wave-sine"></i><span>Correção de sinal</span></div></a>
     </div>
 
@@ -1117,6 +1110,7 @@
     request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede', 'otimizacao de rede', 'otimização de rede', 'OTIMIZACAO DE REDE', 'OTIMIZAÇÃO DE REDE'], 'reload' => 'carregarOtimizacoes'],
     request()->is('atendimento*') => ['categorias' => ['atendimento-cliente', 'atendimento ao cliente'], 'reload' => 'carregarAtendimentos'],
     request()->is('correcao-de-sinal*') => ['categorias' => ['correcao-atenuacao', 'correção de atenuação'], 'reload' => 'carregarCorrecoes'],
+    request()->is('certificacao-cemig*') => ['categorias' => ['certificacao-cemig', 'certificação cemig'], 'reload' => 'carregarCertificacoes'],
     request()->is('ordem-de-servico*') => ['categorias' => ['ordem-servico'], 'reload' => 'carregarOrdemServicoDashboard'],
     request()->is('tarefas*') => ['categorias' => ['tarefas'], 'reload' => 'carregarTarefas'],
     request()->is('dashboard*') => ['categorias' => ['tarefas'], 'reload' => 'carregarSuasTarefas'],

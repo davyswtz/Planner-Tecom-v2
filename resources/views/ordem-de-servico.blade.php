@@ -600,8 +600,6 @@
     document.getElementById('metric-finalizada').textContent = totais.finalizada;
     document.getElementById('metric-tecnicos').textContent = totais.tecnicos;
     document.getElementById('total-tecnicos-label').textContent = totais.tecnicos + ' técnicos';
-    const badge = document.getElementById('nav-badge-os');
-    if (badge) badge.textContent = totais.total;
   }
 
   function atualizarPaginacao() {

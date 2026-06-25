@@ -38,6 +38,10 @@ Route::get('/correcao-de-sinal', function () {
     return view('correcao-de-sinal');
 });
 
+Route::get('/certificacao-cemig', function () {
+    return view('certificacao-cemig');
+});
+
 Route::get('/ordem-de-servico', function () {
     return view('ordem-de-servico');
 });

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PlannerChangesController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\WebhookConfigController;
 use App\Http\Controllers\Api\CorrecaoDeSinalController;
+use App\Http\Controllers\Api\CertificacaoCemigController;
 use App\Http\Controllers\Api\GeoGridController;
 use App\Http\Controllers\Api\NiconController;
 use Illuminate\Http\Request;
@@ -48,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('correcao-sinal/from-caixa', [CorrecaoDeSinalController::class, 'storeFromCaixa']);
     Route::get('correcao-sinal/{id}/os', [CorrecaoDeSinalController::class, 'listarOS']);
     Route::apiResource('correcao-sinal', CorrecaoDeSinalController::class);
+    Route::get('certificacao-cemig/{id}/os', [CertificacaoCemigController::class, 'listarOS']);
+    Route::apiResource('certificacao-cemig', CertificacaoCemigController::class);
     Route::get('ordem-servico/dashboard', [OrdemServicoController::class, 'dashboard']);
     Route::get('ordem-servico/{id}', [OrdemServicoController::class, 'show'])->whereNumber('id');
     Route::get('ordem-servico', [OrdemServicoController::class, 'index']);
