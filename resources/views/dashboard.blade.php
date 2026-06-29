@@ -979,7 +979,6 @@
       if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
       const base = Array.isArray(tarefas) ? tarefas : [];
-      window.plannerLimparTombstonesConfirmadas?.(base.map((t) => t.id));
       const filtradas = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(base) : base;
       const lista = filtrarTarefasDoUsuario(filtradas);
 
@@ -993,6 +992,7 @@
 
       container.innerHTML = lista.map(renderCardTarefa).join('');
       atualizarContadorSuasTarefas(lista.length);
+      window.plannerPurgarCardsExcluidos?.();
     } catch (err) {
       container.innerHTML = renderErro(err.message || 'Erro ao carregar tarefas.');
     }
@@ -1218,11 +1218,12 @@
 
     try {
       await deletarTarefaApi(id);
+      window.plannerConfirmarExclusaoServidor?.(id);
       fecharConfirmacaoExclusao();
       fecharDetalhe();
       delete tarefasMap[id];
       window.plannerSyncExclusaoTarefa?.(id);
-      window.plannerPausarPolling?.(60000);
+      window.plannerPausarPolling?.(120000);
       await window.plannerNotifyLocalMutation?.();
     } catch (err) {
       window.plannerDesmarcarExcluida?.(id);

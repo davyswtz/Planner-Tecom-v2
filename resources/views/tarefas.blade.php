@@ -661,9 +661,9 @@
       if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
       const lista = Array.isArray(tarefas) ? tarefas : [];
-      window.plannerLimparTombstonesConfirmadas?.(lista.map((t) => t.id));
       const filtradas = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
       renderKanban(filtradas);
+      window.plannerPurgarCardsExcluidos?.();
     } catch (err) {
       console.error(err);
     }
@@ -918,11 +918,12 @@
 
     try {
       await deletarTarefaApi(id);
+      window.plannerConfirmarExclusaoServidor?.(id);
       fecharConfirmacaoExclusao();
       fecharDetalhe();
       delete tarefasMap[id];
       window.plannerSyncExclusaoTarefa?.(id);
-      window.plannerPausarPolling?.(60000);
+      window.plannerPausarPolling?.(120000);
       await window.plannerNotifyLocalMutation?.();
     } catch (err) {
       window.plannerDesmarcarExcluida?.(id);

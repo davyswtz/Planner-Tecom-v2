@@ -97,7 +97,7 @@
 
   function aplicarExclusao(id) {
     if (id == null || id === '') return;
-    window.plannerMarcarExcluida?.(id);
+    window.plannerConfirmarExclusaoServidor?.(id);
     window.plannerRemoverCardKanban?.(id);
   }
 

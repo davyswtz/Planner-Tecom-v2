@@ -79,8 +79,9 @@
     lastEventId = eventKey;
 
     clearTimeout(reloadTimer);
-    reloadTimer = setTimeout(() => {
-      window.plannerRealtimeReload();
+    reloadTimer = setTimeout(async () => {
+      await window.plannerRealtimeReload();
+      window.plannerPurgarCardsExcluidos?.();
       setTimeout(() => { lastEventId = null; }, 300);
     }, 350);
   }

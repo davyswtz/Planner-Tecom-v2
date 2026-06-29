@@ -61,16 +61,11 @@ class PlannerChangesController extends Controller
     private function obterStats(array $categorias): array
     {
         $stats = $this->montarQuery($categorias)
-            ->selectRaw('COUNT(*) as total, MAX(updated_at) as last_change')
+            ->selectRaw('COUNT(*) as total, MAX(UNIX_TIMESTAMP(updated_at)) as last_ts')
             ->first();
 
-        $lastChange = $stats?->last_change;
-        $version = $lastChange
-            ? (is_string($lastChange) ? $lastChange : $lastChange->format('Y-m-d H:i:s.u'))
-            : '0';
-
         return [
-            'version' => $version,
+            'version' => (string) (int) ($stats?->last_ts ?? 0),
             'total' => (int) ($stats?->total ?? 0),
         ];
     }

@@ -131,12 +131,18 @@ public function __construct(private GoogleChatService $googleChatService){}
 
     public function listarOsVinculadas(int $parentId)
     {
+        $parent = OpTask::find($parentId);
+        $parentCategoria = $parent?->categoria;
+
         $taskIdsFromOsTecnicos = OsTecnico::where('parent_task_id', $parentId)
             ->pluck('task_id');
 
         return OpTask::where('parent_task_id', $parentId)
-            ->where(function ($query) use ($taskIdsFromOsTecnicos) {
+            ->where(function ($query) use ($taskIdsFromOsTecnicos, $parentCategoria) {
                 $query->where('categoria', 'ordem-servico');
+                if ($parentCategoria) {
+                    $query->orWhere('categoria', $parentCategoria);
+                }
                 if ($taskIdsFromOsTecnicos->isNotEmpty()) {
                     $query->orWhereIn('id', $taskIdsFromOsTecnicos);
                 }

@@ -1,11 +1,13 @@
 /**
  * Ações imediatas no kanban após mutação local (exclusão, etc.).
- * Tombstones em sessionStorage + localStorage para sobreviver entre abas.
+ * Tombstones otimistas + confirmações permanentes (nunca limpas pelo polling).
  */
 (function () {
   const TOMBSTONE_SESSION_KEY = 'planner_tarefas_excluidas';
   const TOMBSTONE_LOCAL_KEY = 'planner_tarefas_excluidas_ls';
+  const CONFIRMED_KEY = 'planner_tarefas_excluidas_ok';
   const tombstones = new Set();
+  const confirmadas = new Set();
 
   function persistirTombstones() {
     const payload = JSON.stringify([...tombstones]);
@@ -21,7 +23,15 @@
     }
   }
 
-  function carregarTombstones() {
+  function persistirConfirmadas() {
+    try {
+      localStorage.setItem(CONFIRMED_KEY, JSON.stringify([...confirmadas]));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function carregarEstado() {
     for (const storage of [sessionStorage, localStorage]) {
       const key = storage === sessionStorage ? TOMBSTONE_SESSION_KEY : TOMBSTONE_LOCAL_KEY;
       try {
@@ -32,20 +42,49 @@
         /* ignore */
       }
     }
+
+    try {
+      const raw = localStorage.getItem(CONFIRMED_KEY);
+      if (!raw) return;
+      JSON.parse(raw).forEach((id) => {
+        const alvo = String(id);
+        confirmadas.add(alvo);
+        tombstones.add(alvo);
+      });
+    } catch {
+      /* ignore */
+    }
   }
 
-  carregarTombstones();
+  carregarEstado();
+
+  function marcarInterno(id) {
+    const alvo = String(id);
+    tombstones.add(alvo);
+    persistirTombstones();
+  }
 
   window.plannerMarcarExcluida = function (id) {
     if (id == null || id === '') return;
-    tombstones.add(String(id));
+    marcarInterno(id);
+  };
+
+  window.plannerConfirmarExclusaoServidor = function (id) {
+    if (id == null || id === '') return;
+    const alvo = String(id);
+    confirmadas.add(alvo);
+    tombstones.add(alvo);
+    persistirConfirmadas();
     persistirTombstones();
   };
 
   window.plannerDesmarcarExcluida = function (id) {
     if (id == null || id === '') return;
-    tombstones.delete(String(id));
+    const alvo = String(id);
+    tombstones.delete(alvo);
+    confirmadas.delete(alvo);
     persistirTombstones();
+    persistirConfirmadas();
   };
 
   window.plannerEstaExcluida = function (id) {
@@ -57,11 +96,13 @@
     return items.filter((item) => !tombstones.has(String(item?.id)));
   };
 
+  /** @deprecated Não limpar exclusões confirmadas pelo servidor. */
   window.plannerLimparTombstonesConfirmadas = function (idsPresentes) {
     if (!Array.isArray(idsPresentes)) return;
     const presentes = new Set(idsPresentes.map((id) => String(id)));
     let mudou = false;
     for (const id of [...tombstones]) {
+      if (confirmadas.has(id)) continue;
       if (!presentes.has(id)) {
         tombstones.delete(id);
         mudou = true;
@@ -114,6 +155,13 @@
     }
   };
 
+  window.plannerPurgarCardsExcluidos = function () {
+    if (tombstones.size === 0) return;
+    for (const id of tombstones) {
+      window.plannerRemoverCardKanban(id);
+    }
+  };
+
   window.plannerAposExclusaoTarefa = async function (id, reloadFn) {
     window.plannerMarcarExcluida(id);
     window.plannerRemoverCardKanban(id);
@@ -137,11 +185,25 @@
   };
 
   window.addEventListener('storage', (event) => {
-    if (event.key !== TOMBSTONE_LOCAL_KEY || !event.newValue) return;
-    try {
-      JSON.parse(event.newValue).forEach((id) => tombstones.add(String(id)));
-    } catch {
-      /* ignore */
+    if (event.key === TOMBSTONE_LOCAL_KEY && event.newValue) {
+      try {
+        JSON.parse(event.newValue).forEach((id) => tombstones.add(String(id)));
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    if (event.key === CONFIRMED_KEY && event.newValue) {
+      try {
+        JSON.parse(event.newValue).forEach((id) => {
+          const alvo = String(id);
+          confirmadas.add(alvo);
+          tombstones.add(alvo);
+        });
+      } catch {
+        /* ignore */
+      }
     }
   });
 })();

@@ -51,17 +51,22 @@
     const controller = new AbortController();
     if (abortarAnterior) abortController = controller;
 
-    const response = await fetch(montarUrl(longPoll), {
-      headers: {
-        Authorization: 'Bearer ' + token,
-        Accept: 'application/json',
-      },
-      cache: 'no-store',
-      signal: controller.signal,
-    });
+    try {
+      const response = await fetch(montarUrl(longPoll), {
+        headers: {
+          Authorization: 'Bearer ' + token,
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+        signal: controller.signal,
+      });
 
-    if (!response.ok) return null;
-    return response.json();
+      if (!response.ok) return null;
+      return response.json();
+    } catch (err) {
+      if (err?.name === 'AbortError') return null;
+      throw err;
+    }
   }
 
   function pararFallback() {
@@ -95,6 +100,7 @@
     recarregando = true;
     try {
       await window.plannerRealtimeReload();
+      window.plannerPurgarCardsExcluidos?.();
     } finally {
       recarregando = false;
     }

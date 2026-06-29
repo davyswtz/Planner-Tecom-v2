@@ -242,6 +242,8 @@
   }
   .user-info { flex: 1; overflow: hidden; }
   .user-name { color: #fff; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-name-btn { cursor: pointer; transition: opacity 0.12s; }
+  .user-name-btn:hover { opacity: 0.85; text-decoration: underline; text-underline-offset: 2px; }
   .user-role { color: var(--blue-200); font-size: 11px; }
   .theme-toggle {
     background: transparent; border: none;
@@ -788,6 +790,23 @@
   .btn-modal-ghost:hover { background: var(--gray-50); border-color: var(--gray-400); }
   .btn-modal-primary { border: none; background: #166ac4; color: #fff; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
   .btn-modal-primary:hover { background: #0d5aaa; }
+  .modal-logout-overlay {
+    position: fixed; inset: 0; z-index: 110;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+    background: rgba(0,0,0,0); visibility: hidden; pointer-events: none;
+    transition: background 0.25s ease, visibility 0.25s;
+  }
+  .modal-logout-overlay.open { visibility: visible; pointer-events: auto; background: rgba(0,0,0,0.5); }
+  .modal-logout-box {
+    background: var(--white); border-radius: var(--radius); border: 1px solid var(--gray-200);
+    width: 100%; max-width: 400px; padding: 20px 24px;
+    opacity: 0; transform: scale(0.96) translateY(8px);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-logout-overlay.open .modal-logout-box { opacity: 1; transform: scale(1) translateY(0); }
+  .modal-logout-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0 0 8px; }
+  .modal-logout-text { font-size: 13px; color: var(--gray-500); margin: 0 0 18px; line-height: 1.5; }
+  .modal-logout-foot { display: flex; justify-content: flex-end; gap: 8px; }
   @keyframes conteudoEntrada { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
@@ -897,7 +916,7 @@
     <div class="user-card">
       <div class="avatar" id="sidebar-user-avatar">--</div>
       <div class="user-info">
-        <div class="user-name" id="sidebar-user-name">Usuário</div>
+        <div class="user-name user-name-btn" id="sidebar-user-name" role="button" tabindex="0" title="Sair do sistema">Usuário</div>
         <div class="user-role" id="sidebar-user-role">—</div>
       </div>
       <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
@@ -952,6 +971,17 @@
 </div>
 
 <button class="fab" onclick="abrirNovoItem()"><i class="ti ti-plus"></i></button>
+
+<div id="modal-logout-overlay" class="modal-logout-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-logout-title">
+  <div class="modal-logout-box">
+    <p class="modal-logout-title" id="modal-logout-title">Sair do sistema</p>
+    <p class="modal-logout-text">Deseja sair do sistema?</p>
+    <div class="modal-logout-foot">
+      <button type="button" class="btn-modal btn-modal-ghost" id="btn-logout-cancelar">Cancelar</button>
+      <button type="button" class="btn-modal btn-modal-primary" id="btn-logout-confirmar">Sim</button>
+    </div>
+  </div>
+</div>
 
 <script>
   const days = ['dom.','seg.','ter.','qua.','qui.','sex.','sáb.'];
@@ -1101,6 +1131,39 @@
     if (typeof abrirModal === 'function') abrirModal();
     else console.log('abrir modal');
   }
+
+  function abrirModalLogout() {
+    document.getElementById('modal-logout-overlay')?.classList.add('open');
+  }
+
+  function fecharModalLogout() {
+    document.getElementById('modal-logout-overlay')?.classList.remove('open');
+  }
+
+  function confirmarLogoutSistema() {
+    fecharModalLogout();
+    if (typeof window.plannerLogout === 'function') {
+      window.plannerLogout();
+    }
+  }
+
+  document.getElementById('sidebar-user-name')?.addEventListener('click', abrirModalLogout);
+  document.getElementById('sidebar-user-name')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      abrirModalLogout();
+    }
+  });
+  document.getElementById('btn-logout-cancelar')?.addEventListener('click', fecharModalLogout);
+  document.getElementById('btn-logout-confirmar')?.addEventListener('click', confirmarLogoutSistema);
+  document.getElementById('modal-logout-overlay')?.addEventListener('click', (event) => {
+    if (event.target === event.currentTarget) fecharModalLogout();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && document.getElementById('modal-logout-overlay')?.classList.contains('open')) {
+      fecharModalLogout();
+    }
+  });
 </script>
 
 @php
@@ -1130,15 +1193,23 @@
   };
 @endphp
 
-<script src="{{ asset('js/planner-notificacoes.js') }}"></script>
+@php
+  $plannerAssetV = static function (string $path): string {
+    $full = public_path($path);
+    $v = is_file($full) ? (string) filemtime($full) : '1';
+    return asset($path) . '?v=' . $v;
+  };
+@endphp
+
+<script src="{{ $plannerAssetV('js/planner-notificacoes.js') }}"></script>
 
 @if($realtimePage)
-<script src="{{ asset('js/planner-reload-guard.js') }}"></script>
-<script src="{{ asset('js/planner-kanban.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-reload-guard.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-kanban.js') }}"></script>
 @endif
 
 @if(request()->is('tarefas*', 'dashboard*'))
-<script src="{{ asset('js/planner-tarefas-sync.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-tarefas-sync.js') }}"></script>
 @endif
 
 @yield('scripts')
@@ -1178,8 +1249,8 @@
     authEndpoint: @json(url('/broadcasting/auth')),
   };
 </script>
-<script src="{{ asset('js/planner-polling.js') }}"></script>
-<script src="{{ asset('js/planner-realtime.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-polling.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-realtime.js') }}"></script>
 @elseif($realtimePage)
 <script>
   window.plannerRealtimeReload = async function () {
@@ -1197,7 +1268,7 @@
     debounceFocusMs: 2500,
   };
 </script>
-<script src="{{ asset('js/planner-polling.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-polling.js') }}"></script>
 @endif
 
 </body>
