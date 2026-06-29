@@ -527,6 +527,8 @@
     try {
       const resultado = await atualizarTarefaApi(alvo, { status: novoStatus, categoria: 'tarefas' });
       const tarefa = resultado.opTask || resultado.tarefa || resultado;
+      if (window.plannerEstaExcluida?.(alvo)) return;
+
       tarefasMap[alvo] = tarefa;
 
       if (card) {
@@ -659,6 +661,7 @@
       if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
       const lista = Array.isArray(tarefas) ? tarefas : [];
+      window.plannerLimparTombstonesConfirmadas?.(lista.map((t) => t.id));
       const filtradas = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
       renderKanban(filtradas);
     } catch (err) {
@@ -872,8 +875,10 @@
       const resultado = await atualizarTarefaApi(id, dados);
       const tarefa = resultado.opTask || resultado.tarefa || resultado;
       fecharDetalhe();
-      adicionarCardTarefa(tarefa);
-      window.plannerSyncTarefa?.(tarefa);
+      if (!window.plannerEstaExcluida?.(id)) {
+        adicionarCardTarefa(tarefa);
+        window.plannerSyncTarefa?.(tarefa);
+      }
       await window.plannerAposMutacaoLocal?.();
     } catch (err) {
       alert(err.message || 'Erro ao salvar alterações.');

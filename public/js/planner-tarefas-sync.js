@@ -27,9 +27,13 @@
       && window.plannerPossuiPermissao('visualizar_aba_tarefas');
   }
 
+  function tarefaFoiExcluida(id) {
+    return typeof window.plannerEstaExcluida === 'function' && window.plannerEstaExcluida(id);
+  }
+
   function aplicarTarefa(tarefa) {
     if (!tarefa?.id || tarefa.categoria !== 'tarefas') return;
-    if (typeof window.plannerEstaExcluida === 'function' && window.plannerEstaExcluida(tarefa.id)) return;
+    if (tarefaFoiExcluida(tarefa.id)) return;
 
     const pertenceAoUsuario = tarefaPertenceAoUsuario(tarefa);
 
@@ -43,6 +47,10 @@
   }
 
   function publicarSync(payload) {
+    if (payload?.type === 'tarefa-updated' && tarefaFoiExcluida(payload.tarefa?.id)) {
+      return;
+    }
+
     try {
       channel?.postMessage(payload);
     } catch {
@@ -50,6 +58,26 @@
     }
 
     try {
+      if (payload?.type === 'tarefa-deleted') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ t: Date.now(), ...payload }));
+        return;
+      }
+
+      const atual = localStorage.getItem(STORAGE_KEY);
+      if (atual) {
+        try {
+          const parsed = JSON.parse(atual);
+          if (
+            parsed?.type === 'tarefa-deleted'
+            && String(parsed.id) === String(payload?.tarefa?.id)
+          ) {
+            return;
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ t: Date.now(), ...payload }));
     } catch {
       /* ignore */
@@ -58,6 +86,7 @@
 
   window.plannerSyncTarefa = function (tarefa) {
     if (!tarefa?.id) return;
+    if (tarefaFoiExcluida(tarefa.id)) return;
     publicarSync({ type: 'tarefa-updated', tarefa });
   };
 

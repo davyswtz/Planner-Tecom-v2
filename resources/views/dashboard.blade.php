@@ -794,6 +794,8 @@
     try {
       const resultado = await atualizarTarefaApi(id, { status: novoStatus, categoria: 'tarefas' });
       const tarefa = resultado.opTask || resultado.tarefa || resultado;
+      if (window.plannerEstaExcluida?.(id)) return;
+
       tarefasMap[id] = tarefa;
 
       const badgesEl = document.querySelector('#detalhe-conteudo .detail-badges');
@@ -976,8 +978,10 @@
       const tarefas = await listarTarefas({ categoria: 'tarefas', minhas: true, limit: 50 });
       if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
-      const base = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(tarefas) : tarefas;
-      const lista = filtrarTarefasDoUsuario(base);
+      const base = Array.isArray(tarefas) ? tarefas : [];
+      window.plannerLimparTombstonesConfirmadas?.(base.map((t) => t.id));
+      const filtradas = window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(base) : base;
+      const lista = filtrarTarefasDoUsuario(filtradas);
 
       Object.keys(tarefasMap).forEach(k => delete tarefasMap[k]);
 
@@ -1171,8 +1175,10 @@
       const resultado = await atualizarTarefaApi(id, dados);
       const tarefa = resultado.opTask || resultado.tarefa || resultado;
       fecharDetalhe();
-      atualizarCardSuasTarefas(tarefa);
-      window.plannerSyncTarefa?.(tarefa);
+      if (!window.plannerEstaExcluida?.(id)) {
+        atualizarCardSuasTarefas(tarefa);
+        window.plannerSyncTarefa?.(tarefa);
+      }
       await window.plannerAposMutacaoLocal?.();
     } catch (err) {
       alert(err.message || 'Erro ao salvar alterações.');
