@@ -1,25 +1,36 @@
 /**
  * Ações imediatas no kanban após mutação local (exclusão, etc.).
+ * Tombstones em sessionStorage + localStorage para sobreviver entre abas.
  */
 (function () {
-  const TOMBSTONE_KEY = 'planner_tarefas_excluidas';
+  const TOMBSTONE_SESSION_KEY = 'planner_tarefas_excluidas';
+  const TOMBSTONE_LOCAL_KEY = 'planner_tarefas_excluidas_ls';
   const tombstones = new Set();
 
   function persistirTombstones() {
+    const payload = JSON.stringify([...tombstones]);
     try {
-      sessionStorage.setItem(TOMBSTONE_KEY, JSON.stringify([...tombstones]));
+      sessionStorage.setItem(TOMBSTONE_SESSION_KEY, payload);
+    } catch {
+      /* ignore */
+    }
+    try {
+      localStorage.setItem(TOMBSTONE_LOCAL_KEY, payload);
     } catch {
       /* ignore */
     }
   }
 
   function carregarTombstones() {
-    try {
-      const raw = sessionStorage.getItem(TOMBSTONE_KEY);
-      if (!raw) return;
-      JSON.parse(raw).forEach((id) => tombstones.add(String(id)));
-    } catch {
-      /* ignore */
+    for (const storage of [sessionStorage, localStorage]) {
+      const key = storage === sessionStorage ? TOMBSTONE_SESSION_KEY : TOMBSTONE_LOCAL_KEY;
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) continue;
+        JSON.parse(raw).forEach((id) => tombstones.add(String(id)));
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -124,4 +135,13 @@
       await reloadFn();
     }
   };
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== TOMBSTONE_LOCAL_KEY || !event.newValue) return;
+    try {
+      JSON.parse(event.newValue).forEach((id) => tombstones.add(String(id)));
+    } catch {
+      /* ignore */
+    }
+  });
 })();

@@ -62,7 +62,13 @@
     if (!shouldHandle(payload)) return;
 
     if (payload?.action === 'deleted' && payload?.id != null) {
+      clearTimeout(reloadTimer);
+      reloadTimer = null;
       window.plannerRemoverCardKanban?.(payload.id);
+      return;
+    }
+
+    if (payload?.id != null && window.plannerEstaExcluida?.(payload.id)) {
       return;
     }
 
