@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-use App\Models\User;
-use App\Models\Tecnico;
+
 use App\Http\Controllers\Controller;
+use App\Models\Tecnico;
+use App\Models\User;
 use App\Services\UsuarioPermissaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -51,8 +52,10 @@ class AuthController extends Controller
 
     }
 
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
+
         return response()->json(['message' => 'Logout realizado com sucesso']);
     }
 
@@ -72,12 +75,4 @@ class AuthController extends Controller
             ],
         ]);
     }
-
 }
-
-
-
-    
-    
-    
-

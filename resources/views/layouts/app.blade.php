@@ -1140,11 +1140,31 @@
     document.getElementById('modal-logout-overlay')?.classList.remove('open');
   }
 
-  function confirmarLogoutSistema() {
-    fecharModalLogout();
-    if (typeof window.plannerLogout === 'function') {
-      window.plannerLogout();
+  async function confirmarLogoutSistema() {
+    const btn = document.getElementById('btn-logout-confirmar');
+    const token = localStorage.getItem('planner_token');
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Saindo...';
     }
+
+    try {
+      if (token) {
+        await fetch('/api/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/json',
+          },
+        });
+      }
+    } catch (_) {}
+
+    localStorage.removeItem('planner_token');
+    localStorage.removeItem('planner_user');
+    fecharModalLogout();
+    window.location.replace('/login');
   }
 
   document.getElementById('sidebar-user-name')?.addEventListener('click', abrirModalLogout);
