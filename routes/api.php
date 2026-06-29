@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\TrocaPosteController;
+use App\Http\Controllers\Api\TrocaEtiquetaController;
 use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\NotificacaoController;
@@ -40,6 +41,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('troca-poste/coordenada', [TrocaPosteController::class, 'buscarEndereco']);
     Route::get('troca-poste/{id}/os', [TrocaPosteController::class, 'listarOS']);
     Route::apiResource('troca-poste', TrocaPosteController::class);
+    Route::get('troca-etiqueta/coordenada', [TrocaEtiquetaController::class, 'buscarEndereco']);
+    Route::get('troca-etiqueta/{id}/os', [TrocaEtiquetaController::class, 'listarOS']);
+    Route::apiResource('troca-etiqueta', TrocaEtiquetaController::class)->parameters([
+        'troca-etiqueta' => 'troca_etiqueta',
+    ]);
     Route::get('otimizacao-rede/coordenada', [OtimizacaoDeRedeController::class, 'buscarEndereco']);
     Route::get('otimizacao-rede/{id}/os', [OtimizacaoDeRedeController::class, 'listarOS']);
     Route::apiResource('otimizacao-rede', OtimizacaoDeRedeController::class);

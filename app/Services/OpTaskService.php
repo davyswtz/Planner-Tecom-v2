@@ -242,6 +242,7 @@ public function __construct(private GoogleChatService $googleChatService){}
         'qualidade-potencia'    => 'QUA',
         'qualidade de potencia' => 'QUA',
         'tarefas'               => 'TAR',
+        'ordem-servico'         => 'OS',
         'sem-categoria'         => 'GEN',
     ];
 
