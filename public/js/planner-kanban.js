@@ -147,6 +147,7 @@
       document.getElementById('total-rompimentos') ||
       document.getElementById('total-otimizacoes') ||
       document.getElementById('total-trocas') ||
+      document.getElementById('total-etiquetas') ||
       document.getElementById('total-atendimentos') ||
       document.getElementById('total-tarefas');
 

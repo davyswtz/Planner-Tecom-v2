@@ -103,6 +103,7 @@ class GoogleChatService
         $tituloAlerta = match ($categoria) {
             'rompimentos', 'rompimento' => 'ROMPIMENTO',
             'troca-poste' => 'TROCA DE POSTE',
+            'troca-etiqueta' => 'TROCA DE ETIQUETA',
             'otimizacao-rede' => 'OTIMIZAÇÃO DE REDE',
             'atendimento-cliente' => 'ATENDIMENTO',
             'correcao-atenuacao' => 'CORREÇÃO DE SINAL',

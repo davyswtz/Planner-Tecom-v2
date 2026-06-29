@@ -26,6 +26,10 @@ Route::get('/troca-de-poste', function () {
     return view('troca-de-poste');
 });
 
+Route::get('/troca-de-etiqueta', function () {
+    return view('troca-de-etiqueta');
+});
+
 Route::get('/otimizacao-de-rede', function () {
     return view('otimizacao-de-rede');
 });

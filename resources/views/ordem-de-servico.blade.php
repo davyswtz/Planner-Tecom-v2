@@ -274,6 +274,7 @@
         <option value="">Todas</option>
         <option value="rompimentos">Rompimentos</option>
         <option value="troca-poste">Troca de poste</option>
+        <option value="troca-etiqueta">Troca de etiqueta</option>
         <option value="otimizacao-rede">Otimização de rede</option>
         <option value="atendimento-cliente">Atendimento</option>
       </select>
