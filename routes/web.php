@@ -54,6 +54,10 @@ Route::get('/configuracoes', function () {
     return view('configuracoes');
 });
 
+Route::get('/mensagens', function () {
+    return view('mensagens');
+});
+
 Route::get('/buscar-caixa', function () {
     return view('buscar-caixa', [
         'cidadesNicon' => config('services.nicon.cidades', []),
