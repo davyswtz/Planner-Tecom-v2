@@ -908,6 +908,7 @@
     <div class="nav-section">
       <div class="nav-section-label">Gestão</div>
       <a href="/usuarios" id="nav-item-usuarios" data-permissao="visualizar_aba_usuarios" class="nav-item {{ request()->is('usuarios*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
+      <a href="/mensagens" id="nav-item-mensagens" data-permissao="visualizar_tela_mensagens" class="nav-item {{ request()->is('mensagens*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-message"></i><span>Mensagens</span></div></a>
       <a href="/configuracoes" id="nav-item-configuracoes" data-permissao="adicionar_webhook" class="nav-item {{ request()->is('configuracoes*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>
     </div>
   </div>

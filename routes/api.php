@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\WebhookConfigController;
 use App\Http\Controllers\Api\CorrecaoDeSinalController;
 use App\Http\Controllers\Api\CertificacaoCemigController;
 use App\Http\Controllers\Api\GeoGridController;
+use App\Http\Controllers\Api\MensagemTemplateController;
 use App\Http\Controllers\Api\NiconController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -70,5 +71,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('webhook-config', [WebhookConfigController::class, 'show']);
         Route::put('webhook-config', [WebhookConfigController::class, 'update']);
         Route::post('webhook-config/{id}/testar', [WebhookConfigController::class, 'testar'])->whereNumber('id');
+    });
+
+    Route::middleware('permissao:visualizar_tela_mensagens')->group(function () {
+        Route::get('mensagens-templates', [MensagemTemplateController::class, 'show']);
+        Route::put('mensagens-templates', [MensagemTemplateController::class, 'update']);
+        Route::post('mensagens-templates/preview', [MensagemTemplateController::class, 'preview']);
     });
 });

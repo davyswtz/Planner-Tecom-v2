@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Http;
 
 class GoogleChatService
 {
-    public function __construct(private WebhookService $webhooks)
-    {
+    public function __construct(
+        private WebhookService $webhooks,
+        private MensagemTemplateService $mensagens,
+    ) {
     }
 
     public function enviarNotificacao(OpTask $rompimento, array $mensagem, ?string $statusNovo = null): void
@@ -50,11 +52,25 @@ class GoogleChatService
 
     public function montarMensagemOsEmAndamento(array $os): array
     {
+        $template = $this->mensagens->obterTemplate('ordem-servico', 'Em andamento');
+        if ($template !== null) {
+            return [
+                'text' => $this->mensagens->renderizar($template, $os, null, 'Em andamento'),
+            ];
+        }
+
         return $this->montarMensagemOsStatus($os, '📋 *Atualização de Ordem de Serviço*', '🔄', true);
     }
 
     public function montarMensagemOsFinalizada(array $os): array
     {
+        $template = $this->mensagens->obterTemplate('ordem-servico', 'Finalizada');
+        if ($template !== null) {
+            return [
+                'text' => $this->mensagens->renderizar($template, $os, null, 'Finalizada'),
+            ];
+        }
+
         return $this->montarMensagemOsStatus($os, '✅ *OS Finalizada*', '✅');
     }
 
@@ -88,15 +104,34 @@ class GoogleChatService
         return ['text' => implode("\n", $linhas)];
     }
 
+    public function montarMensagemTrocaDePoste(array $task, string $statusAnterior, string $statusNovo): array
+    {
+        return $this->montarMensagemStatus($task, $statusAnterior, $statusNovo);
+    }
+
     public function montarMensagemStatus(array $rompimento, string $statusAnterior, string $statusNovo, ?string $enviadoPor = null): array
     {
-        $categoria = $rompimento['categoria'] ?? '';
+        $categoria = $this->mensagens->normalizarCategoria($rompimento['categoria'] ?? '');
+        $statusNormalizado = $this->mensagens->normalizarStatus($statusNovo);
+        $template = $this->mensagens->obterTemplate($categoria, $statusNormalizado);
 
-        if ($this->isOtimizacaoRede($categoria)) {
+        if ($template !== null) {
+            return [
+                'text' => $this->mensagens->renderizar(
+                    $template,
+                    $rompimento,
+                    $statusAnterior,
+                    $statusNovo,
+                    $enviadoPor
+                ),
+            ];
+        }
+
+        if ($this->isOtimizacaoRede($rompimento['categoria'] ?? '')) {
             return $this->montarMensagemOtimizacaoRede($rompimento, $enviadoPor);
         }
 
-        if ($this->isRompimento($categoria) && $statusNovo === 'Em andamento') {
+        if ($this->isRompimento($rompimento['categoria'] ?? '') && $statusNovo === 'Em andamento') {
             return $this->montarMensagemRompimentoEmAndamento($rompimento);
         }
 
