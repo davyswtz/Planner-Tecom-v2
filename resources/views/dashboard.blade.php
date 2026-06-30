@@ -288,6 +288,24 @@
     border-color: #30363d;
   }
   [data-theme="dark"] .tarefa-status-check { color: #e6edf3; }
+  .responsaveis-wrap {
+    display: flex; flex-direction: column; gap: 8px;
+    border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    padding: 8px 10px; background: var(--white);
+  }
+  .responsaveis-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+  .responsavel-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 8px; border-radius: 20px; background: #eff6ff;
+    color: #1d4ed8; font-size: 12px; font-weight: 500;
+  }
+  .responsavel-tag button {
+    border: none; background: transparent; color: inherit; cursor: pointer;
+    padding: 0; display: inline-flex; font-size: 13px; line-height: 1;
+  }
+  .responsaveis-empty { font-size: 12px; color: var(--gray-400); }
+  [data-theme="dark"] .responsaveis-wrap { background: #21262d; border-color: #30363d; }
+  [data-theme="dark"] .responsavel-tag { background: #0d2340; color: #79c0ff; }
 </style>
 @endsection
 
@@ -665,8 +683,100 @@
   }
 
   function textoResponsavel(responsavel) {
-    const valor = (responsavel || '').trim();
-    return valor ? esc(valor) : 'Não tem responsável pela tarefa';
+    const lista = parseResponsaveis(responsavel);
+    if (!lista.length) return 'Não tem responsável pela tarefa';
+    return esc(lista.join(', '));
+  }
+
+  function serializarResponsaveis(lista) {
+    return parseResponsaveis(lista.join(', ')).join(', ');
+  }
+
+  function renderResponsaveisTags(containerId, selecionados, onRemove) {
+    const wrap = document.getElementById(containerId);
+    if (!wrap) return;
+
+    if (!selecionados.length) {
+      wrap.innerHTML = '<span class="responsaveis-empty">Nenhum responsável selecionado.</span>';
+      return;
+    }
+
+    wrap.innerHTML = selecionados.map(username => `
+      <span class="responsavel-tag" data-username="${esc(username)}">
+        ${esc(username)}
+        <button type="button" title="Remover" onclick="${onRemove}('${esc(username)}')">
+          <i class="ti ti-x"></i>
+        </button>
+      </span>
+    `).join('');
+  }
+
+  function atualizarSelectResponsaveisDisponiveis(selectId, selecionados) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const opcoes = usuariosSistema
+      .filter(u => !selecionados.includes(u.username))
+      .map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`)
+      .join('');
+
+    select.innerHTML = `<option value="">Adicionar responsável...</option>${opcoes}`;
+    select.value = '';
+  }
+
+  window.adicionarResponsavelEdicao = function (username) {
+    if (!username) return;
+    const wrap = document.getElementById('responsaveis-tags-edicao');
+    if (!wrap) return;
+
+    const atuais = Array.from(wrap.querySelectorAll('.responsavel-tag'))
+      .map(el => el.dataset.username || '')
+      .filter(Boolean);
+
+    if (atuais.includes(username)) return;
+
+    atuais.push(username);
+    renderResponsaveisTags('responsaveis-tags-edicao', atuais, 'removerResponsavelEdicao');
+    atualizarSelectResponsaveisDisponiveis('select-responsavel-edicao', atuais);
+  };
+
+  window.removerResponsavelEdicao = function (username) {
+    const wrap = document.getElementById('responsaveis-tags-edicao');
+    if (!wrap) return;
+
+    const atuais = Array.from(wrap.querySelectorAll('.responsavel-tag'))
+      .map(el => el.dataset.username || '')
+      .filter(item => item && item !== username);
+
+    renderResponsaveisTags('responsaveis-tags-edicao', atuais, 'removerResponsavelEdicao');
+    atualizarSelectResponsaveisDisponiveis('select-responsavel-edicao', atuais);
+  };
+
+  function obterResponsaveisEdicao() {
+    const wrap = document.getElementById('responsaveis-tags-edicao');
+    if (!wrap) return [];
+
+    return Array.from(wrap.querySelectorAll('.responsavel-tag'))
+      .map(el => el.dataset.username || '')
+      .filter(Boolean);
+  }
+
+  function montarCampoResponsaveisEdicao(valorAtual) {
+    const selecionados = parseResponsaveis(valorAtual);
+    const opcoes = usuariosSistema
+      .filter(u => !selecionados.includes(u.username))
+      .map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`)
+      .join('');
+
+    return `
+      <div class="responsaveis-wrap">
+        <div class="responsaveis-tags" id="responsaveis-tags-edicao"></div>
+        <select id="select-responsavel-edicao" class="tarefa-input" style="height:38px;width:100%;box-sizing:border-box"
+          onchange="adicionarResponsavelEdicao(this.value)">
+          <option value="">Adicionar responsável...</option>
+          ${opcoes}
+        </select>
+      </div>`;
   }
 
   function formatarPrazo(valor) {
@@ -948,7 +1058,7 @@
     }
 
     const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
-    if (user?.username && tarefa.responsavel === user.username) {
+    if (user?.username && responsavelInclui(tarefa.responsavel, user.username)) {
       const container = document.getElementById('suas-tarefas-body');
       if (container?.querySelector('.suas-tarefas-empty')) {
         container.innerHTML = renderCardTarefa(tarefa);
@@ -959,12 +1069,26 @@
     }
   }
 
+  function parseResponsaveis(valor) {
+    if (!valor) return [];
+    return String(valor)
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .filter((item, index, lista) => lista.indexOf(item) === index);
+  }
+
+  function responsavelInclui(responsavel, username) {
+    if (!username) return false;
+    return parseResponsaveis(responsavel).includes(username);
+  }
+
   function filtrarTarefasDoUsuario(tarefas) {
     const user = JSON.parse(localStorage.getItem('planner_user') || 'null');
     const username = user?.username || '';
     return (Array.isArray(tarefas) ? tarefas : []).filter((t) => {
       if (t.categoria && t.categoria !== 'tarefas') return false;
-      if (!username || t.responsavel !== username) return false;
+      if (!username || !responsavelInclui(t.responsavel, username)) return false;
       return !tarefaEstaFinalizada(t.status);
     });
   }
@@ -1029,7 +1153,7 @@
         ${renderStatusChecks(t)}
         <div class="detail-grid-2">
           ${campoDetalhe('Título', esc(t.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('Responsável', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
+          ${campoDetalhe('Responsáveis', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
           ${campoDescricaoDetalhe('Descrição', t.descricao)}
@@ -1134,12 +1258,15 @@
 
     const respEl = document.getElementById('campo-responsavel');
     if (respEl) {
-      const bruto = respEl.textContent.trim();
-      const valor = (bruto === '—' || bruto === 'Não tem responsável pela tarefa') ? '' : bruto;
-      const opcoes = usuariosSistema.map(u =>
-        `<option value="${esc(u.username)}" ${u.username === valor ? 'selected' : ''}>${esc(u.username)}</option>`
-      ).join('');
-      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Nenhum (opcional)</option>${opcoes}</select>`;
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      const tarefa = id ? tarefasMap[id] : null;
+      const bruto = tarefa?.responsavel || '';
+      respEl.innerHTML = montarCampoResponsaveisEdicao(bruto);
+      renderResponsaveisTags(
+        'responsaveis-tags-edicao',
+        parseResponsaveis(bruto),
+        'removerResponsavelEdicao'
+      );
     }
 
     const prazoEl = document.getElementById('campo-prazo');
@@ -1156,7 +1283,7 @@
     if (!id) return;
 
     const titulo = document.querySelector('#campo-titulo input')?.value?.trim() || '';
-    const responsavel = document.querySelector('#campo-responsavel select')?.value || '';
+    const responsavel = serializarResponsaveis(obterResponsaveisEdicao());
     const descricao = getDescricaoEditorValue(document.getElementById('campo-descricao')) || '';
     const prazo = document.querySelector('#campo-prazo input')?.value || '';
 

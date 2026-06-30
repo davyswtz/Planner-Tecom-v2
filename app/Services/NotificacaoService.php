@@ -8,15 +8,10 @@ use Illuminate\Support\Facades\Schema;
 
 class NotificacaoService
 {
-    public function notificarTarefaAtribuida(OpTask $tarefa, string $criadoPor): ?AppNotification
+    public function notificarTarefaAtribuida(OpTask $tarefa, string $criadoPor): void
     {
         if (! Schema::hasTable('app_notification') || ! Schema::hasColumn('app_notification', 'username')) {
-            return null;
-        }
-
-        $responsavel = trim((string) $tarefa->responsavel);
-        if ($responsavel === '' || ($criadoPor !== '' && $responsavel === $criadoPor)) {
-            return null;
+            return;
         }
 
         $criador = $criadoPor !== '' ? $criadoPor : 'Sistema';
@@ -25,16 +20,22 @@ class NotificacaoService
             ? ' Prazo: ' . date('d/m/Y', strtotime((string) $tarefa->prazo)) . '.'
             : '';
 
-        return AppNotification::create([
-            'kind' => 'task_assigned',
-            'title' => 'Nova tarefa atribuída',
-            'message' => "{$criador} atribuiu a tarefa \"{$tituloTarefa}\" para você.{$prazo}",
-            'ref_type' => 'op_task',
-            'ref_id' => $tarefa->id,
-            'op_category' => 'tarefas',
-            'created_by' => $criadoPor,
-            'username' => $responsavel,
-        ]);
+        foreach (OpTask::parseResponsaveis($tarefa->responsavel) as $responsavel) {
+            if ($criadoPor !== '' && $responsavel === $criadoPor) {
+                continue;
+            }
+
+            AppNotification::create([
+                'kind' => 'task_assigned',
+                'title' => 'Nova tarefa atribuída',
+                'message' => "{$criador} atribuiu a tarefa \"{$tituloTarefa}\" para você.{$prazo}",
+                'ref_type' => 'op_task',
+                'ref_id' => $tarefa->id,
+                'op_category' => 'tarefas',
+                'created_by' => $criadoPor,
+                'username' => $responsavel,
+            ]);
+        }
     }
 
     public function listarPorUsuario(string $username, int $limit = 30): array

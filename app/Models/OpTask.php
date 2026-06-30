@@ -125,6 +125,59 @@ class OpTask extends Model
         $this->attributes['setor'] = (string) ($value ?? '');
     }
 
+    /** @return array<int, string> */
+    public static function parseResponsaveis(?string $valor): array
+    {
+        if ($valor === null || trim($valor) === '') {
+            return [];
+        }
+
+        $partes = preg_split('/\s*,\s*/', $valor) ?: [];
+
+        return array_values(array_unique(array_filter(
+            array_map(static fn (string $item) => trim($item), $partes),
+            static fn (string $item) => $item !== ''
+        )));
+    }
+
+    /** @param array<int, string> $usernames */
+    public static function serializarResponsaveis(array $usernames): string
+    {
+        $lista = array_values(array_unique(array_filter(
+            array_map(static fn ($username) => trim((string) $username), $usernames),
+            static fn (string $username) => $username !== ''
+        )));
+
+        return implode(', ', $lista);
+    }
+
+    public static function responsavelInclui(?string $responsavel, string $username): bool
+    {
+        $username = trim($username);
+
+        if ($username === '') {
+            return false;
+        }
+
+        return in_array($username, self::parseResponsaveis($responsavel), true);
+    }
+
+    public function scopeWhereResponsavel(Builder $query, string $username): Builder
+    {
+        $username = trim($username);
+
+        if ($username === '') {
+            return $query;
+        }
+
+        return $query->where(function (Builder $sub) use ($username) {
+            $sub->where('responsavel', $username)
+                ->orWhere('responsavel', 'like', $username . ',%')
+                ->orWhere('responsavel', 'like', '%,' . $username)
+                ->orWhere('responsavel', 'like', '%,' . $username . ',%');
+        });
+    }
+
     /** Tarefas de topo de uma categoria (exclui subtarefas/OS filhas). */
     public function scopeTarefasPai(Builder $query, string|array $categorias): Builder
     {

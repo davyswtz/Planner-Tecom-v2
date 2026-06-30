@@ -199,6 +199,6 @@ class OpTaskController extends Controller
             return true;
         }
 
-        return $opTask->responsavel === $username;
+        return OpTask::responsavelInclui($opTask->responsavel, $username);
     }
 }

@@ -22,7 +22,7 @@ public function __construct(private GoogleChatService $googleChatService){}
         return OpTask::query()
             ->whereNull('parent_task_id')
             ->when($categoria !== null, fn ($query) => $query->where('categoria', $categoria))
-            ->when($responsavel !== null && $responsavel !== '', fn ($query) => $query->where('responsavel', $responsavel))
+            ->when($responsavel !== null && $responsavel !== '', fn ($query) => $query->whereResponsavel($responsavel))
             ->when($excluirFinalizadas, fn ($query) => $query->whereNotIn('status', ['Finalizar', 'Finalizada']))
             ->orderBy($orderBy, $order)
             ->limit($limit)
@@ -46,7 +46,9 @@ public function __construct(private GoogleChatService $googleChatService){}
         return $this->createOpTask([
             'titulo' => $dados['titulo'],
             'descricao' => $dados['descricao'] ?? '',
-            'responsavel' => $dados['responsavel'] ?? '',
+            'responsavel' => OpTask::serializarResponsaveis(
+                OpTask::parseResponsaveis($dados['responsavel'] ?? '')
+            ),
             'prazo' => $dados['prazo'] ?? null,
             'prioridade' => $dados['prioridade'] ?? 'Média',
             'categoria' => 'tarefas',
@@ -65,6 +67,12 @@ public function __construct(private GoogleChatService $googleChatService){}
 
         $permitidos = ['titulo', 'descricao', 'responsavel', 'prazo', 'prioridade', 'status'];
         $filtrados = array_intersect_key($dados, array_flip($permitidos));
+
+        if (array_key_exists('responsavel', $filtrados)) {
+            $filtrados['responsavel'] = OpTask::serializarResponsaveis(
+                OpTask::parseResponsaveis($filtrados['responsavel'])
+            );
+        }
 
         return $this->updateOpTask($opTask, $filtrados);
     }

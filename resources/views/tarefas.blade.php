@@ -160,6 +160,24 @@
   .btn-prio-media  { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
   .btn-prio-alta   { border-color: #fca5a5; background: var(--red-bg); color: var(--red-text); }
   .btn-prio-ativo  { border-width: 2px; }
+  .responsaveis-wrap {
+    display: flex; flex-direction: column; gap: 8px;
+    border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    padding: 8px 10px; background: var(--white);
+  }
+  .responsaveis-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+  .responsavel-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 8px; border-radius: 20px; background: #eff6ff;
+    color: #1d4ed8; font-size: 12px; font-weight: 500;
+  }
+  .responsavel-tag button {
+    border: none; background: transparent; color: inherit; cursor: pointer;
+    padding: 0; display: inline-flex; font-size: 13px; line-height: 1;
+  }
+  .responsaveis-empty { font-size: 12px; color: var(--gray-400); }
+  [data-theme="dark"] .responsaveis-wrap { background: #21262d; border-color: #30363d; }
+  [data-theme="dark"] .responsavel-tag { background: #0d2340; color: #79c0ff; }
 </style>
 @endsection
 
@@ -181,10 +199,13 @@
 
     <div class="detail-grid-2">
       <div class="tarefa-field">
-        <label class="tarefa-label" for="input-responsavel">Responsável <span style="font-weight:400;color:var(--gray-400)">(opcional)</span></label>
-        <select id="input-responsavel" class="tarefa-input">
-          <option value="">Nenhum (opcional)</option>
-        </select>
+        <label class="tarefa-label" for="input-responsavel">Responsáveis <span style="font-weight:400;color:var(--gray-400)">(opcional)</span></label>
+        <div class="responsaveis-wrap">
+          <div class="responsaveis-tags" id="responsaveis-tags-criar"></div>
+          <select id="input-responsavel" class="tarefa-input" onchange="adicionarResponsavelCriar(this.value)">
+            <option value="">Adicionar responsável...</option>
+          </select>
+        </div>
       </div>
       <div class="tarefa-field">
         <label class="tarefa-label" for="input-prazo">Prazo</label>
@@ -365,6 +386,7 @@
 
   let tarefasMap = {};
   let usuariosSistema = [];
+  let responsaveisCriar = [];
   let prioridadeSelecionada = 'Média';
   let prioridadeEdicao = 'Média';
 
@@ -481,9 +503,136 @@
       </div>`;
   }
 
+  function parseResponsaveis(valor) {
+    if (!valor) return [];
+    return String(valor)
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .filter((item, index, lista) => lista.indexOf(item) === index);
+  }
+
+  function serializarResponsaveis(lista) {
+    return parseResponsaveis(lista.join(', ')).join(', ');
+  }
+
+  function renderResponsaveisTags(containerId, selecionados, onRemove) {
+    const wrap = document.getElementById(containerId);
+    if (!wrap) return;
+
+    if (!selecionados.length) {
+      wrap.innerHTML = '<span class="responsaveis-empty">Nenhum responsável selecionado.</span>';
+      return;
+    }
+
+    wrap.innerHTML = selecionados.map(username => `
+      <span class="responsavel-tag" data-username="${esc(username)}">
+        ${esc(username)}
+        <button type="button" title="Remover" onclick="${onRemove}('${esc(username)}')">
+          <i class="ti ti-x"></i>
+        </button>
+      </span>
+    `).join('');
+  }
+
+  function atualizarSelectResponsaveisDisponiveis(selectId, selecionados) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const opcoes = usuariosSistema
+      .filter(u => !selecionados.includes(u.username))
+      .map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`)
+      .join('');
+
+    select.innerHTML = `<option value="">Adicionar responsável...</option>${opcoes}`;
+    select.value = '';
+  }
+
+  window.adicionarResponsavelCriar = function (username) {
+    if (!username || responsaveisCriar.includes(username)) return;
+    responsaveisCriar.push(username);
+    renderResponsaveisTags('responsaveis-tags-criar', responsaveisCriar, 'removerResponsavelCriar');
+    atualizarSelectResponsaveisDisponiveis('input-responsavel', responsaveisCriar);
+  };
+
+  window.removerResponsavelCriar = function (username) {
+    responsaveisCriar = responsaveisCriar.filter(item => item !== username);
+    renderResponsaveisTags('responsaveis-tags-criar', responsaveisCriar, 'removerResponsavelCriar');
+    atualizarSelectResponsaveisDisponiveis('input-responsavel', responsaveisCriar);
+  };
+
+  window.adicionarResponsavelEdicao = function (username) {
+    if (!username) return;
+    const wrap = document.getElementById('responsaveis-tags-edicao');
+    if (!wrap) return;
+
+    const atuais = Array.from(wrap.querySelectorAll('.responsavel-tag'))
+      .map(el => el.dataset.username || '')
+      .filter(Boolean);
+
+    if (atuais.includes(username)) return;
+
+    atuais.push(username);
+    renderResponsaveisTags('responsaveis-tags-edicao', atuais, 'removerResponsavelEdicao');
+    atualizarSelectResponsaveisDisponiveis('select-responsavel-edicao', atuais);
+  };
+
+  window.removerResponsavelEdicao = function (username) {
+    const wrap = document.getElementById('responsaveis-tags-edicao');
+    if (!wrap) return;
+
+    const atuais = Array.from(wrap.querySelectorAll('.responsavel-tag'))
+      .map(el => el.dataset.username || '')
+      .filter(item => item && item !== username);
+
+    renderResponsaveisTags('responsaveis-tags-edicao', atuais, 'removerResponsavelEdicao');
+    atualizarSelectResponsaveisDisponiveis('select-responsavel-edicao', atuais);
+  };
+
+  function obterResponsaveisEdicao() {
+    const wrap = document.getElementById('responsaveis-tags-edicao');
+    if (!wrap) return [];
+
+    return Array.from(wrap.querySelectorAll('.responsavel-tag'))
+      .map(el => el.dataset.username || '')
+      .filter(Boolean);
+  }
+
+  function montarCampoResponsaveisEdicao(valorAtual) {
+    const selecionados = parseResponsaveis(valorAtual);
+    const opcoes = usuariosSistema
+      .filter(u => !selecionados.includes(u.username))
+      .map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`)
+      .join('');
+
+    return `
+      <div class="responsaveis-wrap">
+        <div class="responsaveis-tags" id="responsaveis-tags-edicao"></div>
+        <select id="select-responsavel-edicao" class="tarefa-input" style="height:38px"
+          onchange="adicionarResponsavelEdicao(this.value)">
+          <option value="">Adicionar responsável...</option>
+          ${opcoes}
+        </select>
+      </div>`;
+  }
+
   function textoResponsavel(responsavel) {
-    const valor = (responsavel || '').trim();
-    return valor ? esc(valor) : 'Não tem responsável pela tarefa';
+    const lista = parseResponsaveis(responsavel);
+    if (!lista.length) return 'Não tem responsável pela tarefa';
+    return esc(lista.join(', '));
+  }
+
+  function badgeResponsaveis(responsavel) {
+    const lista = parseResponsaveis(responsavel);
+    if (!lista.length) {
+      return '<span style="font-size:10px;color:var(--gray-400)">Sem responsável</span>';
+    }
+
+    if (lista.length <= 2) {
+      return lista.map(item => `<span class="badge b-regiao-gv">${esc(item)}</span>`).join('');
+    }
+
+    return `<span class="badge b-regiao-gv">${esc(lista[0])}</span><span class="badge b-regiao-gv">+${lista.length - 1}</span>`;
   }
 
   function renderCard(t) {
@@ -497,7 +646,7 @@
         <div class="kcard-foot" style="margin-top:6px">
           <span class="badge b-cat-gen">Tarefa</span>
           ${badgePrioridade(t.prioridade)}
-          ${t.responsavel ? `<span class="badge b-regiao-gv">${esc(t.responsavel)}</span>` : `<span style="font-size:10px;color:var(--gray-400)">Sem responsável</span>`}
+          ${badgeResponsaveis(t.responsavel)}
         </div>
       </div>`;
   }
@@ -686,10 +835,15 @@
   }
 
   function atualizarSelectResponsavel(selectId = 'input-responsavel') {
+    if (selectId === 'input-responsavel') {
+      atualizarSelectResponsaveisDisponiveis(selectId, responsaveisCriar);
+      return;
+    }
+
     const select = document.getElementById(selectId);
     if (!select) return;
     const valorAtual = select.value;
-    select.innerHTML = '<option value="">Nenhum (opcional)</option>'
+    select.innerHTML = '<option value="">Adicionar responsável...</option>'
       + usuariosSistema.map(u => `<option value="${esc(u.username)}">${esc(u.username)}</option>`).join('');
     if (usuariosSistema.some(u => u.username === valorAtual)) {
       select.value = valorAtual;
@@ -716,7 +870,7 @@
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Título', esc(t.titulo), 1, 'campo-titulo')}
-          ${campoDetalhe('Responsável', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
+          ${campoDetalhe('Responsáveis', textoResponsavel(t.responsavel), 1, 'campo-responsavel')}
         </div>
         <div class="detail-grid">
           ${campoDescricaoDetalhe('Descrição', t.descricao)}
@@ -826,12 +980,15 @@
 
     const respEl = document.getElementById('campo-responsavel');
     if (respEl) {
-      const bruto = respEl.textContent.trim();
-      const valor = (bruto === '—' || bruto === 'Não tem responsável pela tarefa') ? '' : bruto;
-      const opcoes = usuariosSistema.map(u =>
-        `<option value="${esc(u.username)}" ${u.username === valor ? 'selected' : ''}>${esc(u.username)}</option>`
-      ).join('');
-      respEl.innerHTML = `<select style="${inputStyle}"><option value="">Nenhum (opcional)</option>${opcoes}</select>`;
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      const tarefa = id ? tarefasMap[id] : null;
+      const bruto = tarefa?.responsavel || '';
+      respEl.innerHTML = montarCampoResponsaveisEdicao(bruto);
+      renderResponsaveisTags(
+        'responsaveis-tags-edicao',
+        parseResponsaveis(bruto),
+        'removerResponsavelEdicao'
+      );
     }
 
     const prazoEl = document.getElementById('campo-prazo');
@@ -856,7 +1013,7 @@
     if (!id) return;
 
     const titulo = document.querySelector('#campo-titulo input')?.value?.trim() || '';
-    const responsavel = document.querySelector('#campo-responsavel select')?.value || '';
+    const responsavel = serializarResponsaveis(obterResponsaveisEdicao());
     const descricao = getDescricaoEditorValue(document.getElementById('campo-descricao')) || '';
     const prazo = document.querySelector('#campo-prazo input')?.value || '';
 
@@ -950,7 +1107,9 @@
   function limparFormulario() {
     document.getElementById('input-titulo').value = '';
     resetDescricaoEditor(document.getElementById('input-descricao-wrap'));
-    document.getElementById('input-responsavel').value = '';
+    responsaveisCriar = [];
+    renderResponsaveisTags('responsaveis-tags-criar', responsaveisCriar, 'removerResponsavelCriar');
+    atualizarSelectResponsaveisDisponiveis('input-responsavel', responsaveisCriar);
     document.getElementById('input-prazo').value = '';
     prioridadeSelecionada = 'Média';
     atualizarBotoesPrioridade(document.getElementById('prioridade-criar-wrap'), 'Média');
@@ -974,7 +1133,7 @@
 
   window.criarTarefa = async function () {
     const titulo = document.getElementById('input-titulo').value.trim();
-    const responsavel = document.getElementById('input-responsavel').value;
+    const responsavel = serializarResponsaveis(responsaveisCriar);
     const prazo = document.getElementById('input-prazo').value;
 
     if (!titulo) {
