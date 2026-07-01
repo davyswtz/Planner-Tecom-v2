@@ -50,7 +50,9 @@ class OrdemServicoService
                     'aberta' => $this->contarPorStatus($items, 'Aberta'),
                     'em_andamento' => $this->contarPorStatus($items, 'Em andamento'),
                     'finalizada' => $this->contarPorStatus($items, 'Finalizada'),
-                    'total' => $items->count(),
+                    'total' => $this->contarPorStatus($items, 'Aberta')
+                        + $this->contarPorStatus($items, 'Em andamento')
+                        + $this->contarPorStatus($items, 'Finalizada'),
                 ];
             })
             ->sortByDesc('total')
@@ -83,15 +85,36 @@ class OrdemServicoService
 
         return [
             'totais' => [
-                'total' => $osUnicas->count(),
-                'aberta' => $this->contarPorStatus($osUnicas, 'Aberta'),
-                'em_andamento' => $this->contarPorStatus($osUnicas, 'Em andamento'),
-                'finalizada' => $this->contarPorStatus($osUnicas, 'Finalizada'),
+                'total' => $this->contarPorStatus($os, 'Aberta')
+                    + $this->contarPorStatus($os, 'Em andamento')
+                    + $this->contarPorStatus($os, 'Finalizada'),
+                'aberta' => $this->contarPorStatus($os, 'Aberta'),
+                'em_andamento' => $this->contarPorStatus($os, 'Em andamento'),
+                'finalizada' => $this->contarPorStatus($os, 'Finalizada'),
                 'tecnicos' => $porTecnico->count(),
             ],
             'por_tecnico' => $porTecnico,
             'por_regiao' => $porRegiao,
             'por_categoria_pai' => $porCategoriaPai,
+            'lista' => $os
+                ->sort(function (array $a, array $b) {
+                    $cmpTecnico = strcasecmp($a['tecnico'] ?? '', $b['tecnico'] ?? '');
+                    if ($cmpTecnico !== 0) {
+                        return $cmpTecnico;
+                    }
+
+                    return strcmp($b['data_criacao'] ?? '', $a['data_criacao'] ?? '');
+                })
+                ->values()
+                ->map(fn (array $item) => [
+                    'tecnico' => $item['tecnico'] ?? '',
+                    'taskCode' => $item['taskCode'] ?? '',
+                    'titulo' => $item['titulo'] ?? '',
+                    'status' => $item['status'] ?? '',
+                    'data_criacao' => $item['data_criacao'] ?? '',
+                    'data_conclusao' => $item['data_conclusao'] ?? '',
+                ])
+                ->all(),
         ];
     }
 

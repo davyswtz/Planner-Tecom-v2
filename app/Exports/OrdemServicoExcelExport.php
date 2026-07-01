@@ -13,7 +13,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrdemServicoExcelExport
 {
-    private const COL_LAST = 'D';
+    private const COL_LAST = 'E';
+
+    private const COL_LIST_LAST = 'F';
 
     private const GREEN_DARK = '14532D';
 
@@ -63,6 +65,10 @@ class OrdemServicoExcelExport
         $row = $this->escreverCabecalho($sheet, $row, $filtrosAplicados, $dashboard['totais']);
         $row = $this->escreverTabela($sheet, $row, $dashboard['por_tecnico'], $dashboard['totais']);
 
+        if (! empty($dashboard['lista'])) {
+            $row = $this->escreverListaOs($sheet, $row + 1, collect($dashboard['lista']));
+        }
+
         $this->ajustarLarguras($sheet);
         $sheet->setShowGridlines(false);
 
@@ -87,28 +93,6 @@ class OrdemServicoExcelExport
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
         ]);
         $sheet->getRowDimension($row)->setRowHeight(36);
-        $row++;
-
-        $periodo = $this->extrairPeriodo($filtrosAplicados);
-        $gerado = now()->timezone(config('app.timezone'))->format('d/m/Y \à\s H:i');
-
-        $sheet->mergeCells("A{$row}:".self::COL_LAST."{$row}");
-        $sheet->setCellValue("A{$row}", "{$periodo} · Gerado em {$gerado}");
-        $sheet->getStyle("A{$row}:".self::COL_LAST."{$row}")->applyFromArray([
-            'font' => ['name' => 'Calibri', 'size' => 10, 'color' => ['rgb' => self::GREEN_MUTED]],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => self::GREEN_LIGHT]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
-        ]);
-        $sheet->getRowDimension($row)->setRowHeight(22);
-        $row++;
-
-        $sheet->mergeCells("A{$row}:".self::COL_LAST."{$row}");
-        $sheet->setCellValue("A{$row}", "Total de O.S. no período: {$totais['total']}");
-        $sheet->getStyle("A{$row}:".self::COL_LAST."{$row}")->applyFromArray([
-            'font' => ['name' => 'Calibri', 'size' => 11, 'bold' => true, 'color' => ['rgb' => self::GREEN_PRIMARY]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
-        ]);
-        $sheet->getRowDimension($row)->setRowHeight(24);
 
         return $row + 2;
     }
@@ -118,8 +102,8 @@ class OrdemServicoExcelExport
      */
     private function escreverTabela(Worksheet $sheet, int $row, Collection $porTecnico, array $totais): int
     {
-        $headers = ['Técnico', 'Abertas', 'Em andamento', 'Finalizadas'];
-        $cols = ['A', 'B', 'C', 'D'];
+        $headers = ['Técnico', 'Abertas', 'Em andamento', 'Finalizadas', 'Total'];
+        $cols = ['A', 'B', 'C', 'D', 'E'];
 
         foreach ($headers as $i => $header) {
             $sheet->setCellValue($cols[$i].$row, $header);
@@ -142,6 +126,7 @@ class OrdemServicoExcelExport
             $sheet->setCellValue("B{$row}", $item['aberta']);
             $sheet->setCellValue("C{$row}", $item['em_andamento']);
             $sheet->setCellValue("D{$row}", $item['finalizada']);
+            $sheet->setCellValue("E{$row}", $item['total']);
             $row++;
         }
 
@@ -150,10 +135,11 @@ class OrdemServicoExcelExport
         }
 
         $totalRow = $row;
-        $sheet->setCellValue("A{$totalRow}", 'Total do período');
+        $sheet->setCellValue("A{$totalRow}", 'Total');
         $sheet->setCellValue("B{$totalRow}", $totais['aberta']);
         $sheet->setCellValue("C{$totalRow}", $totais['em_andamento']);
         $sheet->setCellValue("D{$totalRow}", $totais['finalizada']);
+        $sheet->setCellValue("E{$totalRow}", $totais['total']);
 
         $sheet->getStyle("A{$totalRow}:".self::COL_LAST."{$totalRow}")->applyFromArray([
             'font' => ['name' => 'Calibri', 'size' => 11, 'bold' => true, 'color' => ['rgb' => self::TEXT_DARK]],
@@ -164,7 +150,7 @@ class OrdemServicoExcelExport
             ],
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
         ]);
-        $sheet->getStyle("B{$totalRow}:D{$totalRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B{$totalRow}:E{$totalRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("A{$totalRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setIndent(1);
         $sheet->getRowDimension($totalRow)->setRowHeight(30);
 
@@ -178,6 +164,91 @@ class OrdemServicoExcelExport
         return $totalRow + 1;
     }
 
+    /** @param  Collection<int, array{tecnico: string, taskCode: string, titulo: string, status: string, data_criacao: string, data_conclusao: ?string}>  $lista */
+    private function escreverListaOs(Worksheet $sheet, int $row, Collection $lista): int
+    {
+        $sheet->mergeCells("A{$row}:".self::COL_LIST_LAST."{$row}");
+        $sheet->setCellValue("A{$row}", 'Lista de ordens de serviço');
+        $sheet->getStyle("A{$row}:".self::COL_LIST_LAST."{$row}")->applyFromArray([
+            'font' => ['name' => 'Calibri', 'size' => 12, 'bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => self::GREEN_PRIMARY]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
+        ]);
+        $sheet->getRowDimension($row)->setRowHeight(28);
+        $row++;
+
+        $headers = ['Técnico', 'Código', 'Título', 'Status', 'Criação', 'Conclusão'];
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+        foreach ($headers as $i => $header) {
+            $sheet->setCellValue($cols[$i].$row, $header);
+        }
+
+        $headerRow = $row;
+        $sheet->getStyle("A{$headerRow}:".self::COL_LIST_LAST."{$headerRow}")->applyFromArray([
+            'font' => ['name' => 'Calibri', 'size' => 10, 'bold' => true, 'color' => ['rgb' => self::GREEN_PRIMARY]],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => self::GREEN_LIGHT]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => self::GREEN_BORDER]]],
+        ]);
+        $sheet->getStyle("A{$headerRow}:C{$headerRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setIndent(1);
+        $sheet->getRowDimension($headerRow)->setRowHeight(24);
+        $row++;
+
+        $dataStart = $row;
+        foreach ($lista as $item) {
+            $sheet->setCellValue("A{$row}", $item['tecnico']);
+            $sheet->setCellValue("B{$row}", $item['taskCode']);
+            $sheet->setCellValue("C{$row}", $item['titulo']);
+            $sheet->setCellValue("D{$row}", $item['status']);
+            $sheet->setCellValue("E{$row}", $this->formatarDataBr($item['data_criacao']));
+            $sheet->setCellValue("F{$row}", $this->formatarDataBr($item['data_conclusao'] ?? ''));
+            $row++;
+        }
+
+        if ($dataStart < $row) {
+            $sheet->getStyle("A{$dataStart}:".self::COL_LIST_LAST.($row - 1))->applyFromArray([
+                'font' => ['name' => 'Calibri', 'size' => 10, 'color' => ['rgb' => self::TEXT_DARK]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+            ]);
+            $sheet->getStyle("A{$dataStart}:C".($row - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setIndent(1);
+            $sheet->getStyle("D{$dataStart}:F".($row - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            for ($r = $dataStart; $r < $row; $r++) {
+                if (($r - $dataStart) % 2 === 1) {
+                    $sheet->getStyle("A{$r}:".self::COL_LIST_LAST."{$r}")->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setRGB(self::GREEN_ZEBRA);
+                }
+                $sheet->getRowDimension($r)->setRowHeight(22);
+            }
+        }
+
+        $lastRow = max($headerRow, $row - 1);
+        $sheet->getStyle("A{$headerRow}:".self::COL_LIST_LAST.$lastRow)->applyFromArray([
+            'borders' => [
+                'outline' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => self::GREEN_BORDER]],
+                'inside' => ['borderStyle' => Border::BORDER_HAIR, 'color' => ['rgb' => self::GREEN_BORDER]],
+            ],
+        ]);
+
+        return $row;
+    }
+
+    private function formatarDataBr(?string $data): string
+    {
+        $data = trim((string) $data);
+        if ($data === '') {
+            return '—';
+        }
+
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $data, $matches)) {
+            return "{$matches[3]}/{$matches[2]}/{$matches[1]}";
+        }
+
+        return $data;
+    }
+
     private function estiloLinhasDados(Worksheet $sheet, int $inicio, int $fim): void
     {
         $sheet->getStyle("A{$inicio}:".self::COL_LAST."{$fim}")->applyFromArray([
@@ -185,7 +256,7 @@ class OrdemServicoExcelExport
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
         ]);
 
-        $sheet->getStyle("B{$inicio}:D{$fim}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B{$inicio}:E{$fim}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("A{$inicio}:A{$fim}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setIndent(1);
 
         for ($r = $inicio; $r <= $fim; $r++) {
@@ -198,23 +269,13 @@ class OrdemServicoExcelExport
         }
     }
 
-    /** @param  list<array{0: string, 1: string}>  $filtrosAplicados */
-    private function extrairPeriodo(array $filtrosAplicados): string
-    {
-        foreach ($filtrosAplicados as [$campo, $valor]) {
-            if ($campo === 'Período') {
-                return $valor;
-            }
-        }
-
-        return 'Período: todos os registros';
-    }
-
     private function ajustarLarguras(Worksheet $sheet): void
     {
-        $sheet->getColumnDimension('A')->setWidth(28);
+        $sheet->getColumnDimension('A')->setWidth(22);
         $sheet->getColumnDimension('B')->setWidth(14);
-        $sheet->getColumnDimension('C')->setWidth(16);
+        $sheet->getColumnDimension('C')->setWidth(36);
         $sheet->getColumnDimension('D')->setWidth(14);
+        $sheet->getColumnDimension('E')->setWidth(12);
+        $sheet->getColumnDimension('F')->setWidth(12);
     }
 }
