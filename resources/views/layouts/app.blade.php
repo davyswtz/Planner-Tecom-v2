@@ -958,10 +958,10 @@
           </div>
         </div>
       </div>
-      <button class="icon-btn"><i class="ti ti-refresh"></i></button>
+      <button class="icon-btn" type="button" id="btn-topbar-atualizar" title="Atualizar"><i class="ti ti-refresh"></i></button>
       @unless(View::hasSection('hide-topbar-btn'))
-      <button class="btn-primary" onclick="abrirNovoItem()">
-        <i class="ti ti-plus"></i> @yield('btn-label', 'Nova tarefa')
+      <button class="btn-primary" type="button" onclick="abrirNovoItem()">
+        <i class="ti @yield('btn-icon', 'ti-plus')"></i> @yield('btn-label', 'Nova tarefa')
       </button>
       @endunless
     </div>

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -132,11 +132,11 @@ class OpTask extends Model
             return [];
         }
 
-        $partes = preg_split('/\s*,\s*/', $valor) ?: [];
+        $partes = preg_split('/\s*(?:,|\+|·)\s*/u', $valor) ?: [];
 
         return array_values(array_unique(array_filter(
             array_map(static fn (string $item) => trim($item), $partes),
-            static fn (string $item) => $item !== ''
+            static fn (string $item) => $item !== '' && $item !== '—'
         )));
     }
 
@@ -171,10 +171,13 @@ class OpTask extends Model
         }
 
         return $query->where(function (Builder $sub) use ($username) {
-            $sub->where('responsavel', $username)
-                ->orWhere('responsavel', 'like', $username . ',%')
-                ->orWhere('responsavel', 'like', '%,' . $username)
-                ->orWhere('responsavel', 'like', '%,' . $username . ',%');
+            $sub->where('responsavel', $username);
+
+            foreach ([',', '+', '·'] as $separador) {
+                $sub->orWhere('responsavel', 'like', $username.$separador.'%')
+                    ->orWhere('responsavel', 'like', '%'.$separador.$username)
+                    ->orWhere('responsavel', 'like', '%'.$separador.$username.$separador.'%');
+            }
         });
     }
 

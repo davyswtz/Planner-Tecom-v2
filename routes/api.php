@@ -1,23 +1,23 @@
 <?php
 
-use App\Http\Controllers\Api\TrocaPosteController;
-use App\Http\Controllers\Api\TrocaEtiquetaController;
-use App\Http\Controllers\Api\TecnicoController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\NotificacaoController;
-use App\Http\Controllers\Api\OpTaskController;
-use App\Http\Controllers\Api\RompimentoController;
-use App\Http\Controllers\Api\OtimizacaoDeRedeController;
 use App\Http\Controllers\Api\AtendimentoController;
-use App\Http\Controllers\Api\OrdemServicoController;
-use App\Http\Controllers\Api\PlannerChangesController;
-use App\Http\Controllers\Api\UsuarioController;
-use App\Http\Controllers\Api\WebhookConfigController;
-use App\Http\Controllers\Api\CorrecaoDeSinalController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CertificacaoCemigController;
+use App\Http\Controllers\Api\CorrecaoDeSinalController;
 use App\Http\Controllers\Api\GeoGridController;
 use App\Http\Controllers\Api\MensagemTemplateController;
 use App\Http\Controllers\Api\NiconController;
+use App\Http\Controllers\Api\NotificacaoController;
+use App\Http\Controllers\Api\OpTaskController;
+use App\Http\Controllers\Api\OrdemServicoController;
+use App\Http\Controllers\Api\OtimizacaoDeRedeController;
+use App\Http\Controllers\Api\PlannerChangesController;
+use App\Http\Controllers\Api\RompimentoController;
+use App\Http\Controllers\Api\TecnicoController;
+use App\Http\Controllers\Api\TrocaEtiquetaController;
+use App\Http\Controllers\Api\TrocaPosteController;
+use App\Http\Controllers\Api\UsuarioController;
+use App\Http\Controllers\Api\WebhookConfigController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('certificacao-cemig/{id}/os', [CertificacaoCemigController::class, 'listarOS']);
     Route::apiResource('certificacao-cemig', CertificacaoCemigController::class);
     Route::get('ordem-servico/dashboard', [OrdemServicoController::class, 'dashboard']);
+    Route::get('ordem-servico/exportar', [OrdemServicoController::class, 'exportar']);
     Route::get('ordem-servico/{id}', [OrdemServicoController::class, 'show'])->whereNumber('id');
     Route::get('ordem-servico', [OrdemServicoController::class, 'index']);
     Route::get('usuarios/opcoes', [UsuarioController::class, 'opcoes']);
