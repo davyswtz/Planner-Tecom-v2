@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\CorrecaoDadosService;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
-use RuntimeException;
 
 class CorrecaoDadosController extends Controller
 {
@@ -14,19 +13,19 @@ class CorrecaoDadosController extends Controller
 
     public function index()
     {
-        $items = $this->correcaoDadosService->listar();
-
         return response()->json([
-            'total' => $items->count(),
-            'items' => $items,
+            'total' => $this->correcaoDadosService->listar()->count(),
+            'items' => $this->correcaoDadosService->listar(),
             'categorias' => $this->correcaoDadosService->categoriasTela(),
         ], 200);
     }
 
     public function store(Request $request)
     {
+        $dados = $this->validar($request);
+
         try {
-            $item = $this->correcaoDadosService->criar($this->validar($request));
+            $item = $this->correcaoDadosService->criar($dados);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -36,8 +35,10 @@ class CorrecaoDadosController extends Controller
 
     public function update(Request $request, int $id)
     {
+        $dados = $this->validar($request, true);
+
         try {
-            $item = $this->correcaoDadosService->atualizar($id, $this->validar($request, true));
+            $item = $this->correcaoDadosService->atualizar($id, $dados);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -51,11 +52,9 @@ class CorrecaoDadosController extends Controller
             $this->correcaoDadosService->excluir($id);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
-        } catch (RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
         }
 
-        return response()->json(['message' => 'Registro excluído do banco com sucesso.'], 200);
+        return response()->json(['message' => 'Registro excluído com sucesso.'], 200);
     }
 
     private function validar(Request $request, bool $parcial = false): array

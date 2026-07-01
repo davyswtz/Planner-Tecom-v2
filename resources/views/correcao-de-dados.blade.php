@@ -66,6 +66,9 @@
     display: none; padding: 10px 12px; border-radius: var(--radius-sm);
     background: #fef2f2; color: #b91c1c; font-size: 13px;
   }
+  [data-theme="dark"] .cd-banner { background: #052e16; border-color: #166534; color: #86efac; }
+  [data-theme="dark"] .cd-input, [data-theme="dark"] .cd-select, [data-theme="dark"] .cd-textarea,
+  [data-theme="dark"] .cd-btn { background: #21262d; border-color: #30363d; color: #e6edf3; }
 </style>
 @endsection
 
@@ -74,8 +77,8 @@
   <div class="cd-banner">
     <i class="ti ti-info-circle"></i>
     <div>
-      Registros criados aqui usam as <strong>datas informadas por você</strong>.
-      Ao excluir, o registro é <strong>removido do banco</strong> (<code>op_tasks</code> e <code>os_tecnicos</code>).
+      Registros criados aqui usam as <strong>datas informadas por você</strong>, não a data atual.
+      Isso vale apenas para itens desta tela — aparecem normalmente nos filtros e relatórios do período escolhido.
     </div>
   </div>
 
@@ -127,7 +130,7 @@
         <option value="os">Ordem de serviço (O.S.)</option>
         <option value="tarefa">Tarefa</option>
       </select>
-      <span class="cd-help" id="cd-registro-hint">O.S. avulsa, sem vínculo — contabilizada para o técnico.</span>
+      <span class="cd-help" id="cd-registro-hint">O.S. avulsa, sem vínculo com tarefa pai — contabilizada para o técnico.</span>
     </div>
 
     <div class="cd-field full">
@@ -137,7 +140,9 @@
 
     <div class="cd-field" id="cd-campo-tecnico">
       <label class="cd-label" for="cd-tecnico">Técnico</label>
-      <select id="cd-tecnico" class="cd-select"><option value="">Selecione...</option></select>
+      <select id="cd-tecnico" class="cd-select">
+        <option value="">Selecione...</option>
+      </select>
     </div>
 
     <div class="cd-field">
@@ -172,6 +177,7 @@
     <div class="cd-field">
       <label class="cd-label" for="cd-data-criacao">Data de criação</label>
       <input type="date" id="cd-data-criacao" class="cd-input"/>
+      <span class="cd-help">Será usada nos filtros por período.</span>
     </div>
 
     <div class="cd-field" id="cd-campo-conclusao">
@@ -181,7 +187,7 @@
 
     <div class="cd-field full">
       <label class="cd-label" for="cd-descricao">Descrição (opcional)</label>
-      <textarea id="cd-descricao" class="cd-textarea"></textarea>
+      <textarea id="cd-descricao" class="cd-textarea" placeholder="Observações"></textarea>
     </div>
   </div>
 
@@ -204,29 +210,70 @@
   let editandoId = null;
   let itens = [];
 
-  const token = () => localStorage.getItem('planner_token');
-  const esc = (v) => v == null || v === '' ? '—' : String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const fmtData = (iso) => {
+  function token() {
+    return localStorage.getItem('planner_token');
+  }
+
+  function esc(v) {
+    if (v == null || v === '') return '—';
+    return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtData(iso) {
     if (!iso) return '—';
     const [y, m, d] = iso.split('-');
-    return y && m && d ? `${d}/${m}/${y}` : esc(iso);
-  };
+    if (!y || !m || !d) return esc(iso);
+    return `${d}/${m}/${y}`;
+  }
+
+  function labelCategoria(cat) {
+    const map = {
+      'ordem-servico': 'Ordem de serviço',
+      'rompimentos': 'Rompimentos',
+      'troca-poste': 'Troca de poste',
+      'troca-etiqueta': 'Troca de etiqueta',
+      'otimizacao-rede': 'Otimização de rede',
+      'atendimento-cliente': 'Atendimento',
+      'correcao-atenuacao': 'Correção de sinal',
+      'certificacao-cemig': 'Certificação',
+      'manutencao-corretiva': 'Manutenção',
+      'tarefas': 'Tarefas',
+    };
+    return map[cat] || cat;
+  }
+
+  function mostrarErro(msg) {
+    const el = document.getElementById('cd-erro');
+    el.textContent = msg || 'Não foi possível salvar.';
+    el.style.display = 'block';
+  }
+
+  function statusFinalizado() {
+    const s = document.getElementById('cd-status').value.toLowerCase();
+    return ['finalizada', 'concluída', 'concluida'].includes(s);
+  }
 
   window.atualizarConclusaoCorrecao = function () {
-    document.getElementById('cd-campo-conclusao').style.display =
-      ['finalizada', 'concluída', 'concluida'].includes(document.getElementById('cd-status').value.toLowerCase()) ? '' : 'none';
+    const campo = document.getElementById('cd-campo-conclusao');
+    campo.style.display = statusFinalizado() ? '' : 'none';
   };
 
   window.atualizarFormCorrecao = function () {
     const registro = document.getElementById('cd-registro').value;
-    document.getElementById('cd-campo-tecnico').style.display = registro === 'os' ? '' : 'none';
-    document.getElementById('cd-registro-hint').textContent = registro === 'os'
-      ? 'O.S. avulsa, sem vínculo — contabilizada para o técnico.'
-      : 'Tarefa pai da categoria selecionada.';
+    const campoTecnico = document.getElementById('cd-campo-tecnico');
+    const hint = document.getElementById('cd-registro-hint');
+
+    campoTecnico.style.display = registro === 'os' ? '' : 'none';
+    hint.textContent = registro === 'os'
+      ? 'O.S. avulsa, sem vínculo com tarefa pai — contabilizada para o técnico.'
+      : 'Tarefa pai da categoria selecionada — não gera vínculo em os_tecnicos.';
+
     const status = document.getElementById('cd-status');
-    status.innerHTML = registro === 'tarefa'
-      ? '<option>Criada</option><option>Em andamento</option><option>Finalizada</option><option>Concluída</option>'
-      : '<option>Aberta</option><option>Em andamento</option><option>Finalizada</option><option>Concluída</option>';
+    if (registro === 'tarefa') {
+      status.innerHTML = '<option>Criada</option><option>Em andamento</option><option>Finalizada</option><option>Concluída</option>';
+    } else {
+      status.innerHTML = '<option>Aberta</option><option>Em andamento</option><option>Finalizada</option><option>Concluída</option>';
+    }
     atualizarConclusaoCorrecao();
   };
 
@@ -236,7 +283,9 @@
       const res = await fetch('/api/tecnicos', { headers: { Authorization: 'Bearer ' + token() } });
       const data = await res.json();
       const lista = Array.isArray(data) ? data : (data.tecnicos || data.items || []);
-      select.innerHTML = '<option value="">Selecione...</option>' + lista.map(t => `<option value="${esc(t.nome)}">${esc(t.nome)}</option>`).join('');
+      select.innerHTML = '<option value="">Selecione...</option>' + lista.map(t =>
+        `<option value="${esc(t.nome)}">${esc(t.nome)}</option>`
+      ).join('');
     } catch {
       select.innerHTML = '<option value="">Erro ao carregar</option>';
     }
@@ -256,12 +305,19 @@
     document.getElementById('cd-descricao').value = '';
     document.getElementById('cd-erro').style.display = 'none';
     document.getElementById('cd-modal-titulo').textContent = 'Novo registro';
+    document.getElementById('cd-modal-subtitulo').textContent = 'Tarefa ou O.S. com datas personalizadas';
     document.getElementById('btn-salvar-correcao').innerHTML = '<i class="ti ti-device-floppy" style="font-size:14px"></i> Salvar';
     atualizarFormCorrecao();
   }
 
-  window.abrirModalCorrecao = () => { limparForm(); document.getElementById('modal-correcao').classList.add('open'); };
-  window.fecharModalCorrecao = () => document.getElementById('modal-correcao').classList.remove('open');
+  window.abrirModalCorrecao = function () {
+    limparForm();
+    document.getElementById('modal-correcao').classList.add('open');
+  };
+
+  window.fecharModalCorrecao = function () {
+    document.getElementById('modal-correcao').classList.remove('open');
+  };
 
   window.editarCorrecao = function (id) {
     const item = itens.find(i => i.id === id);
@@ -294,13 +350,11 @@
       method: 'DELETE',
       headers: { Authorization: 'Bearer ' + token(), Accept: 'application/json' },
     });
-
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       alert(err.message || 'Não foi possível excluir.');
       return;
     }
-
     await carregarLista();
   };
 
@@ -319,23 +373,27 @@
       descricao: document.getElementById('cd-descricao').value.trim(),
     };
 
-    const erro = document.getElementById('cd-erro');
-    if (!payload.titulo) { erro.textContent = 'Informe o título.'; erro.style.display = 'block'; return; }
-    if (!payload.data_criacao) { erro.textContent = 'Informe a data de criação.'; erro.style.display = 'block'; return; }
-    if (registro === 'os' && !payload.tecnico) { erro.textContent = 'Selecione o técnico.'; erro.style.display = 'block'; return; }
-    erro.style.display = 'none';
+    if (!payload.titulo) return mostrarErro('Informe o título.');
+    if (!payload.categoria) return mostrarErro('Selecione a categoria.');
+    if (!payload.data_criacao) return mostrarErro('Informe a data de criação.');
+    if (registro === 'os' && !payload.tecnico) return mostrarErro('Selecione o técnico para a O.S.');
 
-    const res = await fetch(editandoId ? '/api/correcao-dados/' + editandoId : '/api/correcao-dados', {
-      method: editandoId ? 'PUT' : 'POST',
-      headers: { Authorization: 'Bearer ' + token(), 'Content-Type': 'application/json', Accept: 'application/json' },
+    const url = editandoId ? '/api/correcao-dados/' + editandoId : '/api/correcao-dados';
+    const method = editandoId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: 'Bearer ' + token(),
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
       body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      erro.textContent = err.message || 'Erro ao salvar.';
-      erro.style.display = 'block';
-      return;
+      return mostrarErro(err.message || 'Erro ao salvar.');
     }
 
     fecharModalCorrecao();
@@ -345,41 +403,74 @@
   function renderTabela() {
     const wrap = document.getElementById('cd-wrap');
     document.getElementById('cd-total').textContent = itens.length;
+
     if (!itens.length) {
-      wrap.innerHTML = '<div class="cd-empty"><i class="ti ti-database-off"></i> Nenhum registro.</div>';
+      wrap.innerHTML = '<div class="cd-empty"><i class="ti ti-database-off"></i> Nenhum registro de correção ainda.</div>';
       return;
     }
-    wrap.innerHTML = `<table class="cd-table"><thead><tr>
-      <th>Categoria</th><th>Registro</th><th>Código</th><th>Título</th><th>Técnico</th>
-      <th>Status</th><th>Criação</th><th>Conclusão</th><th></th>
-    </tr></thead><tbody>${itens.map(item => `<tr>
-      <td>${esc(item.categoria_label || item.categoria)}</td>
-      <td><span class="cd-badge cd-badge--${item.registro || item.tipo}">${(item.registro || item.tipo) === 'os' ? 'O.S.' : 'Tarefa'}</span></td>
-      <td class="cd-muted">${esc(item.taskCode)}</td>
-      <td class="cd-titulo">${esc(item.titulo)}</td>
-      <td>${esc(item.tecnico)}</td>
-      <td>${esc(item.status)}</td>
-      <td>${fmtData(item.data_criacao)}</td>
-      <td>${fmtData(item.data_conclusao)}</td>
-      <td class="cd-acoes">
-        <button type="button" class="cd-btn" onclick="editarCorrecao(${item.id})" title="Editar"><i class="ti ti-pencil"></i></button>
-        <button type="button" class="cd-btn danger" onclick="excluirCorrecao(${item.id})" title="Excluir do banco"><i class="ti ti-trash"></i></button>
-      </td>
-    </tr>`).join('')}</tbody></table>`;
+
+    wrap.innerHTML = `
+      <table class="cd-table">
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>Registro</th>
+            <th>Código</th>
+            <th>Título</th>
+            <th>Técnico</th>
+            <th>Status</th>
+            <th>Criação</th>
+            <th>Conclusão</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itens.map(item => `
+            <tr>
+              <td>${esc(item.categoria_label || labelCategoria(item.categoria))}</td>
+              <td><span class="cd-badge cd-badge--${item.registro || item.tipo}">${(item.registro || item.tipo) === 'os' ? 'O.S.' : 'Tarefa'}</span></td>
+              <td class="cd-muted">${esc(item.taskCode)}</td>
+              <td class="cd-titulo">${esc(item.titulo)}</td>
+              <td>${esc(item.tecnico)}</td>
+              <td>${esc(item.status)}</td>
+              <td>${fmtData(item.data_criacao)}</td>
+              <td>${fmtData(item.data_conclusao)}</td>
+              <td class="cd-acoes">
+                <button type="button" class="cd-btn" onclick="editarCorrecao(${item.id})"><i class="ti ti-pencil"></i></button>
+                <button type="button" class="cd-btn danger" onclick="excluirCorrecao(${item.id})"><i class="ti ti-trash"></i></button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
   }
 
   async function carregarLista() {
     const wrap = document.getElementById('cd-wrap');
     wrap.innerHTML = '<div class="cd-loading"><i class="ti ti-loader-2"></i> Carregando...</div>';
-    const res = await fetch('/api/correcao-dados', { headers: { Authorization: 'Bearer ' + token(), Accept: 'application/json' } });
-    if (res.status === 403) { window.location.replace('/dashboard'); return; }
-    if (!res.ok) { wrap.innerHTML = '<div class="cd-empty">Erro ao carregar.</div>'; return; }
+
+    const res = await fetch('/api/correcao-dados', {
+      headers: { Authorization: 'Bearer ' + token(), Accept: 'application/json' },
+    });
+
+    if (res.status === 403) {
+      window.location.replace('/dashboard');
+      return;
+    }
+
+    if (!res.ok) {
+      wrap.innerHTML = '<div class="cd-empty">Não foi possível carregar os registros.</div>';
+      return;
+    }
     const data = await res.json();
     itens = data.items || [];
     renderTabela();
   }
 
-  window.abrirNovoItem = () => abrirModalCorrecao();
+  window.abrirNovoItem = function () {
+    abrirModalCorrecao();
+  };
   await carregarTecnicos();
   await carregarLista();
 </script>

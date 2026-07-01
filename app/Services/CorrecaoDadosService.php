@@ -2,14 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\AppNotification;
 use App\Models\OpTask;
 use App\Models\OsTecnico;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
-use RuntimeException;
 
 class CorrecaoDadosService
 {
@@ -120,7 +117,10 @@ class CorrecaoDadosService
 
                 $this->sincronizarOsTecnico($task, $tecnico, $dataCriacao, $dataConclusao, $status);
             } else {
-                $this->removerOsTecnicosDaTask((int) $task->id);
+                OsTecnico::query()
+                    ->where('task_id', $task->id)
+                    ->where('correcao_dados', true)
+                    ->delete();
             }
 
             return $this->formatar($task->fresh());
@@ -130,61 +130,15 @@ class CorrecaoDadosService
     public function excluir(int $id): void
     {
         $task = $this->buscarCorrecao($id);
-        $taskId = (int) $task->id;
 
-        DB::transaction(function () use ($task, $taskId) {
-            $this->removerOsTecnicosDaTask($taskId);
-
-            OpTask::query()
-                ->where('correcao_dados', true)
-                ->where('parent_task_id', $taskId)
-                ->each(fn (OpTask $filha) => $this->excluirRegistroInterno((int) $filha->id));
-
-            $this->limparNotificacoes($taskId);
-
-            $excluido = OpTask::query()
-                ->whereKey($taskId)
+        DB::transaction(function () use ($task) {
+            OsTecnico::query()
+                ->where('task_id', $task->id)
                 ->where('correcao_dados', true)
                 ->delete();
 
-            if ($excluido === 0) {
-                throw new RuntimeException('Não foi possível excluir o registro do banco de dados.');
-            }
+            $task->delete();
         });
-
-        if (OpTask::whereKey($taskId)->exists()) {
-            throw new RuntimeException('Não foi possível excluir o registro do banco de dados.');
-        }
-    }
-
-    private function excluirRegistroInterno(int $taskId): void
-    {
-        $this->removerOsTecnicosDaTask($taskId);
-        $this->limparNotificacoes($taskId);
-        OpTask::query()->whereKey($taskId)->where('correcao_dados', true)->delete();
-    }
-
-    private function removerOsTecnicosDaTask(int $taskId): void
-    {
-        OsTecnico::query()
-            ->where('correcao_dados', true)
-            ->where(function ($query) use ($taskId) {
-                $query->where('task_id', $taskId)
-                    ->orWhere('parent_task_id', $taskId);
-            })
-            ->delete();
-    }
-
-    private function limparNotificacoes(int $taskId): void
-    {
-        if (! Schema::hasTable('app_notification')) {
-            return;
-        }
-
-        AppNotification::query()
-            ->where('ref_type', 'op_task')
-            ->where('ref_id', $taskId)
-            ->delete();
     }
 
     private function buscarCorrecao(int $id): OpTask
@@ -205,7 +159,10 @@ class CorrecaoDadosService
         ?string $dataConclusao,
         string $status,
     ): void {
-        $this->removerOsTecnicosDaTask((int) $task->id);
+        OsTecnico::query()
+            ->where('task_id', $task->id)
+            ->where('correcao_dados', true)
+            ->delete();
 
         OsTecnico::create([
             'task_id' => $task->id,
@@ -258,6 +215,7 @@ class CorrecaoDadosService
             'data_criacao' => $dataCriacao,
             'data_conclusao' => $dataConclusao,
             'descricao' => $task->descricao,
+            'parent_task_id' => $task->parent_task_id ? (int) $task->parent_task_id : null,
             'correcao_dados' => true,
         ];
     }
@@ -304,7 +262,9 @@ class CorrecaoDadosService
             throw new InvalidArgumentException('Selecione a categoria (tela).');
         }
 
-        if (! in_array($categoria, array_keys($this->categoriasTela()), true)) {
+        $permitidas = array_keys($this->categoriasTela());
+
+        if (! in_array($categoria, $permitidas, true)) {
             throw new InvalidArgumentException('Categoria inválida.');
         }
 
