@@ -66,6 +66,21 @@
     display: none; padding: 10px 12px; border-radius: var(--radius-sm);
     background: #fef2f2; color: #b91c1c; font-size: 13px;
   }
+  .cd-tecnicos-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .cd-tecnicos-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px;
+  }
+  .cd-tecnicos-empty { font-size: 12px; color: var(--gray-400); }
+  .cd-tecnico-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    background: #e8f2fc; color: #0c447c;
+  }
+  .cd-tecnico-tag button {
+    border: none; background: transparent; color: inherit; cursor: pointer;
+    padding: 0; display: inline-flex; align-items: center;
+  }
+  [data-theme="dark"] .cd-tecnico-tag { background: #0d2340; color: #79c0ff; }
   [data-theme="dark"] .cd-banner { background: #052e16; border-color: #166534; color: #86efac; }
   [data-theme="dark"] .cd-input, [data-theme="dark"] .cd-select, [data-theme="dark"] .cd-textarea,
   [data-theme="dark"] .cd-btn { background: #21262d; border-color: #30363d; color: #e6edf3; }
@@ -138,11 +153,15 @@
       <input type="text" id="cd-titulo" class="cd-input" placeholder="Descrição do serviço"/>
     </div>
 
-    <div class="cd-field" id="cd-campo-tecnico">
-      <label class="cd-label" for="cd-tecnico">Técnico</label>
-      <select id="cd-tecnico" class="cd-select">
-        <option value="">Selecione...</option>
-      </select>
+    <div class="cd-field full" id="cd-campo-tecnico">
+      <label class="cd-label" for="cd-tecnico">Técnico(s)</label>
+      <div class="cd-tecnicos-wrap">
+        <div class="cd-tecnicos-tags" id="cd-tecnicos-tags"></div>
+        <select id="cd-tecnico" class="cd-select" onchange="adicionarTecnicoCorrecao(this.value)">
+          <option value="">Adicionar técnico...</option>
+        </select>
+      </div>
+      <span class="cd-help" id="cd-tecnico-hint">Selecione técnicos já cadastrados. Na O.S., cada um recebe a contagem.</span>
     </div>
 
     <div class="cd-field">
@@ -209,6 +228,8 @@
 <script type="module">
   let editandoId = null;
   let itens = [];
+  let listaTecnicos = [];
+  let tecnicosSelecionados = [];
 
   function token() {
     return localStorage.getItem('planner_token');
@@ -260,13 +281,15 @@
 
   window.atualizarFormCorrecao = function () {
     const registro = document.getElementById('cd-registro').value;
-    const campoTecnico = document.getElementById('cd-campo-tecnico');
     const hint = document.getElementById('cd-registro-hint');
+    const tecnicoHint = document.getElementById('cd-tecnico-hint');
 
-    campoTecnico.style.display = registro === 'os' ? '' : 'none';
     hint.textContent = registro === 'os'
-      ? 'O.S. avulsa, sem vínculo com tarefa pai — contabilizada para o técnico.'
-      : 'Tarefa pai da categoria selecionada — não gera vínculo em os_tecnicos.';
+      ? 'O.S. avulsa — contabilizada para cada técnico selecionado.'
+      : 'Tarefa pai da categoria selecionada.';
+    tecnicoHint.textContent = registro === 'os'
+      ? 'Obrigatório na O.S. Cada técnico recebe a contagem nos relatórios.'
+      : 'Opcional na tarefa. Use apenas técnicos já cadastrados.';
 
     const status = document.getElementById('cd-status');
     if (registro === 'tarefa') {
@@ -277,17 +300,64 @@
     atualizarConclusaoCorrecao();
   };
 
-  async function carregarTecnicos() {
+  function parseTecnicos(valor) {
+    if (Array.isArray(valor)) {
+      return valor.map(item => String(item).trim()).filter(Boolean)
+        .filter((item, index, lista) => lista.indexOf(item) === index);
+    }
+    if (!valor) return [];
+    return String(valor).split(',').map(item => item.trim()).filter(Boolean)
+      .filter((item, index, lista) => lista.indexOf(item) === index);
+  }
+
+  function renderTecnicosTags() {
+    const wrap = document.getElementById('cd-tecnicos-tags');
+    if (!tecnicosSelecionados.length) {
+      wrap.innerHTML = '<span class="cd-tecnicos-empty">Nenhum técnico selecionado.</span>';
+      return;
+    }
+    wrap.innerHTML = tecnicosSelecionados.map((nome, index) => `
+      <span class="cd-tecnico-tag">
+        ${esc(nome)}
+        <button type="button" title="Remover" onclick="removerTecnicoCorrecaoPorIndice(${index})">
+          <i class="ti ti-x"></i>
+        </button>
+      </span>
+    `).join('');
+  }
+
+  window.removerTecnicoCorrecaoPorIndice = function (index) {
+    tecnicosSelecionados.splice(index, 1);
+    renderTecnicosTags();
+    atualizarSelectTecnicos();
+  };
+
+  function atualizarSelectTecnicos() {
     const select = document.getElementById('cd-tecnico');
+    const opcoes = listaTecnicos
+      .filter(t => !tecnicosSelecionados.includes(t.nome))
+      .map(t => `<option value="${esc(t.nome)}">${esc(t.nome)}</option>`)
+      .join('');
+    select.innerHTML = `<option value="">Adicionar técnico...</option>${opcoes}`;
+    select.value = '';
+  }
+
+  window.adicionarTecnicoCorrecao = function (nome) {
+    if (!nome || tecnicosSelecionados.includes(nome)) return;
+    tecnicosSelecionados.push(nome);
+    renderTecnicosTags();
+    atualizarSelectTecnicos();
+  };
+
+  async function carregarTecnicos() {
     try {
       const res = await fetch('/api/tecnicos', { headers: { Authorization: 'Bearer ' + token() } });
       const data = await res.json();
-      const lista = Array.isArray(data) ? data : (data.tecnicos || data.items || []);
-      select.innerHTML = '<option value="">Selecione...</option>' + lista.map(t =>
-        `<option value="${esc(t.nome)}">${esc(t.nome)}</option>`
-      ).join('');
+      listaTecnicos = Array.isArray(data) ? data : (data.tecnicos || data.items || []);
+      atualizarSelectTecnicos();
     } catch {
-      select.innerHTML = '<option value="">Erro ao carregar</option>';
+      listaTecnicos = [];
+      document.getElementById('cd-tecnico').innerHTML = '<option value="">Erro ao carregar técnicos</option>';
     }
   }
 
@@ -296,7 +366,9 @@
     document.getElementById('cd-categoria').value = 'rompimentos';
     document.getElementById('cd-registro').value = 'os';
     document.getElementById('cd-titulo').value = '';
-    document.getElementById('cd-tecnico').value = '';
+    tecnicosSelecionados = [];
+    renderTecnicosTags();
+    atualizarSelectTecnicos();
     document.getElementById('cd-regiao').value = '';
     document.getElementById('cd-status').value = 'Aberta';
     document.getElementById('cd-prioridade').value = 'Média';
@@ -327,7 +399,9 @@
     document.getElementById('cd-registro').value = item.registro || item.tipo || 'os';
     atualizarFormCorrecao();
     document.getElementById('cd-titulo').value = item.titulo || '';
-    document.getElementById('cd-tecnico').value = item.tecnico || '';
+    tecnicosSelecionados = parseTecnicos(item.tecnicos || item.tecnico);
+    renderTecnicosTags();
+    atualizarSelectTecnicos();
     document.getElementById('cd-regiao').value = item.regiao || '';
     document.getElementById('cd-status').value = item.status || 'Aberta';
     document.getElementById('cd-prioridade').value = item.prioridade || 'Média';
@@ -364,7 +438,7 @@
       registro,
       categoria: document.getElementById('cd-categoria').value,
       titulo: document.getElementById('cd-titulo').value.trim(),
-      tecnico: document.getElementById('cd-tecnico').value,
+      tecnicos: tecnicosSelecionados,
       regiao: document.getElementById('cd-regiao').value,
       status: document.getElementById('cd-status').value,
       prioridade: document.getElementById('cd-prioridade').value,
@@ -376,7 +450,7 @@
     if (!payload.titulo) return mostrarErro('Informe o título.');
     if (!payload.categoria) return mostrarErro('Selecione a categoria.');
     if (!payload.data_criacao) return mostrarErro('Informe a data de criação.');
-    if (registro === 'os' && !payload.tecnico) return mostrarErro('Selecione o técnico para a O.S.');
+    if (registro === 'os' && !payload.tecnicos.length) return mostrarErro('Selecione ao menos um técnico para a O.S.');
 
     const url = editandoId ? '/api/correcao-dados/' + editandoId : '/api/correcao-dados';
     const method = editandoId ? 'PUT' : 'POST';
@@ -417,7 +491,7 @@
             <th>Registro</th>
             <th>Código</th>
             <th>Título</th>
-            <th>Técnico</th>
+            <th>Técnico(s)</th>
             <th>Status</th>
             <th>Criação</th>
             <th>Conclusão</th>
@@ -431,7 +505,7 @@
               <td><span class="cd-badge cd-badge--${item.registro || item.tipo}">${(item.registro || item.tipo) === 'os' ? 'O.S.' : 'Tarefa'}</span></td>
               <td class="cd-muted">${esc(item.taskCode)}</td>
               <td class="cd-titulo">${esc(item.titulo)}</td>
-              <td>${esc(item.tecnico)}</td>
+              <td>${esc((item.tecnicos && item.tecnicos.length) ? item.tecnicos.join(', ') : item.tecnico)}</td>
               <td>${esc(item.status)}</td>
               <td>${fmtData(item.data_criacao)}</td>
               <td>${fmtData(item.data_conclusao)}</td>

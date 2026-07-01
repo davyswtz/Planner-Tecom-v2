@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\OpTask;
 use App\Models\OsTecnico;
+use App\Models\Tecnico;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class CorrecaoDadosService
@@ -33,8 +35,12 @@ class CorrecaoDadosService
                 ? $this->normalizarData($dados['data_conclusao'], 'data de conclusão')
                 : null;
 
-            $tecnico = trim((string) ($dados['tecnico'] ?? ''));
+            $tecnicos = $this->normalizarTecnicos($dados);
             $regiao = trim((string) ($dados['regiao'] ?? ''));
+
+            if ($registro === 'os' && $tecnicos === []) {
+                throw new InvalidArgumentException('Selecione ao menos um técnico para a ordem de serviço.');
+            }
 
             $payload = [
                 'titulo' => trim((string) $dados['titulo']),
@@ -42,7 +48,7 @@ class CorrecaoDadosService
                 'categoria' => $categoria,
                 'sub_processo' => $registro === 'os' ? $categoriaTela : '',
                 'regiao' => $regiao,
-                'responsavel' => $tecnico,
+                'responsavel' => OpTask::serializarResponsaveis($tecnicos),
                 'status' => $status,
                 'prioridade' => $dados['prioridade'] ?? 'Média',
                 'correcao_dados' => true,
@@ -59,11 +65,7 @@ class CorrecaoDadosService
             $task = OpTask::create($payload);
 
             if ($registro === 'os') {
-                if ($tecnico === '') {
-                    throw new InvalidArgumentException('Informe o técnico para a ordem de serviço.');
-                }
-
-                $this->sincronizarOsTecnico($task, $tecnico, $dataCriacao, $dataConclusao, $status);
+                $this->sincronizarOsTecnicos($task, $tecnicos, $dataCriacao, $dataConclusao, $status);
             }
 
             return $this->formatar($task->fresh());
@@ -88,14 +90,20 @@ class CorrecaoDadosService
                 ? $this->normalizarData($dados['data_conclusao'], 'data de conclusão')
                 : null;
 
-            $tecnico = trim((string) ($dados['tecnico'] ?? $task->responsavel));
+            $tecnicos = array_key_exists('tecnicos', $dados) || array_key_exists('tecnico', $dados)
+                ? $this->normalizarTecnicos($dados)
+                : $this->normalizarTecnicos([], $task);
+
+            if ($registro === 'os' && $tecnicos === []) {
+                throw new InvalidArgumentException('Selecione ao menos um técnico para a ordem de serviço.');
+            }
 
             $task->titulo = trim((string) ($dados['titulo'] ?? $task->titulo));
             $task->descricao = trim((string) ($dados['descricao'] ?? $task->descricao));
             $task->categoria = $registro === 'os' ? 'ordem-servico' : $categoriaTela;
             $task->sub_processo = $registro === 'os' ? $categoriaTela : '';
             $task->regiao = trim((string) ($dados['regiao'] ?? $task->regiao));
-            $task->responsavel = $tecnico;
+            $task->responsavel = OpTask::serializarResponsaveis($tecnicos);
             $task->status = $status;
             $task->prioridade = $dados['prioridade'] ?? $task->prioridade;
             $task->criadaEm = $this->dataParaTimestamp($dataCriacao);
@@ -111,11 +119,7 @@ class CorrecaoDadosService
             $task->save();
 
             if ($registro === 'os') {
-                if ($tecnico === '') {
-                    throw new InvalidArgumentException('Informe o técnico para a ordem de serviço.');
-                }
-
-                $this->sincronizarOsTecnico($task, $tecnico, $dataCriacao, $dataConclusao, $status);
+                $this->sincronizarOsTecnicos($task, $tecnicos, $dataCriacao, $dataConclusao, $status);
             } else {
                 OsTecnico::query()
                     ->where('task_id', $task->id)
@@ -152,9 +156,9 @@ class CorrecaoDadosService
         return $task;
     }
 
-    private function sincronizarOsTecnico(
+    private function sincronizarOsTecnicos(
         OpTask $task,
-        string $tecnico,
+        array $tecnicos,
         string $dataCriacao,
         ?string $dataConclusao,
         string $status,
@@ -164,31 +168,46 @@ class CorrecaoDadosService
             ->where('correcao_dados', true)
             ->delete();
 
-        OsTecnico::create([
-            'task_id' => $task->id,
-            'parent_task_id' => null,
-            'tecnico_nome' => $tecnico,
-            'titulo' => $task->titulo,
-            'task_code' => $task->taskCode,
-            'categoria' => $task->categoria,
-            'regiao' => $task->regiao,
-            'status' => $status,
-            'prioridade' => $task->prioridade,
-            'data_criacao' => $dataCriacao,
-            'data_conclusao' => $this->statusEhConcluido($status)
-                ? ($dataConclusao ?? $dataCriacao)
-                : '',
-            'criada_em' => $dataCriacao,
-            'correcao_dados' => true,
-        ]);
+        foreach ($tecnicos as $tecnico) {
+            OsTecnico::create([
+                'task_id' => $task->id,
+                'parent_task_id' => null,
+                'tecnico_nome' => $tecnico,
+                'titulo' => $task->titulo,
+                'task_code' => $task->taskCode,
+                'categoria' => $task->categoria,
+                'regiao' => $task->regiao,
+                'status' => $status,
+                'prioridade' => $task->prioridade,
+                'data_criacao' => $dataCriacao,
+                'data_conclusao' => $this->statusEhConcluido($status)
+                    ? ($dataConclusao ?? $dataCriacao)
+                    : '',
+                'criada_em' => $dataCriacao,
+                'correcao_dados' => true,
+            ]);
+        }
     }
 
     private function formatar(OpTask $task): array
     {
-        $osTecnico = OsTecnico::query()
+        $osTecnicos = OsTecnico::query()
             ->where('task_id', $task->id)
             ->where('correcao_dados', true)
-            ->first();
+            ->get();
+
+        $tecnicosOs = $osTecnicos
+            ->map(fn (OsTecnico $registro) => trim((string) $registro->tecnico_nome))
+            ->filter(fn (string $nome) => $nome !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        $tecnicos = $tecnicosOs !== []
+            ? $tecnicosOs
+            : OpTask::parseResponsaveis($task->responsavel);
+
+        $osTecnico = $osTecnicos->first();
 
         $dataCriacao = $osTecnico?->data_criacao?->format('Y-m-d')
             ?? substr((string) $task->criadaEm, 0, 10);
@@ -208,7 +227,8 @@ class CorrecaoDadosService
             'categoria_label' => $this->rotuloCategoriaTela($categoriaTela),
             'titulo' => $task->titulo,
             'taskCode' => $task->taskCode,
-            'tecnico' => trim((string) $task->responsavel) ?: ($osTecnico?->tecnico_nome ?? ''),
+            'tecnico' => OpTask::serializarResponsaveis($tecnicos),
+            'tecnicos' => $tecnicos,
             'regiao' => $task->regiao,
             'status' => $task->status,
             'prioridade' => $task->prioridade,
@@ -218,6 +238,51 @@ class CorrecaoDadosService
             'parent_task_id' => $task->parent_task_id ? (int) $task->parent_task_id : null,
             'correcao_dados' => true,
         ];
+    }
+
+    /** @return array<int, string> */
+    private function normalizarTecnicos(array $dados, ?OpTask $task = null): array
+    {
+        if (! empty($dados['tecnicos']) && is_array($dados['tecnicos'])) {
+            $lista = OpTask::parseResponsaveis(implode(', ', $dados['tecnicos']));
+        } elseif (! empty($dados['tecnico'])) {
+            $lista = OpTask::parseResponsaveis((string) $dados['tecnico']);
+        } elseif ($task) {
+            $lista = OpTask::parseResponsaveis($task->responsavel);
+        } else {
+            $lista = [];
+        }
+
+        if ($lista === []) {
+            return [];
+        }
+
+        if (! Schema::hasTable('tecnicos')) {
+            return $lista;
+        }
+
+        $cadastrados = Tecnico::query()
+            ->pluck('nome')
+            ->map(fn (string $nome) => trim($nome))
+            ->filter(fn (string $nome) => $nome !== '')
+            ->values()
+            ->all();
+
+        $indicePorNome = [];
+        foreach ($cadastrados as $nome) {
+            $indicePorNome[mb_strtolower($nome)] = $nome;
+        }
+
+        $validados = [];
+        foreach ($lista as $nome) {
+            $chave = mb_strtolower(trim($nome));
+            if ($chave === '' || ! isset($indicePorNome[$chave])) {
+                throw new InvalidArgumentException("Técnico não cadastrado: {$nome}");
+            }
+            $validados[] = $indicePorNome[$chave];
+        }
+
+        return array_values(array_unique($validados));
     }
 
     private function normalizarData(?string $data, string $rotulo): string
