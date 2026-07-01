@@ -24,7 +24,16 @@ class OsTecnico extends Model
         'data_criacao',
         'data_conclusao',
         'criada_em',
+        'correcao_dados',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'correcao_dados' => 'boolean',
+            'data_criacao' => 'date',
+        ];
+    }
 
     public function task(): BelongsTo
     {

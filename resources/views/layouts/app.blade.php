@@ -911,6 +911,7 @@
       <a href="/usuarios" id="nav-item-usuarios" data-permissao="visualizar_aba_usuarios" class="nav-item {{ request()->is('usuarios*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-users"></i><span>Usuários</span></div></a>
       <a href="/mensagens" id="nav-item-mensagens" data-permissao="visualizar_tela_mensagens" class="nav-item {{ request()->is('mensagens*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-message"></i><span>Mensagens</span></div></a>
       <a href="/configuracoes" id="nav-item-configuracoes" data-permissao="adicionar_webhook" class="nav-item {{ request()->is('configuracoes*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-settings"></i><span>Configurações</span></div></a>
+      <a href="/correcao-de-dados" id="nav-item-correcao-dados" data-permissao="corrigir_dados" class="nav-item {{ request()->is('correcao-de-dados*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-edit"></i><span>Correção de dados</span></div></a>
     </div>
   </div>
 
