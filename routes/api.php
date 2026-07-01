@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AtendimentoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CertificacaoCemigController;
+use App\Http\Controllers\Api\CorrecaoDadosController;
 use App\Http\Controllers\Api\CorrecaoDeSinalController;
 use App\Http\Controllers\Api\GeoGridController;
 use App\Http\Controllers\Api\MensagemTemplateController;
@@ -68,6 +69,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('geogrid/caixa/buscar', [GeoGridController::class, 'buscarCaixa']);
     Route::get('geogrid/caixas', [GeoGridController::class, 'listarCaixas']);
     Route::post('geogrid/itens/mapa', [GeoGridController::class, 'mapaItens']);
+    Route::middleware('permissao:corrigir_dados')->group(function () {
+        Route::get('correcao-dados', [CorrecaoDadosController::class, 'index']);
+        Route::post('correcao-dados', [CorrecaoDadosController::class, 'store']);
+        Route::put('correcao-dados/{id}', [CorrecaoDadosController::class, 'update'])->whereNumber('id');
+        Route::delete('correcao-dados/{id}', [CorrecaoDadosController::class, 'destroy'])->whereNumber('id');
+    });
+
     Route::middleware('permissao:visualizar_aba_usuarios')->group(function () {
         Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
     });

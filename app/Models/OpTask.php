@@ -74,12 +74,14 @@ class OpTask extends Model
         'data_instalacao',
         'assinada_por',
         'assinada_em',
+        'correcao_dados',
     ];
 
     protected function casts(): array
     {
         return [
             'is_parent_task' => 'boolean',
+            'correcao_dados' => 'boolean',
             'prazo' => 'date',
             'active_duration_minutes' => 'integer',
             'updated_at' => 'datetime',

@@ -50,6 +50,10 @@ Route::get('/ordem-de-servico', function () {
     return view('ordem-de-servico');
 });
 
+Route::get('/correcao-de-dados', function () {
+    return view('correcao-de-dados');
+});
+
 Route::get('/usuarios', function () {
     return view('usuarios');
 });
