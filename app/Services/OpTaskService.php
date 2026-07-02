@@ -7,6 +7,7 @@ use App\Models\AppNotification;
 use App\Models\OpTask;
 use App\Models\OsTecnico;
 use App\Services\GoogleChatService;
+use App\Services\MensagemTemplateService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -14,8 +15,10 @@ use Throwable;
 
 class OpTaskService
 {
-
-public function __construct(private GoogleChatService $googleChatService){}
+    public function __construct(
+        private GoogleChatService $googleChatService,
+        private OsTecnicoService $osTecnicoService,
+    ) {}
 
     public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc', ?string $categoria = null, ?string $responsavel = null, bool $excluirFinalizadas = false)
     {
@@ -29,15 +32,31 @@ public function __construct(private GoogleChatService $googleChatService){}
             ->get();
     }
 
-    public function createOpTask(array $dados): OpTask{
+    public function createOpTask(array $dados): OpTask
+    {
+        if (($dados['categoria'] ?? '') === 'ordem-servico' && array_key_exists('responsavel', $dados)) {
+            $dados['responsavel'] = OpTask::serializarResponsaveis(
+                OpTask::parseResponsaveis($dados['responsavel'] ?? '')
+            );
+        }
+
         $dados['taskCode'] = $this->gerarTaskCode($dados);
         $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
         $task = OpTask::create($dados);
 
-        if(!empty($dados['parent_task_id'])) {
+        if (! empty($dados['parent_task_id'])) {
             OpTask::where('id', $dados['parent_task_id'])->update(['is_parent_task' => true]);
-
         }
+
+        if (($task->categoria ?? '') === 'ordem-servico') {
+            $this->osTecnicoService->sincronizarParaOs($task->fresh());
+        }
+
+        $status = trim((string) ($task->status ?? ''));
+        if ($this->deveDispararWebhookNaCriacao($status)) {
+            $this->dispararWebhookMudancaStatus($task->fresh(), '', $status);
+        }
+
         return $task;
     }
 
@@ -160,44 +179,105 @@ public function __construct(private GoogleChatService $googleChatService){}
     }
 
     public function updateOpTask(OpTask $opTask, array $dados): OpTask
-{
-    $statusAnterior = $opTask->status;
-    $opTask->update($dados);
+    {
+        $statusAnterior = $opTask->status;
 
-    if (isset($dados['status']) && $dados['status'] !== $statusAnterior && ($opTask->categoria ?? '') !== 'tarefas') {
-        $isOs = ($opTask->categoria ?? '') === 'ordem-servico';
-        $statusNovo = $dados['status'] ?? '';
-
-        if ($isOs && $this->googleChatService->isOsEmAndamento($statusNovo)) {
-            $mensagem = $this->googleChatService->montarMensagemOsEmAndamento($opTask->toArray());
-        } elseif ($isOs && $this->googleChatService->isOsFinalizada($statusNovo)) {
-            $mensagem = $this->googleChatService->montarMensagemOsFinalizada($opTask->toArray());
-        } else {
-            $mensagem = $this->googleChatService->montarMensagemStatus(
-                $opTask->toArray(),
-                $statusAnterior,
-                $dados['status']
+        if (($opTask->categoria ?? '') === 'ordem-servico' && array_key_exists('responsavel', $dados)) {
+            $dados['responsavel'] = OpTask::serializarResponsaveis(
+                OpTask::parseResponsaveis($dados['responsavel'] ?? '')
             );
         }
 
-        $googleChatService = $this->googleChatService;
+        $opTask->update($dados);
 
-        if (!empty($opTask->parent_task_id)) {
-            $pai = OpTask::find($opTask->parent_task_id);
-            if ($pai) {
-                app()->terminating(function () use ($pai, $mensagem, $googleChatService, $dados) {
-                    $googleChatService->enviarNotificacao($pai, $mensagem, $dados['status']);
-                });
-            }
-        } else {
-            app()->terminating(function () use ($opTask, $mensagem, $googleChatService, $dados) {
-                $googleChatService->enviarNotificacao($opTask, $mensagem, $dados['status']);
-            });
+        if (isset($dados['status']) && $dados['status'] !== $statusAnterior && ($opTask->categoria ?? '') !== 'tarefas') {
+            $this->dispararWebhookMudancaStatus($opTask->fresh(), $statusAnterior, $dados['status']);
         }
+
+        if (($opTask->categoria ?? '') === 'ordem-servico') {
+            $this->osTecnicoService->sincronizarParaOs($opTask->fresh());
+        }
+
+        return $opTask->fresh();
     }
 
-    return $opTask->fresh();
-}
+    private function dispararWebhookMudancaStatus(OpTask $task, string $statusAnterior, string $statusNovo): void
+    {
+        if (($task->categoria ?? '') === 'tarefas') {
+            return;
+        }
+
+        $payload = $this->montarPayloadWebhook($task);
+        $isOs = ($task->categoria ?? '') === 'ordem-servico';
+
+        if ($isOs && $this->googleChatService->isOsEmAndamento($statusNovo)) {
+            $mensagem = $this->googleChatService->montarMensagemOsEmAndamento($payload);
+        } elseif ($isOs && $this->googleChatService->isOsFinalizada($statusNovo)) {
+            $mensagem = $this->googleChatService->montarMensagemOsFinalizada($payload);
+        } else {
+            $mensagem = $this->googleChatService->montarMensagemStatus(
+                $payload,
+                $statusAnterior,
+                $statusNovo
+            );
+        }
+
+        $destinoId = ! empty($task->parent_task_id)
+            ? (int) $task->parent_task_id
+            : (int) $task->id;
+
+        $osTaskId = $isOs ? (int) $task->id : null;
+        $googleChatService = $this->googleChatService;
+
+        app()->terminating(function () use ($destinoId, $mensagem, $googleChatService, $statusNovo, $osTaskId): void {
+            $destino = OpTask::find($destinoId)?->fresh();
+            if (! $destino) {
+                return;
+            }
+
+            if ($osTaskId) {
+                $os = OpTask::find($osTaskId)?->fresh();
+                if ($os) {
+                    $mensagem = $googleChatService->enriquecerMensagemComAnexosOs($os, $mensagem);
+                }
+            }
+
+            $googleChatService->enviarNotificacao($destino, $mensagem, $statusNovo);
+        });
+    }
+
+    /** @return array<string, mixed> */
+    private function montarPayloadWebhook(OpTask $task): array
+    {
+        $payload = $task->toArray();
+        $pai = $task->parent_task_id ? OpTask::find($task->parent_task_id)?->fresh() : null;
+
+        if ($pai) {
+            $categoriaPai = app(MensagemTemplateService::class)->normalizarCategoria($pai->categoria ?? '');
+            $payload['parent_task_code'] = $pai->taskCode;
+            $payload['parent_titulo'] = $pai->titulo;
+            $payload['parent_categoria'] = $categoriaPai;
+            $payload['parent_categoria_label'] = config("mensagens.categorias.{$categoriaPai}.label") ?? $pai->categoria;
+
+            if (trim((string) ($payload['regiao'] ?? '')) === '') {
+                $payload['regiao'] = $pai->regiao;
+            }
+        }
+
+        $titulo = trim((string) ($payload['titulo'] ?? ''));
+        if (preg_match('/^OS\s*[—\-]\s*(.+)$/iu', $titulo, $matches)) {
+            $payload['os_tipo'] = trim($matches[1]);
+        } else {
+            $payload['os_tipo'] = $titulo !== '' ? $titulo : '—';
+        }
+
+        return $payload;
+    }
+
+    private function deveDispararWebhookNaCriacao(string $status): bool
+    {
+        return $status !== '' && ! in_array($status, ['Aberta', 'Criada', 'Pendente'], true);
+    }
 
     /**
      * Remove uma Ordem de Serviço do banco.

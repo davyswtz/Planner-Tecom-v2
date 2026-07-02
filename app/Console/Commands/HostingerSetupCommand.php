@@ -74,6 +74,12 @@ class HostingerSetupCommand extends Command
             $this->warn('BROADCAST_CONNECTION=log — tempo real entre abas desativado até configurar Pusher.');
         }
 
+        if (config('broadcasting.default') === 'pusher' && ! filled(config('broadcasting.connections.pusher.key'))) {
+            $this->error('BROADCAST_CONNECTION=pusher sem PUSHER_APP_KEY. Use BROADCAST_CONNECTION=log ou preencha as chaves Pusher.');
+
+            return self::FAILURE;
+        }
+
         return self::SUCCESS;
     }
 }

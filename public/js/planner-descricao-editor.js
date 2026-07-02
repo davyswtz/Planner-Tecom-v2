@@ -67,10 +67,8 @@ export function renderDescricaoView(valor) {
   return `<div class="descricao-view-shell"><div class="descricao-view">${html}</div></div>`;
 }
 
-export function createDescricaoEditorMarkup(placeholder = 'Detalhes da tarefa (opcional)') {
-  return `
-    <div class="descricao-editor-wrap" data-descricao-editor>
-      <div class="descricao-editor-shell">
+export function createDescricaoEditorMarkup(placeholder = 'Detalhes da tarefa (opcional)', { compact = false } = {}) {
+  const toolbar = compact ? '' : `
         <div class="descricao-editor-toolbar">
           <div class="descricao-toolbar-left">
             <button type="button" class="descricao-btn-anexo" title="Selecionar imagem do computador">
@@ -83,7 +81,12 @@ export function createDescricaoEditorMarkup(placeholder = 'Detalhes da tarefa (o
             <span class="descricao-hint-chip"><i class="ti ti-clipboard"></i> Ctrl+V</span>
             <span class="descricao-hint-chip"><i class="ti ti-drag-drop"></i> Arrastar</span>
           </div>
-        </div>
+        </div>`;
+
+  return `
+    <div class="descricao-editor-wrap${compact ? ' descricao-editor-wrap--compact' : ''}" data-descricao-editor>
+      <div class="descricao-editor-shell">
+        ${toolbar}
         <div class="descricao-editor-body">
           <div class="descricao-editor-dropzone" hidden>
             <i class="ti ti-photo-up"></i>
@@ -256,10 +259,10 @@ function vincularEditor(wrap) {
   return wrap;
 }
 
-export function mountDescricaoEditor(container, { html = '', placeholder } = {}) {
+export function mountDescricaoEditor(container, { html = '', placeholder, compact = false } = {}) {
   if (!container) return null;
 
-  container.innerHTML = createDescricaoEditorMarkup(placeholder);
+  container.innerHTML = createDescricaoEditorMarkup(placeholder, { compact });
   const wrap = container.querySelector('[data-descricao-editor]');
   vincularEditor(wrap);
 
@@ -286,6 +289,27 @@ export function getDescricaoEditorValue(wrapOrContainer) {
   return html;
 }
 
+export async function prepararImagemArquivo(arquivo) {
+  return prepararImagem(arquivo);
+}
+
 export function resetDescricaoEditor(container) {
-  mountDescricaoEditor(container, { html: '' });
+  mountDescricaoEditor(container, { html: '', compact: container?.dataset?.compact === '1' });
+}
+
+function resolverWrapDescricao(wrapOrContainer) {
+  return wrapOrContainer?.matches?.('[data-descricao-editor]')
+    ? wrapOrContainer
+    : wrapOrContainer?.querySelector?.('[data-descricao-editor]');
+}
+
+export async function appendImagemAoEditor(wrapOrContainer, arquivo) {
+  const wrap = resolverWrapDescricao(wrapOrContainer);
+  const editor = wrap?.querySelector('.descricao-editor');
+  if (!editor) {
+    throw new Error('Editor de descrição não encontrado.');
+  }
+
+  const dataUrl = await prepararImagem(arquivo);
+  inserirImagemNoEditor(editor, dataUrl);
 }

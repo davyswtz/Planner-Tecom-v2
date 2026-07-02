@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\GeoGridController;
 use App\Http\Controllers\Api\MensagemTemplateController;
 use App\Http\Controllers\Api\NiconController;
 use App\Http\Controllers\Api\NotificacaoController;
+use App\Http\Controllers\Api\OpTaskAnexoController;
 use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\OrdemServicoController;
 use App\Http\Controllers\Api\OtimizacaoDeRedeController;
@@ -35,6 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('notificacoes/ler-todas', [NotificacaoController::class, 'marcarTodasLidas']);
     Route::post('notificacoes/{id}/ler', [NotificacaoController::class, 'marcarLida'])->whereNumber('id');
     Route::apiResource('op-tasks', OpTaskController::class);
+    Route::get('op-tasks/{opTask}/anexos', [OpTaskAnexoController::class, 'index']);
+    Route::post('op-tasks/{opTask}/anexos', [OpTaskAnexoController::class, 'store']);
+    Route::delete('op-tasks/{opTask}/anexos/{anexo}', [OpTaskAnexoController::class, 'destroy'])->whereNumber('anexo');
+    Route::get('op-tasks/{opTask}/anexos/{anexo}/arquivo', [OpTaskAnexoController::class, 'arquivo'])->whereNumber('anexo');
     Route::apiResource('rompimentos', RompimentoController::class);
     Route::get('rompimentos/{id}/os', [RompimentoController::class, 'listarOS']);
     Route::apiResource('tecnicos', TecnicoController::class);

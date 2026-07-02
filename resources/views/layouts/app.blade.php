@@ -537,9 +537,311 @@
     transition: transform 0.38s cubic-bezier(0.16,1,0.3,1), opacity 0.38s cubic-bezier(0.16,1,0.3,1);
   }
   .modal-overlay.open .modal-box { opacity: 1; transform: scale(1) translateY(0); }
+  #modal-os-detalhe-overlay { z-index: 200; }
+  .os-card[data-os-id] { cursor: pointer; }
+  .os-card[data-os-id].is-active {
+    box-shadow: 0 0 0 2px rgba(22, 106, 196, 0.25);
+    background: var(--blue-50);
+  }
+  .status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--gray-700);
+  }
+  .status-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot--aberta::before { background: #3b82f6; }
+  .status-dot--andamento::before { background: #f59e0b; }
+  .status-dot--finalizada::before { background: #22c55e; }
+  .detail-descricao-os {
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .detail-descricao-os img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
+  .os-detalhe-loading,
+  .os-detalhe-erro {
+    padding: 16px 0;
+    font-size: 13px;
+    color: var(--gray-500);
+    text-align: center;
+  }
+  .os-detalhe-loading i { animation: spin 0.8s linear infinite; display: inline-block; }
+  .os-detalhe-erro { color: #dc2626; }
+  [data-theme="dark"] .os-card[data-os-id].is-active { background: #0d2340; }
   .modal-head { padding: 16px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
   .modal-foot { padding: 14px 24px; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+  #modal-os-overlay { z-index: 150; }
+  .modal-foot-os {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+  }
+  .modal-foot-os-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .os-btn-anexo-round {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: #166ac4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  }
+  .os-btn-anexo-round i { font-size: 18px; }
+  .os-btn-anexo-round:hover {
+    background: var(--blue-50);
+    border-color: #166ac4;
+  }
+  .os-btn-anexo-round:active { transform: scale(0.96); }
+  .descricao-editor-wrap--compact .descricao-editor {
+    min-height: 88px;
+  }
+  .os-anexos-galeria {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 10px;
+    min-height: 56px;
+  }
+  .os-anexos-vazio {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: var(--gray-400);
+    padding: 10px 12px;
+    border: 1px dashed var(--gray-200);
+    border-radius: var(--radius-sm);
+    text-align: center;
+  }
+  .os-anexo-card {
+    position: relative;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+    overflow: hidden;
+  }
+  .os-anexo-thumb {
+    aspect-ratio: 1;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+  .os-anexo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .os-anexo-thumb-loading {
+    color: var(--gray-400);
+    font-size: 18px;
+  }
+  .os-anexo-thumb-loading i { animation: spin 0.8s linear infinite; display: inline-block; }
+  .os-anexo-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    min-height: 32px;
+  }
+  .os-anexo-nome {
+    font-size: 11px;
+    color: var(--gray-700);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .os-anexo-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #166ac4;
+    background: var(--blue-50);
+    border-radius: 999px;
+    padding: 1px 6px;
+    flex-shrink: 0;
+  }
+  .os-anexo-remover {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .os-anexo-card:hover .os-anexo-remover { opacity: 1; }
+  .os-anexos-detalhe {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .os-anexo-detalhe-item {
+    position: relative;
+  }
+  .os-anexo-detalhe-card {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--gray-50);
+    padding: 0;
+    width: 100%;
+    cursor: zoom-in;
+    transition: border-color 0.15s, transform 0.15s;
+    appearance: none;
+    font: inherit;
+    text-align: left;
+  }
+  .os-anexo-detalhe-card:hover {
+    border-color: var(--primary, #166ac4);
+    transform: translateY(-1px);
+  }
+  .os-anexo-detalhe-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+  .os-anexo-detalhe-remover {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+    z-index: 2;
+  }
+  .os-anexo-detalhe-remover i { font-size: 13px; }
+  .os-anexo-detalhe-remover:hover { background: #dc2626; }
+  .os-anexo-detalhe-item:hover .os-anexo-detalhe-remover { opacity: 1; }
+  .modal-anexo-viewer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
+    background: rgba(0, 0, 0, 0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-anexo-viewer-overlay.open { display: flex; }
+  .modal-anexo-viewer-box {
+    width: min(96vw, 1120px);
+    max-height: 94vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+  .modal-anexo-viewer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    flex-shrink: 0;
+  }
+  .modal-anexo-viewer-nome {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-950);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .modal-anexo-viewer-body {
+    flex: 1;
+    min-height: 220px;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: #0d1117;
+  }
+  .modal-anexo-viewer-body img {
+    max-width: 100%;
+    max-height: calc(94vh - 130px);
+    object-fit: contain;
+    display: block;
+  }
+  .modal-anexo-viewer-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--gray-200);
+    flex-shrink: 0;
+  }
+  [data-theme="dark"] .modal-anexo-viewer-box {
+    background: #161b22;
+    border: 1px solid #30363d;
+  }
+  [data-theme="dark"] .modal-anexo-viewer-head,
+  [data-theme="dark"] .modal-anexo-viewer-foot {
+    border-color: #30363d;
+  }
+  [data-theme="dark"] .modal-anexo-viewer-nome { color: #e6edf3; }
+  [data-theme="dark"] .os-anexos-vazio,
+  [data-theme="dark"] .os-anexo-card,
+  [data-theme="dark"] .os-anexo-detalhe-card {
+    border-color: #30363d;
+    background: #161b22;
+  }
+  [data-theme="dark"] .os-anexo-thumb { background: #0d1117; }
+  [data-theme="dark"] .os-anexo-nome { color: #c9d1d9; }
+  [data-theme="dark"] .os-anexo-badge { background: #0d2340; color: #58a6ff; }
+  [data-theme="dark"] .os-btn-anexo-round {
+    background: #161b22;
+    border-color: #30363d;
+    color: #58a6ff;
+  }
+  [data-theme="dark"] .os-btn-anexo-round:hover {
+    background: #0d2340;
+    border-color: #58a6ff;
+  }
   .modal-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0; }
   .modal-sub { font-size: 12px; color: var(--gray-500); margin: 0; }
   .modal-close { background: transparent; border: none; cursor: pointer; color: var(--gray-500); font-size: 18px; display: flex; align-items: center; padding: 4px; transition: color 0.15s; }
@@ -970,6 +1272,57 @@
 
   <div class="content">
     @yield('content')
+
+    <div id="modal-os-detalhe-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-os-detalhe-titulo">
+      <div class="modal-box">
+        <div class="modal-head">
+          <div>
+            <p class="modal-title" id="modal-os-detalhe-titulo">Ordem de serviço</p>
+            <p class="modal-sub" id="modal-os-detalhe-subtitulo"></p>
+          </div>
+          <button type="button" onclick="fecharDetalheOs()" class="modal-close" aria-label="Fechar">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="modal-os-detalhe-conteudo"></div>
+        </div>
+        <div class="modal-foot">
+          <div class="modal-foot-os">
+            <div class="modal-foot-os-left">
+              <button type="button" class="os-btn-anexo-round" id="os-detalhe-btn-anexo" title="Anexar imagem">
+                <i class="ti ti-paperclip"></i>
+              </button>
+              <input type="file" id="os-detalhe-input-anexo" accept="image/*" multiple hidden />
+            </div>
+            <div class="modal-foot-os-actions">
+              <button type="button" onclick="fecharDetalheOs()" class="btn-modal btn-modal-ghost">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-anexo-viewer-overlay" class="modal-anexo-viewer-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-anexo-viewer-nome">
+      <div class="modal-anexo-viewer-box">
+        <div class="modal-anexo-viewer-head">
+          <span class="modal-anexo-viewer-nome" id="modal-anexo-viewer-nome">Anexo</span>
+          <button type="button" onclick="fecharVisualizadorAnexo()" class="modal-close" aria-label="Fechar">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <div class="modal-anexo-viewer-body">
+          <img id="modal-anexo-viewer-img" alt="">
+        </div>
+        <div class="modal-anexo-viewer-foot">
+          <button type="button" onclick="fecharVisualizadorAnexo()" class="btn-modal btn-modal-ghost">Fechar</button>
+          <button type="button" id="modal-anexo-viewer-download" class="btn-modal btn-modal-primary">
+            <i class="ti ti-download" style="font-size:14px"></i>
+            Baixar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1010,6 +1363,13 @@
     if (funcao === 'tecnico') return 'Técnico';
     if (funcao === 'projetista') return 'Projetista';
     return 'Usuário';
+  }
+
+  function rotuloUsuario(user) {
+    if (!user) return '—';
+    if (user.funcao === 'tecnico') return 'Técnico';
+    if (user.cargo_label) return user.cargo_label;
+    return rotuloFuncao(user.funcao);
   }
 
   function possuiPermissao(key) {
@@ -1061,6 +1421,8 @@
         ...(stored && typeof stored === 'object' ? stored : {}),
         ...data.user,
         permissoes: data.user.permissoes || [],
+        cargo: data.user.cargo ?? null,
+        cargo_label: data.user.cargo_label ?? null,
       };
       localStorage.setItem('planner_user', JSON.stringify(user));
     } catch (_) {}
@@ -1086,7 +1448,7 @@
     }
 
     nomeEl.textContent = username;
-    roleEl.textContent = rotuloFuncao(user.funcao);
+    roleEl.textContent = rotuloUsuario(user);
     avatarEl.textContent = iniciaisDeUsuario(username);
     aplicarPermissoesNav();
   }
@@ -1230,6 +1592,9 @@
 @if($realtimePage)
 <script src="{{ $plannerAssetV('js/planner-reload-guard.js') }}"></script>
 <script src="{{ $plannerAssetV('js/planner-kanban.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-os-anexo-viewer.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-os-detalhe.js') }}"></script>
+<script type="module" src="{{ $plannerAssetV('js/planner-os-modal.js') }}"></script>
 @endif
 
 @if(request()->is('tarefas*', 'dashboard*'))

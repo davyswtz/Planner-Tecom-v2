@@ -287,6 +287,9 @@ class OrdemServicoService
                 'data_instalacao' => $task->data_instalacao,
                 'assinada_por' => $task->assinada_por,
                 'assinada_em' => $task->assinada_em,
+                'setor' => trim((string) $task->setor),
+                'cto' => trim((string) $task->cto),
+                'responsavel' => trim((string) $task->responsavel),
             ];
 
             return collect($tecnicos)->map(function (string $tecnico) use ($base) {

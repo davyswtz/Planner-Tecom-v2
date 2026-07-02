@@ -1,6 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\OpTaskAnexoController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/chat-img/{token}', [OpTaskAnexoController::class, 'imagemChat'])
+    ->where('token', '[\w.\-]+')
+    ->name('chat.anexo.imagem');
 
 Route::get('/', function () {
     return view('login');

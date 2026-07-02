@@ -159,6 +159,14 @@
       <span class="usuario-help">Ao escolher Técnico, o usuário também entra na lista de técnicos.</span>
     </div>
 
+    <div class="usuario-field" id="usuario-campo-cargo" style="display:none">
+      <label class="usuario-label" for="usuario-cargo">Cargo</label>
+      <select id="usuario-cargo" class="usuario-select">
+        <option value="">Selecione o cargo</option>
+      </select>
+      <span class="usuario-help">Defina o cargo do usuário no sistema.</span>
+    </div>
+
     <div class="usuario-field" id="usuario-campos-senha">
       <label class="usuario-label" for="usuario-password">Senha</label>
       <input type="password" id="usuario-password" class="usuario-input" autocomplete="new-password"
@@ -212,6 +220,14 @@
   let usuarioEditando = null;
   let todosUsuarios = [];
   let permissoesDisponiveis = [];
+  let cargosDisponiveis = [
+    { key: 'desenvolvedor', label: 'Desenvolvedor' },
+    { key: 'projetista_jr', label: 'Projetista Jr' },
+    { key: 'projetista_pl', label: 'Projetista Pl' },
+    { key: 'projetista_sr', label: 'Projetista Sr' },
+    { key: 'supervisor', label: 'Supervisor' },
+    { key: 'gestor', label: 'Gestor' },
+  ];
   let permissoesSelecionadas = [];
 
   function token() {
@@ -243,11 +259,13 @@
     document.getElementById('usuario-password').value = '';
     document.getElementById('usuario-password-confirmation').value = '';
     document.getElementById('usuario-regiao').value = '';
+    document.getElementById('usuario-cargo').value = '';
     document.getElementById('usuario-erro').style.display = 'none';
     document.getElementById('usuario-campo-permissoes').style.display = 'none';
     permissoesSelecionadas = [];
     renderPermissoesTags();
     atualizarSelectPermissoes();
+    atualizarSelectCargos();
     document.getElementById('usuario-modal-titulo').textContent = 'Novo usuário';
     document.getElementById('usuario-modal-subtitulo').textContent = 'Crie um acesso para o Planner';
     document.getElementById('usuario-password').placeholder = 'Mínimo de 4 caracteres';
@@ -256,9 +274,26 @@
     atualizarCamposFuncao();
   }
 
+  function labelCargo(key) {
+    const item = cargosDisponiveis.find(c => c.key === key);
+    return item ? item.label : key;
+  }
+
   function labelPermissao(key) {
     const item = permissoesDisponiveis.find(p => p.key === key);
     return item ? item.label : key;
+  }
+
+  function atualizarSelectCargos(valorSelecionado = '') {
+    const select = document.getElementById('usuario-cargo');
+    if (!select) return;
+
+    const opcoes = cargosDisponiveis
+      .map(item => `<option value="${item.key}">${esc(item.label)}</option>`)
+      .join('');
+
+    select.innerHTML = `<option value="">Selecione o cargo</option>${opcoes}`;
+    select.value = valorSelecionado || '';
   }
 
   function renderPermissoesTags() {
@@ -335,6 +370,11 @@
     document.getElementById('usuario-campos-senha').style.display = ehTecnico ? 'none' : 'flex';
     document.getElementById('usuario-campo-confirmar-senha').style.display = ehTecnico ? 'none' : 'flex';
     document.getElementById('usuario-campo-regiao').style.display = ehTecnico ? 'flex' : 'none';
+    document.getElementById('usuario-campo-cargo').style.display = ehTecnico ? 'none' : 'flex';
+
+    if (ehTecnico) {
+      document.getElementById('usuario-cargo').value = '';
+    }
 
     const password = document.getElementById('usuario-password');
     const help = document.getElementById('usuario-password-help');
@@ -373,6 +413,7 @@
     document.getElementById('usuario-username').value = username;
     document.getElementById('usuario-funcao').value = usuario.funcao === 'tecnico' ? 'tecnico' : 'projetista';
     document.getElementById('usuario-regiao').value = usuario.regiao || '';
+    atualizarSelectCargos(usuario.cargo || '');
     document.getElementById('usuario-campo-permissoes').style.display = 'flex';
     definirPermissoesSelecionadas(usuario.permissoes || []);
     document.getElementById('btn-salvar-usuario').innerHTML = '<i class="ti ti-device-floppy" style="font-size:14px"></i> Salvar alterações';
@@ -422,6 +463,7 @@
           <tr>
             <th>Usuário</th>
             <th>Função</th>
+            <th>Cargo</th>
             <th>Região</th>
             <th>Permissões</th>
             <th>Criado em</th>
@@ -436,6 +478,7 @@
                 <div class="usuario-muted">Acesso ao Planner</div>
               </td>
               <td>${usuario.funcao === 'tecnico' ? 'Técnico' : 'Projetista'}</td>
+              <td>${usuario.funcao === 'tecnico' ? '—' : esc(labelCargo(usuario.cargo) || '—')}</td>
               <td>${usuario.funcao === 'tecnico' ? esc(usuario.regiao) : '—'}</td>
               <td>${(usuario.permissoes || []).length
                 ? (usuario.permissoes || []).map(key => esc(labelPermissao(key))).join(', ')
@@ -474,7 +517,9 @@
       const data = await requestJson('/api/usuarios');
       todosUsuarios = data.usuarios || [];
       permissoesDisponiveis = data.permissoes_disponiveis || [];
+      cargosDisponiveis = data.cargos_disponiveis?.length ? data.cargos_disponiveis : cargosDisponiveis;
       atualizarSelectPermissoes();
+      atualizarSelectCargos();
       renderUsuarios(filtrarUsuarios());
     } catch (err) {
       wrap.innerHTML = `<div class="usuario-empty" style="color:#dc2626">${esc(err.message)}</div>`;
@@ -486,6 +531,7 @@
     const username = document.getElementById('usuario-username').value.trim();
     const funcao = document.getElementById('usuario-funcao').value;
     const regiao = document.getElementById('usuario-regiao').value;
+    const cargo = document.getElementById('usuario-cargo').value;
     const password = document.getElementById('usuario-password').value;
     const passwordConfirmation = document.getElementById('usuario-password-confirmation').value;
 
@@ -500,6 +546,11 @@
 
     if (funcao === 'tecnico' && !regiao) {
       mostrarErro('Selecione a região do técnico.');
+      return;
+    }
+
+    if (funcao !== 'tecnico' && !cargo) {
+      mostrarErro('Selecione o cargo do usuário.');
       return;
     }
 
@@ -524,9 +575,12 @@
     const payload = { username, funcao };
     if (funcao === 'tecnico') {
       payload.regiao = regiao;
-    } else if (password || passwordConfirmation) {
-      payload.password = password;
-      payload.password_confirmation = passwordConfirmation;
+    } else {
+      payload.cargo = cargo;
+      if (password || passwordConfirmation) {
+        payload.password = password;
+        payload.password_confirmation = passwordConfirmation;
+      }
     }
     payload.permissoes = [...permissoesSelecionadas];
 
@@ -559,8 +613,8 @@
   };
 
   window.abrirNovoItem = window.abrirModalUsuario;
-  document.getElementById('usuario-funcao').addEventListener('change', atualizarCamposFuncao);
-
+  document.getElementById('usuario-funcao')?.addEventListener('change', atualizarCamposFuncao);
+  atualizarSelectCargos();
   carregarUsuarios();
 </script>
 @endsection

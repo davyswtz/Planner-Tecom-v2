@@ -3,18 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tecnico;
 use App\Models\User;
-use App\Services\UsuarioPermissaoService;
+use App\Support\UsuarioCargo;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
-    public function __construct(
-        private UsuarioPermissaoService $permissoes,
-    ) {}
-
     public function login(Request $request){
         $request->validate([
             'username' => 'required|string',
@@ -37,17 +31,9 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $ehTecnico = Schema::hasTable('tecnicos')
-            && Tecnico::query()->where('username', $user->username)->exists();
-
         return response()->json([
             'token' => $token,
-            'user' => [
-                'id' => $user->username,
-                'username' => $user->username,
-                'funcao' => $ehTecnico ? 'tecnico' : 'projetista',
-                'permissoes' => $this->permissoes->listarPorUsuario($user->username),
-            ],
+            'user' => UsuarioCargo::dadosSessao($user),
         ]);
 
     }
@@ -61,18 +47,8 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = $request->user();
-
-        $ehTecnico = Schema::hasTable('tecnicos')
-            && Tecnico::query()->where('username', $user->username)->exists();
-
         return response()->json([
-            'user' => [
-                'id' => $user->username,
-                'username' => $user->username,
-                'funcao' => $ehTecnico ? 'tecnico' : 'projetista',
-                'permissoes' => $this->permissoes->listarPorUsuario($user->username),
-            ],
+            'user' => UsuarioCargo::dadosSessao($request->user()),
         ]);
     }
 }

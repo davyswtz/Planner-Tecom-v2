@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Troca de Etiqueta — Planner Telecom')
 @section('page-title', 'Troca de Etiqueta')
@@ -56,6 +56,7 @@
     will-change: transform, opacity;
   }
   .modal-overlay.open .modal-box { opacity: 1; transform: scale(1) translateY(0); }
+  #modal-overlay .modal-box { max-width: 760px; }
   .modal-head { padding: 16px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
   .modal-foot { padding: 14px 24px; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
@@ -261,6 +262,44 @@
   .btn-adicionar-etiqueta-inline:hover {
     background: var(--blue-50); border-color: var(--blue-200); color: var(--blue-900);
   }
+  .etiquetas-loc-list {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-top: 4px;
+  }
+  .etiquetas-loc-list:empty { display: none; }
+  .etiqueta-loc-row {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .etiqueta-loc-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .etiqueta-loc-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .etiqueta-loc-grid .os-field { gap: 4px; margin: 0; }
+  .etiqueta-loc-grid .os-label { font-size: 11px; }
+  .etiqueta-loc-grid .os-input {
+    min-height: 36px; font-size: 12px; padding: 7px 10px;
+  }
+  @media (max-width: 560px) {
+    .etiqueta-loc-grid { grid-template-columns: 1fr; }
+  }
+  [data-theme="dark"] .etiqueta-loc-row { background: #161b22; border-color: #30363d; }
+  .etiquetas-detalhe-list { display: flex; flex-direction: column; gap: 10px; }
+  .etiqueta-detalhe-card {
+    border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    padding: 10px 12px; background: var(--gray-50);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .etiqueta-detalhe-loc {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  @media (max-width: 560px) { .etiqueta-detalhe-loc { grid-template-columns: 1fr; } }
+  [data-theme="dark"] .etiqueta-detalhe-card { background: #161b22; border-color: #30363d; }
   .etiquetas-view-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; align-items: center; }
   .etiqueta-chip-view {
     display: inline-flex; align-items: center;
@@ -297,15 +336,19 @@
 
   <div class="modal-form">
 
-    <div class="detail-grid-2">
-      <div class="os-field">
-        <label class="os-label">Coordenadas (opcional)</label>
-        <input type="text" id="input-coordenadas" placeholder="Ex: -18.8517, -41.9494" class="os-input"/>
+    <div class="os-field">
+      <label class="os-label">Nome da(s) etiqueta(s)</label>
+      <div class="etiquetas-input-box" id="etiquetas-input-box" onclick="focarInputEtiqueta(event)">
+        <div class="etiquetas-chips" id="etiquetas-chips"></div>
+        <input type="text" id="input-etiqueta-nome" class="etiquetas-inline-input"
+          placeholder="Ex: IPE1504 — Enter para adicionar"
+          onkeydown="handleEtiquetaInputKeydown(event)"/>
+        <button type="button" class="btn-adicionar-etiqueta-inline" onclick="adicionarEtiquetaNome(event)" title="Adicionar etiqueta">
+          <i class="ti ti-plus" style="font-size:16px"></i>
+        </button>
       </div>
-      <div class="os-field">
-        <label class="os-label">Endereço / Localização</label>
-        <input type="text" id="input-localizacao-texto" placeholder="Ex: Rua das Flores, 123 — Goval" class="os-input"/>
-      </div>
+      <p class="input-hint">Digite o nome, pressione Enter ou clique em + para adicionar mais etiquetas na tarefa.</p>
+      <div id="etiquetas-loc-list" class="etiquetas-loc-list"></div>
     </div>
 
     <div class="os-field">
@@ -324,20 +367,6 @@
       <select id="input-tecnico" class="os-input">
         <option value="">Selecione...</option>
       </select>
-    </div>
-
-    <div class="os-field">
-      <label class="os-label">Nome da(s) etiqueta(s)</label>
-      <div class="etiquetas-input-box" id="etiquetas-input-box" onclick="focarInputEtiqueta(event)">
-        <div class="etiquetas-chips" id="etiquetas-chips"></div>
-        <input type="text" id="input-etiqueta-nome" class="etiquetas-inline-input"
-          placeholder="Ex: IPE1504 — Enter para adicionar"
-          onkeydown="handleEtiquetaInputKeydown(event)"/>
-        <button type="button" class="btn-adicionar-etiqueta-inline" onclick="adicionarEtiquetaNome(event)" title="Adicionar etiqueta">
-          <i class="ti ti-plus" style="font-size:16px"></i>
-        </button>
-      </div>
-      <p class="input-hint">Digite o nome, pressione Enter ou clique em + para adicionar mais etiquetas na tarefa.</p>
     </div>
 
     <div class="os-field">
@@ -448,52 +477,7 @@
 </div>
 
 <!-- MODAL NOVA OS (vinculada à tarefa) -->
-<x-modal
-  id="modal-os-overlay"
-  titulo="Nova Ordem de Serviço"
-  titulo-id="os-modal-titulo"
-  subtitulo-id="os-modal-sub"
-  fechar="fecharNovaOS()">
-
-  <div class="os-field">
-    <label class="os-label">Tipo de serviço</label>
-    <input type="text" id="os-input-tipo" class="os-input"
-      placeholder="Ex: Troca de Etiqueta"
-      oninput="this.value = this.value.toUpperCase()"/>
-  </div>
-
-  <div class="os-field">
-    <label class="os-label">Descrição</label>
-    <textarea id="os-input-descricao" rows="3" placeholder="Descreva a ordem de serviço..." class="os-input"
-      style="height:auto;padding:8px 10px;resize:vertical;min-height:72px"></textarea>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div class="os-field">
-      <label class="os-label">Vincular técnico responsável</label>
-      <select id="os-input-tecnico" class="os-input">
-        <option value="">Selecione...</option>
-      </select>
-    </div>
-    <div class="os-field">
-      <label class="os-label">Status</label>
-      <select id="os-input-status" class="os-input">
-        <option value="Aberta">Aberta</option>
-        <option value="Em andamento">Em andamento</option>
-        <option value="Finalizada">Finalizada</option>
-      </select>
-    </div>
-  </div>
-
-  <x-slot name="footer">
-    <button type="button" onclick="fecharNovaOS()" class="btn-modal btn-modal-ghost">Cancelar</button>
-    <button type="button" class="btn-modal btn-modal-primary" id="os-btn-salvar" onclick="salvarOs()">
-      <i class="ti ti-clipboard-check" style="font-size:14px" id="os-btn-icon"></i>
-      <span id="os-btn-label">Criar OS</span>
-    </button>
-  </x-slot>
-
-</x-modal>
+<x-modal-os tipo-placeholder="Ex: Troca de Etiqueta" status-variant="titulo" />
 
 <!-- FILTROS -->
 <div class="card filtros-card">
@@ -635,7 +619,8 @@
 @section('scripts')
 <script>
   let osEditandoId = null;
-  let etiquetasNomes = [];
+  /** @type {{ nome: string, coordenadas: string, endereco: string }[]} */
+  let etiquetasItens = [];
   /** ID da OS aguardando confirmação no modal de exclusão (null = nenhuma pendente) */
   let osExclusaoPendenteId = null;
   const osDataMap = {};
@@ -689,10 +674,69 @@
     document.getElementById('input-regiao').value = '';
     document.getElementById('input-tecnico').value = '';
     document.getElementById('input-numero-os').value = '';
-    document.getElementById('input-localizacao-texto').value = '';
-    document.getElementById('input-coordenadas').value = '';
     limparEtiquetasNomes();
     carregarTecnicos(null, 'input-tecnico');
+  }
+
+  function criarItemEtiqueta(nome, coordenadas = '', endereco = '') {
+    return { nome, coordenadas, endereco };
+  }
+
+  function montarDescricaoEtiquetas(itens) {
+    return itens.map((item) => {
+      const linhas = [`Etiqueta: ${item.nome}`];
+      if (item.coordenadas.trim()) linhas.push(`Coordenadas: ${item.coordenadas.trim()}`);
+      if (item.endereco.trim()) linhas.push(`Endereço: ${item.endereco.trim()}`);
+      return linhas.join('\n');
+    }).join('\n\n');
+  }
+
+  function parseEtiquetasCompleto(titulo, descricao, coordenadasFallback = '', enderecoFallback = '') {
+    const nomes = parseEtiquetasTitulo(titulo);
+    const mapa = new Map();
+
+    String(descricao || '').split(/\n\s*\n/).forEach((bloco) => {
+      let nome = '';
+      let coordenadas = '';
+      let endereco = '';
+      bloco.split('\n').forEach((linha) => {
+        const texto = linha.trim();
+        if (texto.startsWith('Etiqueta:')) nome = normalizarNomeEtiqueta(texto.slice(9));
+        else if (texto.startsWith('Coordenadas:')) coordenadas = texto.slice(12).trim();
+        else if (/^Endere[cç]o:/i.test(texto)) endereco = texto.replace(/^Endere[cç]o:\s*/i, '').trim();
+      });
+      if (nome) mapa.set(nome, criarItemEtiqueta(nome, coordenadas, endereco));
+    });
+
+    let itens;
+    if (!nomes.length && mapa.size) {
+      itens = [...mapa.values()];
+    } else {
+      itens = nomes.map((nome) => mapa.get(nome) || criarItemEtiqueta(nome));
+    }
+
+    if (!mapa.size && (coordenadasFallback || enderecoFallback)) {
+      const coords = String(coordenadasFallback || '').split(' | ');
+      const enderecos = String(enderecoFallback || '').split(' | ');
+      itens.forEach((item, index) => {
+        if (!item.coordenadas && coords[index]) item.coordenadas = coords[index].trim();
+        if (!item.endereco && enderecos[index]) item.endereco = enderecos[index].trim();
+      });
+      if (itens.length === 1) {
+        if (!itens[0].coordenadas && coordenadasFallback) itens[0].coordenadas = coordenadasFallback.trim();
+        if (!itens[0].endereco && enderecoFallback) itens[0].endereco = enderecoFallback.trim();
+      }
+    }
+
+    return itens;
+  }
+
+  function obterCoordenadasAgregadas(itens) {
+    return itens.map((item) => item.coordenadas.trim()).filter(Boolean).join(' | ');
+  }
+
+  function obterEnderecosAgregados(itens) {
+    return itens.map((item) => item.endereco.trim()).filter(Boolean).join(' | ');
   }
 
   function normalizarNomeEtiqueta(valor) {
@@ -718,8 +762,8 @@
       adicionarEtiquetaNome();
       return;
     }
-    if (event.key === 'Backspace' && !event.target.value && etiquetasNomes.length) {
-      etiquetasNomes.pop();
+    if (event.key === 'Backspace' && !event.target.value && etiquetasItens.length) {
+      etiquetasItens.pop();
       renderEtiquetasChips();
     }
   }
@@ -737,27 +781,59 @@
     return `etiqueta-chip-c${index % 6}`;
   }
 
+  function renderEtiquetasLocalizacao() {
+    const container = document.getElementById('etiquetas-loc-list');
+    if (!container) return;
+
+    container.innerHTML = etiquetasItens.map((item, index) => `
+      <div class="etiqueta-loc-row" data-etiqueta-index="${index}">
+        <div class="etiqueta-loc-head">
+          <span class="etiqueta-chip ${classeCorEtiqueta(index)}">${escEtiqueta(item.nome)}</span>
+        </div>
+        <div class="etiqueta-loc-grid">
+          <div class="os-field">
+            <label class="os-label">Coordenadas</label>
+            <input type="text" class="os-input etiqueta-input-coord"
+              data-index="${index}"
+              value="${escEtiqueta(item.coordenadas)}"
+              placeholder="Ex: -18.8517, -41.9494"/>
+          </div>
+          <div class="os-field">
+            <label class="os-label">Endereço / Localização</label>
+            <input type="text" class="os-input etiqueta-input-endereco"
+              data-index="${index}"
+              value="${escEtiqueta(item.endereco)}"
+              placeholder="Ex: Rua das Flores, 123 — Goval"/>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
   function renderEtiquetasChips() {
     const container = document.getElementById('etiquetas-chips');
     const input = document.getElementById('input-etiqueta-nome');
     if (!container) return;
 
-    container.innerHTML = etiquetasNomes.map((nome, index) => `
+    container.innerHTML = etiquetasItens.map((item, index) => `
       <span class="etiqueta-chip ${classeCorEtiqueta(index)}">
-        <span>${escEtiqueta(nome)}</span>
+        <span>${escEtiqueta(item.nome)}</span>
         <button type="button" class="etiqueta-chip-remove" onclick="removerEtiquetaNome(${index}, event)" aria-label="Remover etiqueta">×</button>
       </span>
     `).join('');
 
     if (input) {
-      input.placeholder = etiquetasNomes.length
+      input.placeholder = etiquetasItens.length
         ? 'Adicionar outra etiqueta...'
         : 'Ex: IPE1504 — Enter para adicionar';
     }
+
+    renderEtiquetasLocalizacao();
   }
 
   function adicionarEtiquetaNome(event) {
     if (event) event.stopPropagation();
+    sincronizarEtiquetasDoFormulario();
     const input = document.getElementById('input-etiqueta-nome');
     if (!input) return;
 
@@ -765,7 +841,9 @@
     if (!bruto) return;
 
     bruto.split(/[,;]+/).map(normalizarNomeEtiqueta).filter(Boolean).forEach((nome) => {
-      if (!etiquetasNomes.includes(nome)) etiquetasNomes.push(nome);
+      if (!etiquetasItens.some((item) => item.nome === nome)) {
+        etiquetasItens.push(criarItemEtiqueta(nome));
+      }
     });
 
     input.value = '';
@@ -776,24 +854,38 @@
 
   function removerEtiquetaNome(index, event) {
     if (event) event.stopPropagation();
-    etiquetasNomes.splice(index, 1);
+    etiquetasItens.splice(index, 1);
     renderEtiquetasChips();
     document.getElementById('input-etiqueta-nome')?.focus();
   }
   window.removerEtiquetaNome = removerEtiquetaNome;
 
   function obterTituloEtiquetas() {
-    return etiquetasNomes.join(', ');
+    return etiquetasItens.map((item) => item.nome).join(', ');
   }
 
-  function renderEtiquetasDetalheHtml(titulo) {
-    const nomes = parseEtiquetasTitulo(titulo);
-    if (!nomes.length) return '—';
-    return `<div class="etiquetas-view-chips">${nomes.map((n, i) => `<span class="etiqueta-chip-view ${classeCorEtiqueta(i)}">${escEtiqueta(n)}</span>`).join('')}</div>`;
+  function renderEtiquetasDetalheHtml(titulo, descricao = '', coordenadasFallback = '', enderecoFallback = '') {
+    const itens = parseEtiquetasCompleto(titulo, descricao, coordenadasFallback, enderecoFallback);
+    if (!itens.length) return '—';
+    return `<div class="etiquetas-detalhe-list">${itens.map((item, i) => `
+      <div class="etiqueta-detalhe-card">
+        <span class="etiqueta-chip-view ${classeCorEtiqueta(i)}">${escEtiqueta(item.nome)}</span>
+        <div class="etiqueta-detalhe-loc">
+          <div class="detail-field">
+            <span class="detail-label">Coordenadas</span>
+            <div class="detail-value">${escEtiqueta(item.coordenadas) || '—'}</div>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Endereço / Localização</span>
+            <div class="detail-value">${escEtiqueta(item.endereco) || '—'}</div>
+          </div>
+        </div>
+      </div>
+    `).join('')}</div>`;
   }
 
   function limparEtiquetasNomes() {
-    etiquetasNomes = [];
+    etiquetasItens = [];
     renderEtiquetasChips();
     const input = document.getElementById('input-etiqueta-nome');
     if (input) input.value = '';
@@ -816,13 +908,13 @@
     osEditandoId = null;
     document.getElementById('modal-os-overlay').classList.add('open');
     const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
-    carregarTecnicos(regiao, 'os-input-tecnico');
+    window.carregarTecnicosOsModal?.(regiao);
     document.getElementById('os-modal-titulo').textContent = 'Nova Ordem de Serviço';
     document.getElementById('os-btn-icon').className = 'ti ti-clipboard-check';
     document.getElementById('os-btn-label').textContent = 'Criar OS';
     document.getElementById('os-input-tipo').value = '';
-    document.getElementById('os-input-descricao').value = '';
-    document.getElementById('os-input-tecnico').value = '';
+    window.resetOsAnexosModal?.();
+    window.resetOsTecnicosModal?.();
     document.getElementById('os-input-status').value = 'Aberta';
   };
 
@@ -837,26 +929,13 @@
 
     const tipoValue = (os.titulo || '').replace(/^OS\s*[—\-]\s*/i, '');
     document.getElementById('os-input-tipo').value = tipoValue;
-    document.getElementById('os-input-descricao').value = os.descricao || '';
+    window.setOsDescricaoValor?.(os.descricao || '');
+    window.carregarAnexosOsModal?.(id);
     document.getElementById('os-input-status').value = os.status || 'Aberta';
 
     const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
-    carregarTecnicos(regiao, 'os-input-tecnico').then(() => {
-      const tecnicoSelect = document.getElementById('os-input-tecnico');
-      let encontrou = false;
-      Array.from(tecnicoSelect.options).forEach(opt => {
-        if (opt.value === os.responsavel || opt.text === os.responsavel) {
-          opt.selected = true;
-          encontrou = true;
-        }
-      });
-      if (!encontrou && os.responsavel) {
-        const opt = document.createElement('option');
-        opt.value = os.responsavel;
-        opt.text = os.responsavel;
-        opt.selected = true;
-        tecnicoSelect.appendChild(opt);
-      }
+    window.carregarTecnicosOsModal?.(regiao).then(() => {
+      window.setOsTecnicosValor?.(os.responsavel || '');
     });
 
     document.getElementById('modal-os-overlay').classList.add('open');
@@ -864,6 +943,7 @@
 
   window.fecharNovaOS = function() {
     osEditandoId = null;
+    window.resetOsAnexosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   };
 
@@ -896,8 +976,8 @@
   async function salvarOs() {
     const trocaId = document.getElementById('detalhe-conteudo')?.dataset?.id;
     const tipo = document.getElementById('os-input-tipo').value.trim();
-    const descricao = document.getElementById('os-input-descricao').value.trim();
-    const tecnico = document.getElementById('os-input-tecnico').value;
+    const descricao = window.getOsDescricaoValor?.() || '';
+    const tecnico = window.getOsTecnicosValor?.() || '';
     const status = document.getElementById('os-input-status').value;
     const token = localStorage.getItem('planner_token');
 
@@ -918,6 +998,7 @@
           responsavel: tecnico,
           status,
         };
+        await window.enviarAnexosPendentesOs?.(osEditandoId);
         const response = await fetch(`/api/op-tasks/${osEditandoId}`, {
           method: 'PUT',
           headers: {
@@ -957,6 +1038,8 @@
           body: JSON.stringify(dados),
         });
         if (response.ok) {
+          const criada = await response.json();
+          await window.enviarAnexosPendentesOs?.(criada.id);
           fecharNovaOS();
           carregarOS(trocaId);
           if (window.carregarEtiquetas) window.carregarEtiquetas();
@@ -1093,7 +1176,7 @@
         const badge  = statusBadge[os.status]  || 'b-media';
         const av     = (os.responsavel || '?').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
         return `
-        <div class="os-card" style="border-left-color:${border}">
+        <div class="os-card" data-os-id="${os.id}" style="border-left-color:${border}">
           <div class="os-card-row">
             <span class="os-card-title">${escOs(os.titulo)}</span>
             <div class="os-card-actions">
@@ -1186,6 +1269,11 @@
     document.getElementById('detalhe-tab-os').style.display = aba === 'os' ? 'block' : 'none';
     document.getElementById('tab-btn-detalhes').classList.toggle('active', aba === 'detalhes');
     document.getElementById('tab-btn-os').classList.toggle('active', aba === 'os');
+    const naAbaOs = aba === 'os';
+    const btnExcluir = document.getElementById('btn-excluir');
+    const btnEditar = document.getElementById('btn-editar');
+    if (btnExcluir) btnExcluir.style.display = naAbaOs ? 'none' : '';
+    if (btnEditar) btnEditar.style.display = naAbaOs ? 'none' : '';
     if (aba === 'os') {
       const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
       if (id) carregarOS(id);
@@ -1324,8 +1412,6 @@
       { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
       { id: 'campo-responsavel',     tipo: 'tecnico' },
       { id: 'campo-numero-os',       tipo: 'text' },
-      { id: 'campo-localizacao-texto', tipo: 'text' },
-      { id: 'campo-coordenadas',     tipo: 'text' },
       { id: 'campo-status',          tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Impedimento', 'Concluída'] },
     ];
 
@@ -1414,6 +1500,8 @@
       adicionarEtiquetaNome();
     }
 
+    sincronizarEtiquetasDoFormulario();
+
     const titulo = obterTituloEtiquetas();
 
     if (!regiao) {
@@ -1427,10 +1515,10 @@
     }
 
     const dados = {
-      titulo: etiquetasNomes.join(', '),
-      descricao: etiquetasNomes.map((nome) => `Etiqueta: ${nome}`).join('\n'),
-      coordenadas:       document.getElementById('input-coordenadas').value.trim(),
-      localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
+      titulo,
+      descricao:         montarDescricaoEtiquetas(etiquetasItens),
+      coordenadas:       obterCoordenadasAgregadas(etiquetasItens),
+      localizacao_texto: obterEnderecosAgregados(etiquetasItens),
       regiao,
       responsavel:       document.getElementById('input-tecnico').value,
       numero_os:         numeroOs,
@@ -1456,7 +1544,22 @@
 
   window.trocarAba = trocarAba;
 
-  async function buscarEndereco(coordenada) {
+  function sincronizarEtiquetasDoFormulario() {
+    document.querySelectorAll('.etiqueta-input-coord').forEach((input) => {
+      const index = Number(input.dataset.index);
+      if (!Number.isNaN(index) && etiquetasItens[index]) {
+        etiquetasItens[index].coordenadas = input.value;
+      }
+    });
+    document.querySelectorAll('.etiqueta-input-endereco').forEach((input) => {
+      const index = Number(input.dataset.index);
+      if (!Number.isNaN(index) && etiquetasItens[index]) {
+        etiquetasItens[index].endereco = input.value;
+      }
+    });
+  }
+
+  async function buscarEndereco(coordenada, index = null) {
     const coord = (coordenada ?? '').trim();
     if (!coord) return;
 
@@ -1466,14 +1569,41 @@
       { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } }
     );
     const data = await response.json();
-    if (response.ok) {
-      document.getElementById('input-localizacao-texto').value = data.endereco ?? '';
+    if (!response.ok) return;
+
+    const endereco = data.endereco ?? '';
+    if (index != null && etiquetasItens[index]) {
+      etiquetasItens[index].endereco = endereco;
+      const input = document.querySelector(`.etiqueta-input-endereco[data-index="${index}"]`);
+      if (input) input.value = endereco;
+      return;
     }
   }
 
-  document.getElementById('input-coordenadas').addEventListener('blur', function () {
-    buscarEndereco(this.value);
+  document.getElementById('etiquetas-loc-list')?.addEventListener('input', (event) => {
+    const coordInput = event.target.closest('.etiqueta-input-coord');
+    const endInput = event.target.closest('.etiqueta-input-endereco');
+    if (coordInput) {
+      const index = Number(coordInput.dataset.index);
+      if (!Number.isNaN(index) && etiquetasItens[index]) {
+        etiquetasItens[index].coordenadas = coordInput.value;
+      }
+    }
+    if (endInput) {
+      const index = Number(endInput.dataset.index);
+      if (!Number.isNaN(index) && etiquetasItens[index]) {
+        etiquetasItens[index].endereco = endInput.value;
+      }
+    }
   });
+
+  document.getElementById('etiquetas-loc-list')?.addEventListener('blur', (event) => {
+    const coordInput = event.target.closest('.etiqueta-input-coord');
+    if (!coordInput) return;
+    const index = Number(coordInput.dataset.index);
+    if (Number.isNaN(index)) return;
+    buscarEndereco(coordInput.value, index);
+  }, true);
 </script>
 
 <script type="module">
@@ -1652,8 +1782,8 @@
           ${badgeRegiao(r.regiao)}
         </div>
         <div class="detail-field">
-          <span class="detail-label">Nome da(s) etiqueta(s)</span>
-          <div class="detail-value" id="campo-titulo">${renderEtiquetasDetalheHtml(r.titulo)}</div>
+          <span class="detail-label">Etiquetas e localização</span>
+          <div class="detail-value" id="campo-titulo" style="padding:10px;background:transparent;border:none">${renderEtiquetasDetalheHtml(r.titulo, r.descricao, r.coordenadas, r.localizacao_texto)}</div>
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Região', esc(r.regiao), 1, 'campo-regiao')}
@@ -1661,10 +1791,6 @@
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
-          ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
-        </div>
-        <div class="detail-grid-2">
-          ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Status', esc(r.status), 1, 'campo-status')}
@@ -1840,7 +1966,7 @@
   initKanbanDragDrop();
   carregarEtiquetas();
   carregarTecnicos(null, 'filtro-tecnico');
-  carregarTecnicos(null, 'os-input-tecnico');
+  window.carregarTecnicosOsModal?.();
   carregarTecnicos(null, 'input-tecnico');
 </script>
 @endsection

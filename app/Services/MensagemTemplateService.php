@@ -16,12 +16,20 @@ class MensagemTemplateService
                 return [
                     'key' => $key,
                     'label' => $meta['label'] ?? $key,
+                    'grupo' => $meta['grupo'] ?? 'operacional',
+                    'descricao' => $meta['descricao'] ?? null,
                     'statuses' => $meta['statuses'] ?? [],
                     'padroes' => $padroes[$key] ?? [],
                 ];
             })
             ->values()
             ->all();
+    }
+
+    /** @return array<string, array{label: string, descricao?: string}> */
+    public function grupos(): array
+    {
+        return config('mensagens.grupos', []);
     }
 
     public function placeholders(): array
@@ -57,6 +65,7 @@ class MensagemTemplateService
     {
         $categoria = $this->normalizarCategoria($categoria);
         $status = $this->normalizarStatus($status);
+        $status = $this->ajustarStatusTemplate($categoria, $status);
 
         if ($categoria === '' || $status === '') {
             return null;
@@ -121,8 +130,55 @@ class MensagemTemplateService
         ) ?? $template;
     }
 
-    public function dadosExemplo(): array
+    public function dadosExemplo(?string $categoria = null): array
     {
+        $categoria = $this->normalizarCategoria($categoria ?? '');
+
+        if ($categoria === 'troca-etiqueta') {
+            return $this->dadosExemploTrocaEtiqueta();
+        }
+
+        if ($categoria === 'ordem-servico') {
+            return $this->dadosExemploOrdemServico();
+        }
+
+        return $this->dadosExemploPadrao();
+    }
+
+    private function dadosExemploOrdemServico(): array
+    {
+        return [
+            'id' => 108,
+            'taskCode' => 'GV-OS-003',
+            'titulo' => 'OS — Instalação de CTO',
+            'categoria' => 'ordem-servico',
+            'status' => 'Em andamento',
+            'regiao' => 'Goval',
+            'responsavel' => 'joao.silva, maria.santos',
+            'descricao' => 'Instalar CTO na caixa 042 e realizar fusão das fibras.',
+            'parent_task_id' => 42,
+            'parent_task_code' => 'GV-ROM-001',
+            'parent_titulo' => 'ROMPIMENTO - CTO-042',
+            'parent_categoria' => 'rompimentos',
+            'parent_categoria_label' => 'Rompimentos',
+            'os_tipo' => 'Instalação de CTO',
+            'is_parent_task' => false,
+            'criadaEm' => '2026-07-01 09:00:00',
+            'updated_at' => '2026-07-02 11:30:00',
+        ];
+    }
+
+    private function dadosExemploPadrao(): array
+    {
+        $resumoOs = app(OsResumoChatService::class)->formatarBloco([
+            'os_total' => 4,
+            'os_finalizadas' => 4,
+            'por_tecnico' => [
+                'joao.silva' => 2,
+                'maria.santos' => 2,
+            ],
+        ]);
+
         return [
             'id' => 42,
             'taskCode' => 'GV-ROM-001',
@@ -154,6 +210,52 @@ class MensagemTemplateService
             'parent_task_id' => null,
             'is_parent_task' => true,
             'historico' => 'Criada → Em andamento',
+            'os_total' => '4',
+            'os_finalizadas' => '4',
+            'os_resumo_tecnicos' => "• joao.silva — 2 OS\n• maria.santos — 2 OS",
+            'os_resumo' => $resumoOs,
+        ];
+    }
+
+    private function dadosExemploTrocaEtiqueta(): array
+    {
+        $etiquetasExemplo = [
+            ['nome' => 'IPE1504', 'coordenadas' => '-18.8512, -41.9495', 'endereco' => 'Rua Exemplo, 100 — Centro'],
+            ['nome' => 'IPG1106', 'coordenadas' => '-18.8520, -41.9501', 'endereco' => 'Av. Brasil, 250 — Goval'],
+            ['nome' => 'IPE2201', 'coordenadas' => '-18.8535, -41.9510', 'endereco' => 'Rua das Flores, 45 — Jardim'],
+        ];
+
+        return [
+            'id' => 42,
+            'taskCode' => 'GV-ETQ-001',
+            'titulo' => 'IPE1504, IPG1106, IPE2201',
+            'categoria' => 'troca-etiqueta',
+            'status' => 'Em andamento',
+            'setor' => 'CTO-042',
+            'cto' => 'CTO-042',
+            'regiao' => 'Goval',
+            'responsavel' => 'joao.silva',
+            'prioridade' => '—',
+            'prazo' => '2026-07-15',
+            'clientesAfetados' => '0',
+            'coordenadas' => '-18.8512, -41.9495 | -18.8520, -41.9501 | -18.8535, -41.9510',
+            'localizacao_texto' => 'Rua Exemplo, 100 — Centro | Av. Brasil, 250 — Goval | Rua das Flores, 45 — Jardim',
+            'descricao' => TrocaEtiquetaParser::montarDescricao($etiquetasExemplo),
+            'numero_os' => 'OS-12345',
+            'ordem_servico' => 'OS-12345',
+            'nome_cliente' => 'Maria Souza',
+            'protocolo' => 'PROT-98765',
+            'sub_processo' => 'Instalação',
+            'data_entrada' => '2026-06-01',
+            'data_instalacao' => '2026-06-10',
+            'assinada_por' => 'tecnico.silva',
+            'assinada_em' => '2026-06-10 14:30:00',
+            'criadaEm' => '2026-06-01 09:00:00',
+            'updated_at' => '2026-06-29 11:45:00',
+            'active_duration_minutes' => 180,
+            'parent_task_id' => null,
+            'is_parent_task' => true,
+            'historico' => 'Criada → Em andamento',
         ];
     }
 
@@ -164,9 +266,10 @@ class MensagemTemplateService
         return match ($categoria) {
             'rompimento', 'rompimentos' => 'rompimentos',
             'troca-poste', 'troca de poste' => 'troca-poste',
+            'troca-etiqueta', 'troca de etiqueta' => 'troca-etiqueta',
             'otimizacao-rede', 'otimizacao de rede', 'otimização de rede' => 'otimizacao-rede',
             'atendimento-cliente', 'atendimento ao cliente' => 'atendimento-cliente',
-            'correcao-atenuacao', 'correção de atenuação' => 'correcao-atenuacao',
+            'correcao-atenuacao', 'correção de atenuação', 'correcao-de-sinal', 'correção de sinal' => 'correcao-atenuacao',
             'certificacao-cemig', 'certificação cemig' => 'certificacao-cemig',
             'ordem-servico' => 'ordem-servico',
             default => str_replace(' ', '-', $categoria),
@@ -225,6 +328,31 @@ class MensagemTemplateService
 
         $statusAtual = trim((string) ($statusNovo ?? $task['status'] ?? '')) ?: '—';
 
+        $tituloOs = trim((string) ($task['titulo'] ?? ''));
+        $osTipo = trim((string) ($task['os_tipo'] ?? ''));
+        if ($osTipo === '' && preg_match('/^OS\s*[—\-]\s*(.+)$/iu', $tituloOs, $m)) {
+            $osTipo = trim($m[1]);
+        }
+        if ($osTipo === '') {
+            $osTipo = $tituloOs !== '' ? $tituloOs : '—';
+        }
+
+        $parentCategoria = $this->normalizarCategoria($task['parent_categoria'] ?? '');
+        $parentCategoriaLabel = trim((string) ($task['parent_categoria_label'] ?? ''));
+        if ($parentCategoriaLabel === '' && $parentCategoria !== '') {
+            $parentCategoriaLabel = trim((string) (config("mensagens.categorias.{$parentCategoria}.label", '')));
+        }
+        if ($parentCategoriaLabel === '') {
+            $parentCategoriaLabel = trim((string) ($task['parent_categoria'] ?? '')) ?: '—';
+        }
+
+        $etiquetasItens = TrocaEtiquetaParser::parseItensParaMensagem(
+            $task['titulo'] ?? '',
+            $task['descricao'] ?? '',
+            $task['coordenadas'] ?? '',
+            $task['localizacao_texto'] ?? '',
+        );
+
         return [
             'id' => trim((string) ($task['id'] ?? '')) ?: '—',
             'task_code' => trim((string) ($task['taskCode'] ?? $task['id'] ?? '')) ?: '—',
@@ -262,10 +390,35 @@ class MensagemTemplateService
             'parent_task_id' => isset($task['parent_task_id']) && $task['parent_task_id'] !== null && $task['parent_task_id'] !== ''
                 ? (string) $task['parent_task_id']
                 : '—',
+            'parent_task_code' => trim((string) ($task['parent_task_code'] ?? '')) ?: '—',
+            'parent_titulo' => trim((string) ($task['parent_titulo'] ?? '')) ?: '—',
+            'parent_categoria' => $parentCategoria !== '' ? $parentCategoria : '—',
+            'parent_categoria_label' => $parentCategoriaLabel,
+            'os_tipo' => $osTipo,
             'is_parent_task' => $this->formatarBooleano($task['is_parent_task'] ?? null),
             'historico' => trim((string) ($task['historico'] ?? '')) ?: '—',
             'enviado_por' => trim((string) ($enviadoPor ?? '')) ?: '—',
+            'etiquetas' => TrocaEtiquetaParser::formatarNomes($etiquetasItens),
+            'etiquetas_localizacao' => TrocaEtiquetaParser::formatarLocalizacaoLista($etiquetasItens),
+            'etiquetas_coordenadas' => TrocaEtiquetaParser::formatarCoordenadasLista($etiquetasItens),
+            'os_total' => trim((string) ($task['os_total'] ?? '')) ?: '—',
+            'os_finalizadas' => trim((string) ($task['os_finalizadas'] ?? '')) ?: '—',
+            'os_resumo_tecnicos' => trim((string) ($task['os_resumo_tecnicos'] ?? '')) ?: '—',
+            'os_resumo' => trim((string) ($task['os_resumo'] ?? '')) ?: '—',
         ];
+    }
+
+    private function ajustarStatusTemplate(string $categoria, string $status): string
+    {
+        if ($categoria === 'certificacao-cemig' && $status === 'Finalizada') {
+            return 'Concluído';
+        }
+
+        if ($categoria === 'troca-etiqueta' && $status === 'Concluída') {
+            return 'Finalizada';
+        }
+
+        return $status;
     }
 
     private function formatarValorData(mixed $valor, bool $comHora = false): string

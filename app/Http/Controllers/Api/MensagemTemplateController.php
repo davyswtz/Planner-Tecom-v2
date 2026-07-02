@@ -16,6 +16,7 @@ class MensagemTemplateController extends Controller
     public function show()
     {
         return response()->json([
+            'grupos' => $this->mensagens->grupos(),
             'catalogo' => $this->mensagens->catalogo(),
             'placeholders' => $this->mensagens->placeholders(),
             'templates' => $this->mensagens->listarEfetivos(),
@@ -76,8 +77,7 @@ class MensagemTemplateController extends Controller
             $template = $this->mensagens->obterTemplate($categoria, $status) ?? '';
         }
 
-        $exemplo = $this->mensagens->dadosExemplo();
-        $exemplo['categoria'] = $categoria;
+        $exemplo = $this->mensagens->dadosExemplo($categoria);
 
         $texto = $this->mensagens->renderizar(
             $template,

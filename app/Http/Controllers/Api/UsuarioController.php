@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Tecnico;
 use App\Models\User;
+use App\Support\UsuarioCargo;
 use App\Services\UsuarioPermissaoService;
 use Illuminate\Http\Request;
 use Illuminate\Database\Schema\Blueprint;
@@ -14,6 +15,8 @@ use Illuminate\Validation\Rule;
 
 class UsuarioController extends Controller
 {
+    private static ?bool $temTabelaTecnicos = null;
+
     private const DEFAULT_ITERATIONS = 200000;
 
     private const REGIOES_TECNICO = [
@@ -27,9 +30,7 @@ class UsuarioController extends Controller
 
     public function opcoes()
     {
-        $tecnicosPorUsername = Schema::hasTable('tecnicos')
-            ? Tecnico::query()->whereNotNull('username')->get()->keyBy('username')
-            : collect();
+        $tecnicosPorUsername = $this->tecnicosPorUsername();
 
         $usuarios = User::query()
             ->orderBy('username')
@@ -48,12 +49,11 @@ class UsuarioController extends Controller
 
     public function index()
     {
-        $tecnicosPorUsername = Schema::hasTable('tecnicos')
-            ? Tecnico::query()->whereNotNull('username')->get()->keyBy('username')
-            : collect();
+        $tecnicosPorUsername = $this->tecnicosPorUsername();
 
         $usuarios = User::query()
-            ->orderBy('created_at', 'desc')
+            ->select(['username', 'cargo', 'created_at'])
+            ->orderByDesc('created_at')
             ->get();
 
         $permissoesPorUsuario = $this->permissoes->listarPorUsuarios(
@@ -67,6 +67,7 @@ class UsuarioController extends Controller
                 return array_merge($this->formatarUsuario($user), [
                     'funcao' => $ehTecnico ? 'tecnico' : 'projetista',
                     'regiao' => $ehTecnico ? ($tecnico->regiao ?? '') : null,
+                    'cargo' => $ehTecnico ? null : ($user->cargo ?? null),
                     'permissoes' => $permissoesPorUsuario[$user->username] ?? [],
                 ]);
             });
@@ -74,6 +75,7 @@ class UsuarioController extends Controller
         return response()->json([
             'usuarios' => $usuarios,
             'permissoes_disponiveis' => $this->permissoes->catalogo(),
+            'cargos_disponiveis' => UsuarioCargo::catalogoFormatado(),
         ], 200);
     }
 
@@ -89,6 +91,12 @@ class UsuarioController extends Controller
             ],
             'password' => [Rule::requiredIf($request->input('funcao') === 'projetista'), 'nullable', 'string', 'min:4', 'confirmed'],
             'funcao' => ['required', Rule::in(['projetista', 'tecnico'])],
+            'cargo' => [
+                Rule::requiredIf($request->input('funcao') === 'projetista'),
+                'nullable',
+                'string',
+                Rule::in(UsuarioCargo::chavesValidas()),
+            ],
             'regiao' => [Rule::requiredIf($request->input('funcao') === 'tecnico'), 'nullable', 'string', Rule::in(self::REGIOES_TECNICO)],
             'permissoes' => ['nullable', 'array'],
             'permissoes.*' => ['string', Rule::in($this->permissoes->chavesValidas())],
@@ -102,6 +110,8 @@ class UsuarioController extends Controller
             'password.confirmed' => 'A confirmação da senha não confere.',
             'funcao.required' => 'Selecione a função do usuário.',
             'funcao.in' => 'Selecione Projetista ou Técnico.',
+            'cargo.required' => 'Selecione o cargo do usuário.',
+            'cargo.in' => 'Selecione um cargo válido.',
             'regiao.required' => 'Selecione a região do técnico.',
             'regiao.in' => 'Selecione Governador Valadares ou Vale do Aço.',
         ]);
@@ -113,6 +123,7 @@ class UsuarioController extends Controller
         $usuario = DB::transaction(function () use ($dados) {
             $usuario = User::create([
                 'username' => $dados['username'],
+                'cargo' => $dados['funcao'] === 'projetista' ? ($dados['cargo'] ?? null) : null,
                 ...$this->gerarSenha($dados['password'] ?? bin2hex(random_bytes(16))),
             ]);
 
@@ -146,6 +157,12 @@ class UsuarioController extends Controller
             ],
             'password' => ['nullable', 'string', 'min:4', 'confirmed'],
             'funcao' => ['required', Rule::in(['projetista', 'tecnico'])],
+            'cargo' => [
+                Rule::requiredIf($request->input('funcao') === 'projetista'),
+                'nullable',
+                'string',
+                Rule::in(UsuarioCargo::chavesValidas()),
+            ],
             'regiao' => [Rule::requiredIf($request->input('funcao') === 'tecnico'), 'nullable', 'string', Rule::in(self::REGIOES_TECNICO)],
             'permissoes' => ['nullable', 'array'],
             'permissoes.*' => ['string', Rule::in($this->permissoes->chavesValidas())],
@@ -157,6 +174,8 @@ class UsuarioController extends Controller
             'password.confirmed' => 'A confirmação da senha não confere.',
             'funcao.required' => 'Selecione a função do usuário.',
             'funcao.in' => 'Selecione Projetista ou Técnico.',
+            'cargo.required' => 'Selecione o cargo do usuário.',
+            'cargo.in' => 'Selecione um cargo válido.',
             'regiao.required' => 'Selecione a região do técnico.',
             'regiao.in' => 'Selecione Governador Valadares ou Vale do Aço.',
         ]);
@@ -173,6 +192,7 @@ class UsuarioController extends Controller
         DB::transaction(function () use ($user, $usuario, $dados) {
             $usernameAnterior = $usuario;
             $user->username = $dados['username'];
+            $user->cargo = $dados['funcao'] === 'projetista' ? ($dados['cargo'] ?? null) : null;
 
             if (filled($dados['password'] ?? null)) {
                 $user->fill($this->gerarSenha($dados['password']));
@@ -210,7 +230,7 @@ class UsuarioController extends Controller
 
         $user->tokens()->delete();
         DB::transaction(function () use ($user, $usuario) {
-            if (Schema::hasTable('tecnicos')) {
+            if ($this->temTabelaTecnicos()) {
                 Tecnico::where('username', $usuario)->delete();
             }
 
@@ -243,21 +263,46 @@ class UsuarioController extends Controller
     {
         return [
             'username' => $user->username,
+            'cargo' => $user->cargo,
             'created_at' => $user->created_at,
         ];
     }
 
     private function formatarUsuarioComFuncao(User $user): array
     {
-        $tecnico = Schema::hasTable('tecnicos')
+        $tecnico = $this->temTabelaTecnicos()
             ? Tecnico::query()->where('username', $user->username)->first()
             : null;
 
         return array_merge($this->formatarUsuario($user), [
             'funcao' => $tecnico ? 'tecnico' : 'projetista',
             'regiao' => $tecnico?->regiao,
+            'cargo' => $tecnico ? null : ($user->cargo ?? null),
             'permissoes' => $this->permissoes->listarPorUsuario($user->username),
         ]);
+    }
+
+    /** @return \Illuminate\Support\Collection<string, Tecnico> */
+    private function tecnicosPorUsername()
+    {
+        if (! $this->temTabelaTecnicos()) {
+            return collect();
+        }
+
+        return Tecnico::query()
+            ->select(['username', 'regiao'])
+            ->whereNotNull('username')
+            ->get()
+            ->keyBy('username');
+    }
+
+    private function temTabelaTecnicos(): bool
+    {
+        if (self::$temTabelaTecnicos === null) {
+            self::$temTabelaTecnicos = Schema::hasTable('tecnicos');
+        }
+
+        return self::$temTabelaTecnicos;
     }
 
     private function sincronizarTecnico(
@@ -266,7 +311,7 @@ class UsuarioController extends Controller
         ?string $usernameAnterior = null,
         ?string $regiao = null,
     ): void {
-        if (! Schema::hasTable('tecnicos')) {
+        if (! $this->temTabelaTecnicos()) {
             return;
         }
 
@@ -289,9 +334,11 @@ class UsuarioController extends Controller
 
     private function garantirTabelaTecnicos(): void
     {
-        if (Schema::hasTable('tecnicos')) {
+        if ($this->temTabelaTecnicos()) {
             return;
         }
+
+        self::$temTabelaTecnicos = null;
 
         Schema::create('tecnicos', function (Blueprint $table) {
             $table->id();
@@ -303,5 +350,7 @@ class UsuarioController extends Controller
             $table->index('nome');
             $table->index('regiao');
         });
+
+        self::$temTabelaTecnicos = true;
     }
 }
