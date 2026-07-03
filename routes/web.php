@@ -47,6 +47,10 @@ Route::get('/correcao-de-sinal', function () {
     return view('correcao-de-sinal');
 });
 
+Route::get('/manutencao-corretiva', function () {
+    return view('manutencao-corretiva');
+});
+
 Route::get('/certificacao-cemig', function () {
     return view('certificacao-cemig');
 });

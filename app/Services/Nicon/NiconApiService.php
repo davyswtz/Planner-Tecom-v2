@@ -21,10 +21,6 @@ class NiconApiService
                 'password' => config('services.nicon.password'),
             ];
 
-            if (config('services.nicon.two_factor')) {
-                $payload['one_time_password'] = config('services.nicon.two_factor');
-            }
-
             $response = Http::timeout(config('services.nicon.timeout', 120))
                 ->acceptJson()
                 ->post("{$this->baseUrl()}/api/app-tecnico/login", $payload);

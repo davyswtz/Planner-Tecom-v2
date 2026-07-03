@@ -14,7 +14,6 @@
     font-size: 13px; line-height: 1.5;
   }
   .cd-banner i { font-size: 20px; margin-top: 1px; flex-shrink: 0; }
-  .cd-actions { display: flex; justify-content: flex-end; margin-bottom: 12px; }
   .cd-table-wrap { overflow-x: auto; }
   .cd-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .cd-table th {
@@ -83,7 +82,7 @@
   [data-theme="dark"] .cd-tecnico-tag { background: #0d2340; color: #79c0ff; }
   [data-theme="dark"] .cd-banner { background: #052e16; border-color: #166534; color: #86efac; }
   [data-theme="dark"] .cd-input, [data-theme="dark"] .cd-select, [data-theme="dark"] .cd-textarea,
-  [data-theme="dark"] .cd-btn { background: #21262d; border-color: #30363d; color: #e6edf3; }
+  [data-theme="dark"] .cd-btn { background: #12151a; border-color: #1e2228; color: #e6edf3; }
 </style>
 @endsection
 
@@ -95,12 +94,6 @@
       Registros criados aqui usam as <strong>datas informadas por você</strong>, não a data atual.
       Isso vale apenas para itens desta tela — aparecem normalmente nos filtros e relatórios do período escolhido.
     </div>
-  </div>
-
-  <div class="cd-actions">
-    <button type="button" class="btn-primary" onclick="abrirModalCorrecao()" style="background:#166534;">
-      <i class="ti ti-plus"></i> Novo registro
-    </button>
   </div>
 
   <div class="card">

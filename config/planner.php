@@ -33,4 +33,19 @@ return [
         'max_imagens_por_mensagem' => 10,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tutorial de onboarding
+    |--------------------------------------------------------------------------
+    |
+    | Incremente PLANNER_TUTORIAL_VERSION no deploy para exibir o tour novamente
+    | a todos os usuários na próxima sessão (ex.: 20260703).
+    |
+    */
+
+    'tutorial' => [
+        'enabled' => env('PLANNER_TUTORIAL_ENABLED', true),
+        'version' => env('PLANNER_TUTORIAL_VERSION', '20260703'),
+    ],
+
 ];

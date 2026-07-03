@@ -9,7 +9,7 @@
   .kcard { cursor: pointer; }
   .modal-foot-inner { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-  .btn-modal-danger { border: 1px solid #fecaca; background: #fff; color: #dc2626; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-modal-danger { border: 1px solid #fecaca; background: #fff; color: #dc2626; font-weight: 500; }
   .btn-modal-danger:hover { background: #fef2f2; border-color: #f87171; }
   .confirm-excluir-overlay {
     position: fixed; inset: 0; z-index: 110;
@@ -31,8 +31,8 @@
   }
   .confirm-excluir-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0 0 6px; }
   .confirm-excluir-text { font-size: 13px; color: var(--gray-500); margin: 0 0 18px; line-height: 1.5; }
-  .confirm-excluir-foot { display: flex; justify-content: flex-end; gap: 8px; }
-  [data-theme="dark"] .btn-modal-danger { background: #21262d; border-color: #7f1d1d; color: #ff7b72; }
+  .confirm-excluir-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  [data-theme="dark"] .btn-modal-danger { background: #12151a; border-color: #7f1d1d; color: #ff7b72; }
   .kcard[draggable="true"] {
     cursor: grab;
     user-select: none;
@@ -127,8 +127,8 @@
   }
   [data-theme="dark"] .tarefa-input,
   [data-theme="dark"] .tarefa-textarea {
-    background: #21262d;
-    border-color: #30363d;
+    background: #12151a;
+    border-color: #1e2228;
     color: #e6edf3;
   }
   .tarefas-page-content {
@@ -149,17 +149,6 @@
   .tarefas-kanban-card .kcol {
     min-height: 0;
   }
-  .prioridade-wrap { display: flex; gap: 8px; }
-  .btn-prioridade {
-    flex: 1; padding: 8px 0; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
-    cursor: pointer; font-family: inherit; transition: filter 0.15s, transform 0.1s;
-    border-width: 1px; border-style: solid;
-  }
-  .btn-prioridade:active { transform: scale(0.97); }
-  .btn-prio-baixa  { border-color: #86efac; background: #f0fdf4; color: #166534; }
-  .btn-prio-media  { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
-  .btn-prio-alta   { border-color: #fca5a5; background: var(--red-bg); color: var(--red-text); }
-  .btn-prio-ativo  { border-width: 2px; }
   .responsaveis-wrap {
     display: flex; flex-direction: column; gap: 8px;
     border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
@@ -176,7 +165,7 @@
     padding: 0; display: inline-flex; font-size: 13px; line-height: 1;
   }
   .responsaveis-empty { font-size: 12px; color: var(--gray-400); }
-  [data-theme="dark"] .responsaveis-wrap { background: #21262d; border-color: #30363d; }
+  [data-theme="dark"] .responsaveis-wrap { background: #12151a; border-color: #1e2228; }
   [data-theme="dark"] .responsavel-tag { background: #0d2340; color: #79c0ff; }
 </style>
 @endsection
@@ -215,10 +204,10 @@
 
     <div class="tarefa-field">
       <label class="tarefa-label">Prioridade</label>
-      <div class="prioridade-wrap" id="prioridade-criar-wrap">
-        <button type="button" onclick="selecionarPrioridadeCriar(this,'Baixa')" class="btn-prioridade btn-prio-baixa">Baixa</button>
-        <button type="button" onclick="selecionarPrioridadeCriar(this,'Média')" class="btn-prioridade btn-prio-media btn-prio-ativo">Média ✓</button>
-        <button type="button" onclick="selecionarPrioridadeCriar(this,'Alta')" class="btn-prioridade btn-prio-alta">Alta</button>
+      <div class="prioridade-wrap" id="prioridade-criar-wrap" role="group" aria-label="Prioridade">
+        <button type="button" onclick="selecionarPrioridadeCriar(this,'Baixa')" class="btn-prioridade btn-prio-baixa" data-nivel="Baixa" aria-pressed="false"><span class="prio-label">Baixa</span></button>
+        <button type="button" onclick="selecionarPrioridadeCriar(this,'Média')" class="btn-prioridade btn-prio-media btn-prio-ativo" data-nivel="Média" aria-pressed="true"><span class="prio-label">Média</span></button>
+        <button type="button" onclick="selecionarPrioridadeCriar(this,'Alta')" class="btn-prioridade btn-prio-alta" data-nivel="Alta" aria-pressed="false"><span class="prio-label">Alta</span></button>
       </div>
     </div>
   </div>
@@ -446,22 +435,12 @@
   }
 
   function atualizarBotoesPrioridade(container, nivelAtivo) {
-    if (!container) return;
-    container.querySelectorAll('.btn-prioridade').forEach(btn => {
-      const nivel = btn.dataset.nivel || btn.textContent.replace(' ✓', '').trim();
-      const ativo = nivel === nivelAtivo;
-      btn.textContent = ativo ? `${nivel} ✓` : nivel;
-      btn.style.borderWidth = ativo ? '2px' : '1px';
-      btn.classList.toggle('btn-prio-ativo', ativo);
-    });
+    window.plannerAtualizarBotoesPrioridade?.(container, nivelAtivo);
   }
 
   function htmlBotoesPrioridade(nivelAtivo, onclickFn) {
-    const classes = { Baixa: 'btn-prio-baixa', Média: 'btn-prio-media', Alta: 'btn-prio-alta' };
-    return NIVEIS_PRIORIDADE.map(nivel => {
-      const ativo = nivel === (nivelAtivo || 'Média');
-      return `<button type="button" data-nivel="${nivel}" onclick="${onclickFn}(this,'${nivel}')" class="btn-prioridade ${classes[nivel]}${ativo ? ' btn-prio-ativo' : ''}" style="border-width:${ativo ? '2px' : '1px'}">${nivel}${ativo ? ' ✓' : ''}</button>`;
-    }).join('');
+    return window.plannerHtmlBotoesPrioridade?.(nivelAtivo, onclickFn)
+      || '';
   }
 
   window.selecionarPrioridadeCriar = function (btn, nivel) {

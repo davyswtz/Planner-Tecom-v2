@@ -1,8 +1,8 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Correção de sinal — Planner Telecom')
-@section('page-title', 'Correção de sinal')
-@section('btn-label', 'Nova correção de sinal')
+@section('title', 'Manutenção corretiva — Planner Telecom')
+@section('page-title', 'Manutenção corretiva')
+@section('btn-label', 'Nova manutenção corretiva')
 
 @section('styles')
 <style>
@@ -206,7 +206,7 @@
 @section('content')
 
 <!-- MODAL CRIAR -->
-<x-modal id="modal-overlay" titulo="Nova correção de sinal" subtitulo="Preencha os dados da correção de sinal">
+<x-modal id="modal-overlay" titulo="Nova manutenção corretiva" subtitulo="Preencha os dados da manutenção corretiva">
 
   <div class="modal-form">
 
@@ -250,8 +250,8 @@
 
   <x-slot name="footer">
     <button onclick="fecharModal()" class="btn-modal btn-modal-ghost">Cancelar</button>
-    <button onclick="criarCorrecaoPoste()" class="btn-modal btn-modal-primary">
-      <i class="ti ti-tools" style="font-size:14px"></i> Criar correção de sinal
+    <button onclick="criarManutencao()" class="btn-modal btn-modal-primary">
+      <i class="ti ti-tools" style="font-size:14px"></i> Criar manutenção corretiva
     </button>
   </x-slot>
 
@@ -288,13 +288,13 @@
     </div>
     <div class="os-empty">
       <i class="ti ti-clipboard-off"></i>
-      <span>Nenhuma OS vinculada a esta correção de sinal</span>
+      <span>Nenhuma OS vinculada a esta manutenção corretiva</span>
     </div>
   </div>
 
   <x-slot name="footer">
     <div class="modal-foot-inner">
-      <button type="button" onclick="abrirConfirmacaoExclusao()" id="btn-excluir" class="btn-modal btn-modal-danger" title="Excluir esta correção de sinal">
+      <button type="button" onclick="abrirConfirmacaoExclusao()" id="btn-excluir" class="btn-modal btn-modal-danger" title="Excluir esta manutenção corretiva">
         <i class="ti ti-trash" style="font-size:14px"></i> Excluir
       </button>
       <div class="modal-foot-actions">
@@ -318,7 +318,7 @@
 <div id="confirm-excluir-overlay" class="confirm-excluir-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-excluir-title">
   <div class="confirm-excluir-box">
     <div class="confirm-excluir-icon"><i class="ti ti-alert-triangle"></i></div>
-    <p class="confirm-excluir-title" id="confirm-excluir-title">Excluir correção de sinal?</p>
+    <p class="confirm-excluir-title" id="confirm-excluir-title">Excluir manutenção corretiva?</p>
     <p class="confirm-excluir-text" id="confirm-excluir-text">
       Esta ação não pode ser desfeita. A tarefa e os dados vinculados serão removidos permanentemente.
     </p>
@@ -349,7 +349,7 @@
 </div>
 
 <!-- MODAL NOVA OS (vinculada à tarefa) -->
-<x-modal-os tipo-placeholder="Ex: Correção sinal — cliente" status-variant="titulo" />
+<x-modal-os tipo-placeholder="Ex: Manutenção — cliente" status-variant="titulo" />
 
 <!-- FILTROS -->
 <div class="card filtros-card">
@@ -399,8 +399,8 @@
 <!-- KANBAN -->
 <div class="card" style="flex:1">
   <div class="card-header">
-    <span class="card-title">Kanban de Correção de sinal</span>
-    <span class="card-action">total: <span id="total-correcoes">0</span></span>
+    <span class="card-title">Kanban de Manutenção corretiva</span>
+    <span class="card-action">total: <span id="total-manutencoes">0</span></span>
   </div>
   <div class="kanban-cols">
     <div class="kcol">
@@ -526,8 +526,8 @@
   window.filtrosParaApi = filtrosParaApi;
 
   async function aplicarFiltros() {
-    if (window.carregarCorrecoes) {
-      window.carregarCorrecoes(obterFiltrosFormulario());
+    if (window.carregarManutencoes) {
+      window.carregarManutencoes(obterFiltrosFormulario());
     }
   }
 
@@ -537,11 +537,11 @@
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
     document.getElementById('filtro-taskcode').value = '';
-    if (window.carregarCorrecoes) window.carregarCorrecoes({});
+    if (window.carregarManutencoes) window.carregarManutencoes({});
   }
 
   // ─── MODAIS ───
-  function limparFormularioCorrecao() {
+  function limparFormularioManutencao() {
     document.getElementById('input-regiao').value = '';
     document.getElementById('input-numero-os').value = '';
     document.getElementById('input-localizacao-texto').value = '';
@@ -551,7 +551,7 @@
   }
 
   window.abrirModal = function() {
-    limparFormularioCorrecao();
+    limparFormularioManutencao();
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -561,8 +561,8 @@
 
   // ─── ORDENS DE SERVIÇO ───
   window.abrirNovaOS = function() {
-    const correcaoId = document.getElementById('detalhe-conteudo')?.dataset?.id;
-    if (!correcaoId) return;
+    const manutencaoId = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    if (!manutencaoId) return;
 
     osEditandoId = null;
     document.getElementById('modal-os-overlay').classList.add('open');
@@ -625,22 +625,22 @@
     if (!response.ok) {
       const erro = await response.json();
       console.error('Erro ao atualizar o status da OS:', erro.message);
-      const correcaoId = document.getElementById('detalhe-conteudo')?.dataset?.id;
-      if (correcaoId) carregarOS(correcaoId);
+      const manutencaoId = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      if (manutencaoId) carregarOS(manutencaoId);
     } else if (osDataMap[osId]) {
       osDataMap[osId].status = novoStatus;
     }
   };
 
   async function salvarOs() {
-    const correcaoId = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    const manutencaoId = document.getElementById('detalhe-conteudo')?.dataset?.id;
     const tipo = document.getElementById('os-input-tipo').value.trim();
     const descricao = window.getOsDescricaoValor?.() || '';
     const tecnico = window.getOsTecnicosValor?.() || '';
     const status = document.getElementById('os-input-status').value;
     const token = localStorage.getItem('planner_token');
 
-    if (!correcaoId) return;
+    if (!manutencaoId) return;
     if (!tipo) {
       alert('Informe o tipo de serviço.');
       return;
@@ -669,8 +669,8 @@
         });
         if (response.ok) {
           fecharNovaOS();
-          carregarOS(correcaoId);
-          if (window.carregarCorrecoes) window.carregarCorrecoes();
+          carregarOS(manutencaoId);
+          if (window.carregarManutencoes) window.carregarManutencoes();
         } else {
           const erro = await response.json();
           console.error('Erro ao atualizar OS:', erro.message);
@@ -683,7 +683,7 @@
           responsavel: tecnico,
           status,
           categoria: 'ordem-servico',
-          parent_task_id: correcaoId,
+          parent_task_id: manutencaoId,
         };
         const response = await fetch('/api/op-tasks', {
           method: 'POST',
@@ -698,8 +698,8 @@
           const criada = await response.json();
           await window.enviarAnexosPendentesOs?.(criada.id);
           fecharNovaOS();
-          carregarOS(correcaoId);
-          if (window.carregarCorrecoes) window.carregarCorrecoes();
+          carregarOS(manutencaoId);
+          if (window.carregarManutencoes) window.carregarManutencoes();
         } else {
           const erro = await response.json();
           console.error('Erro ao criar OS:', erro.message);
@@ -717,9 +717,9 @@
     return String(valor).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  async function carregarOS(correcaoId) {
+  async function carregarOS(manutencaoId) {
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/correcao-sinal/${correcaoId}/os`, {
+    const response = await fetch(`/api/manutencao-corretiva/${manutencaoId}/os`, {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Accept': 'application/json',
@@ -736,7 +736,7 @@
 
   // ─── EXCLUSÃO DE OS ───────────────────────────────────────────────────────
   // Fluxo: botão lixeira no card → modal de confirmação → DELETE /api/op-tasks/{id}
-  // A tarefa pai (correção de sinal) permanece; apenas a OS vinculada é removida.
+  // A tarefa pai (manutenção corretiva) permanece; apenas a OS vinculada é removida.
 
   /** Abre o modal pedindo confirmação antes de excluir uma OS */
   window.abrirConfirmacaoExclusaoOs = function(osId, event) {
@@ -785,7 +785,7 @@
       fecharConfirmacaoExclusaoOs();
       await window.plannerAposMutacaoLocal(async () => {
         if (parentId) await carregarOS(parentId);
-        if (window.carregarCorrecoes) await window.carregarCorrecoes();
+        if (window.carregarManutencoes) await window.carregarManutencoes();
       });
     } catch (err) {
       console.error('Erro ao excluir OS:', err.message);
@@ -816,7 +816,7 @@
         </div>
         <div class="os-empty">
           <i class="ti ti-clipboard-off"></i>
-          <span>Nenhuma OS vinculada a esta correção de sinal</span>
+          <span>Nenhuma OS vinculada a esta manutenção corretiva</span>
         </div>`;
       return;
     }
@@ -977,7 +977,7 @@
 
     const token = localStorage.getItem('planner_token');
     try {
-      const response = await fetch(`/api/correcao-sinal/${id}`, {
+      const response = await fetch(`/api/manutencao-corretiva/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -987,15 +987,15 @@
 
       if (!response.ok) {
         const erro = await response.json();
-        throw new Error(erro.message || 'Erro ao excluir correção de sinal.');
+        throw new Error(erro.message || 'Erro ao excluir manutenção corretiva.');
       }
 
       fecharConfirmacaoExclusao();
       fecharDetalhe();
-      await window.plannerAposExclusaoTarefa(id, () => window.carregarCorrecoes());
+      await window.plannerAposExclusaoTarefa(id, () => window.carregarManutencoes());
     } catch (err) {
-      console.error('Erro ao excluir correção de sinal:', err.message);
-      alert(err.message || 'Erro ao excluir correção de sinal.');
+      console.error('Erro ao excluir manutenção corretiva:', err.message);
+      alert(err.message || 'Erro ao excluir manutenção corretiva.');
     }
   }
 
@@ -1111,7 +1111,7 @@
     };
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/correcao-sinal/${id}`, {
+    const response = await fetch(`/api/manutencao-corretiva/${id}`, {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(dados)
@@ -1119,14 +1119,14 @@
 
     if (response.ok) {
       fecharDetalhe();
-      window.carregarCorrecoes();
+      window.carregarManutencoes();
     } else {
       const erro = await response.json();
       console.error('Erro ao salvar:', erro.message);
     }
   }
 
-  async function criarCorrecaoPoste() {
+  async function criarManutencao() {
     const regiao = document.getElementById('input-regiao').value;
     const numeroOs = document.getElementById('input-numero-os').value.trim();
 
@@ -1136,7 +1136,7 @@
     }
 
     const dados = {
-      titulo:            numeroOs ? `Correção de sinal — OS ${numeroOs}` : 'Correção de sinal',
+      titulo:            numeroOs ? `Manutenção corretiva — OS ${numeroOs}` : 'Manutenção corretiva',
       coordenadas:       document.getElementById('input-coordenadas').value.trim(),
       localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
       regiao:            regiao,
@@ -1147,7 +1147,7 @@
     };
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch('/api/correcao-sinal', {
+    const response = await fetch('/api/manutencao-corretiva', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(dados)
@@ -1156,10 +1156,10 @@
     const resultado = await response.json();
     if (response.ok) {
       fecharModal();
-      window.carregarCorrecoes();
+      window.carregarManutencoes();
     } else {
-      alert(resultado.message || 'Erro ao criar correção de sinal.');
-      console.error('Erro ao criar correção de sinal:', resultado);
+      alert(resultado.message || 'Erro ao criar manutenção corretiva.');
+      console.error('Erro ao criar manutenção corretiva:', resultado);
     }
   }
 
@@ -1171,7 +1171,7 @@
 
     const token = localStorage.getItem('planner_token');
     const response = await fetch(
-      `/api/correcao-sinal/coordenada?coordenada=${encodeURIComponent(coord)}`,
+      `/api/manutencao-corretiva/coordenada?coordenada=${encodeURIComponent(coord)}`,
       { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } }
     );
     const data = await response.json();
@@ -1189,7 +1189,7 @@
   let draggedId = null;
   let draggedStatus = null;
   let wasDragged = false;
-  const correcoesMap = {};
+  const manutencoesMap = {};
   let filtrosAtivos = {};
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
@@ -1203,7 +1203,7 @@
     const novos = await buscarColuna(status, limit, offsetMap[status], filtrosAtivos);
     const colId = colIdMap[status];
     const col = document.getElementById(`col-${colId}`);
-    novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); correcoesMap[r.id] = r; });
+    novos.forEach(r => { col.insertAdjacentHTML('beforeend', renderCard(r)); manutencoesMap[r.id] = r; });
     document.getElementById(`count-${colId}`).textContent = col.querySelectorAll('.kcard').length;
     if (novos.length < limit) document.getElementById(`mais-${colId}`).style.display = 'none';
     document.getElementById(`menos-${colId}`).style.display = 'block';
@@ -1279,16 +1279,16 @@
     Object.entries(filtros).forEach(([chave, valor]) => {
       if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
     });
-    const response = await fetch(`/api/correcao-sinal?${params}`, {
+    const response = await fetch(`/api/manutencao-corretiva?${params}`, {
       headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
       cache: 'no-store',
     });
     const data = await response.json();
-    const lista = data.correcaoDeSinal || [];
+    const lista = data.manutencaoCorretiva || [];
     return window.plannerFiltrarExcluidas ? window.plannerFiltrarExcluidas(lista) : lista;
   }
 
-  async function carregarCorrecoes(filtros) {
+  async function carregarManutencoes(filtros) {
     const gen = window.plannerBeginReload?.() ?? 0;
     const filtrosEfetivos = filtros !== undefined
       ? filtros
@@ -1307,8 +1307,8 @@
     const todos = [...criadas, ...andamento, ...impedimento, ...finalizadas];
     if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
-    Object.keys(correcoesMap).forEach(k => delete correcoesMap[k]);
-    todos.forEach(r => { correcoesMap[r.id] = r; });
+    Object.keys(manutencoesMap).forEach(k => delete manutencoesMap[k]);
+    todos.forEach(r => { manutencoesMap[r.id] = r; });
 
     document.getElementById('col-criada').innerHTML      = criadas.map(renderCard).join('');
     document.getElementById('col-andamento').innerHTML   = andamento.map(renderCard).join('');
@@ -1318,21 +1318,21 @@
     document.getElementById('count-andamento').textContent   = andamento.length;
     document.getElementById('count-impedimento').textContent = impedimento.length;
     document.getElementById('count-finalizada').textContent  = finalizadas.length;
-    document.getElementById('total-correcoes').textContent = todos.length;
+    document.getElementById('total-manutencoes').textContent = todos.length;
 
     document.getElementById('mais-criada').style.display      = criadas.length === 10 ? 'block' : 'none';
     document.getElementById('mais-andamento').style.display   = andamento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-impedimento').style.display = impedimento.length === 10 ? 'block' : 'none';
     document.getElementById('mais-finalizada').style.display  = finalizadas.length === 50 ? 'block' : 'none';
   }
-  window.carregarCorrecoes = carregarCorrecoes;
+  window.carregarManutencoes = carregarManutencoes;
 
   // ─── RENDER CARD ───
   function renderCard(r) {
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
       : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
-    const titulo = r.nome || r.nome_cliente || r.titulo || 'Correção de sinal';
+    const titulo = r.nome || r.nome_cliente || r.titulo || 'Manutenção corretiva';
     const codigo = r.taskCode || r.codigo_exibicao || 'S/C';
     return `
     <div class="kcard"
@@ -1355,7 +1355,7 @@
 
   // ─── RENDER DETALHE ───
   function renderDetalhe(r) {
-    const titulo = r.nome || r.nome_cliente || r.titulo || 'Correção de sinal';
+    const titulo = r.nome || r.nome_cliente || r.titulo || 'Manutenção corretiva';
     const codigo = r.taskCode || r.codigo_exibicao || '';
     document.getElementById('detalhe-titulo').textContent = titulo;
     document.getElementById('detalhe-subtitulo').textContent = codigo ? `Código: ${codigo}` : '';
@@ -1450,12 +1450,12 @@
     renderDetalheLoading();
     const token = localStorage.getItem('planner_token');
     try {
-      const response = await fetch(`/api/correcao-sinal/${id}`, {
+      const response = await fetch(`/api/manutencao-corretiva/${id}`, {
         headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
       });
       const data = await response.json();
       if (!response.ok) { renderDetalheErro(data.message || 'Não foi possível carregar.'); return; }
-      renderDetalhe(data.correcaoDeSinal || data);
+      renderDetalhe(data.manutencaoCorretiva || data);
     } catch {
       renderDetalheErro('Erro de conexão.');
     }
@@ -1476,14 +1476,14 @@
     });
   }
 
-  async function moverCorrecao(id, novoStatus, colDestino) {
+  async function moverManutencao(id, novoStatus, colDestino) {
     const card = document.querySelector(`.kcard[data-id="${id}"]`);
     const colOrigem = card?.closest('.kcol-body');
     const statusAnterior = card?.dataset.status;
     if (card) { card.dataset.status = novoStatus; colDestino.appendChild(card); atualizarContadores(); }
 
     const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/correcao-sinal/${id}`, {
+    const response = await fetch(`/api/manutencao-corretiva/${id}`, {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ status: novoStatus })
@@ -1547,7 +1547,7 @@
       limparDragOver();
       const novoStatus = col.dataset.status;
       if (novoStatus === draggedStatus) return;
-      await moverCorrecao(draggedId, novoStatus, col);
+      await moverManutencao(draggedId, novoStatus, col);
     });
   }
 
@@ -1558,7 +1558,7 @@
   };
 
   initKanbanDragDrop();
-  carregarCorrecoes();
+  carregarManutencoes();
   carregarTecnicos(null, 'filtro-tecnico');
   window.carregarTecnicosOsModal?.();
 </script>

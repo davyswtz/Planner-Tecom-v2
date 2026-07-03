@@ -397,7 +397,7 @@ class MensagemTemplateService
             'parent_categoria_label' => $parentCategoriaLabel,
             'os_tipo' => $osTipo,
             'is_parent_task' => $this->formatarBooleano($task['is_parent_task'] ?? null),
-            'historico' => trim((string) ($task['historico'] ?? '')) ?: '—',
+            'historico' => app(OpTaskHistoricoService::class)->resumoParaTemplate($task['historico'] ?? null),
             'enviado_por' => trim((string) ($enviadoPor ?? '')) ?: '—',
             'etiquetas' => TrocaEtiquetaParser::formatarNomes($etiquetasItens),
             'etiquetas_localizacao' => TrocaEtiquetaParser::formatarLocalizacaoLista($etiquetasItens),

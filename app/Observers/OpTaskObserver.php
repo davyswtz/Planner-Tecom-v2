@@ -4,18 +4,29 @@ namespace App\Observers;
 
 use App\Events\OpTaskChanged;
 use App\Models\OpTask;
+use App\Services\OpTaskHistoricoService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class OpTaskObserver
 {
+    public function __construct(
+        private OpTaskHistoricoService $historico,
+    ) {
+    }
+
     public function created(OpTask $task): void
     {
+        $this->historico->registrarCriacao($task, auth()->user()?->username);
         $this->broadcastSafely($task, 'created');
     }
 
     public function updated(OpTask $task): void
     {
+        if ($task->wasChanged() && ! $task->wasChanged('historico')) {
+            $this->historico->registrarAlteracoes($task, auth()->user()?->username);
+        }
+
         $this->broadcastSafely($task, 'updated');
     }
 

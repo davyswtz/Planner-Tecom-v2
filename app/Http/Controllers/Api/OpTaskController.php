@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 
 use App\Services\NotificacaoService;
+use App\Services\OpTaskHistoricoService;
 use App\Services\OpTaskService;
 use App\Services\UsuarioPermissaoService;
 use App\Http\Controllers\Controller;
@@ -14,6 +15,7 @@ class OpTaskController extends Controller
 {
     public function __construct(
         private OpTaskService $opTaskService,
+        private OpTaskHistoricoService $historico,
         private UsuarioPermissaoService $permissoes,
         private NotificacaoService $notificacoes,
     ) {}
@@ -105,6 +107,20 @@ class OpTaskController extends Controller
 
         $resultado = $this->opTaskService->showOpTask($opTask);
         return response()->json($resultado);
+    }
+
+    public function historico(Request $request, OpTask $opTask)
+    {
+        if ($opTask->categoria === 'tarefas' && ! $this->usuarioPodeInteragirComTarefa($request, $opTask)) {
+            return response()->json(['message' => 'Sem permissão para visualizar o histórico desta tarefa.'], 403);
+        }
+
+        $dados = $this->historico->listar($opTask);
+
+        return response()->json([
+            'message' => 'Histórico carregado com sucesso',
+            'historico' => $dados,
+        ]);
     }
 
     /**
