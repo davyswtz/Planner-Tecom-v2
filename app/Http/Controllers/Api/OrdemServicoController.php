@@ -8,24 +8,29 @@ use Illuminate\Http\Request;
 
 class OrdemServicoController extends Controller
 {
-    public function __construct(private OrdemServicoService $ordemServicoService) {}
+    public function __construct(
+        private OrdemServicoService $ordemServicoService,
+    ) {}
 
     public function dashboard(Request $request)
     {
         $filtros = $this->extrairFiltros($request);
 
-        return response()->json($this->ordemServicoService->getDashboard($filtros), 200);
+        return response()->json(
+            $this->ordemServicoService->getDashboard($filtros),
+            200,
+        );
     }
 
     public function index(Request $request)
     {
         $filtros = $this->extrairFiltros($request);
-        $limit = max(1, min(200, (int) $request->query('limit', 50)));
-        $offset = max(0, (int) $request->query('offset', 0));
+        $limit = max(1, min(200, (int) $request->query("limit", 50)));
+        $offset = max(0, (int) $request->query("offset", 0));
 
         return response()->json(
             $this->ordemServicoService->listar($filtros, $limit, $offset),
-            200
+            200,
         );
     }
 
@@ -33,11 +38,14 @@ class OrdemServicoController extends Controller
     {
         $os = $this->ordemServicoService->show($id);
 
-        if (! $os) {
-            return response()->json(['message' => 'Ordem de serviço não encontrada'], 404);
+        if (!$os) {
+            return response()->json(
+                ["message" => "Ordem de serviço não encontrada"],
+                404,
+            );
         }
 
-        return response()->json(['os' => $os], 200);
+        return response()->json(["os" => $os], 200);
     }
 
     public function exportar(Request $request)
@@ -47,22 +55,36 @@ class OrdemServicoController extends Controller
         return $this->ordemServicoService->exportarPlanilha($filtros);
     }
 
+    public function heatmap(Request $request)
+    {
+        $tipo = $request->query("tipo", "mensal");
+        $mes = $request->query("mes");
+
+        return response()->json(
+            $this->ordemServicoService->getHeatmap($tipo, $mes),
+            200,
+        );
+    }
+
     private function extrairFiltros(Request $request): array
     {
-        $filtros = array_filter([
-            'regiao' => $request->query('regiao'),
-            'tecnico' => $request->query('tecnico'),
-            'status' => $request->query('status'),
-            'prioridade' => $request->query('prioridade'),
-            'categoriaPai' => $request->query('categoriaPai'),
-            'dataInicio' => $request->query('dataInicio'),
-            'dataFim' => $request->query('dataFim'),
-            'tipoData' => $request->query('tipoData'),
-            'busca' => $request->query('busca'),
-        ], fn ($valor) => $valor !== null && trim((string) $valor) !== '');
+        $filtros = array_filter(
+            [
+                "regiao" => $request->query("regiao"),
+                "tecnico" => $request->query("tecnico"),
+                "status" => $request->query("status"),
+                "prioridade" => $request->query("prioridade"),
+                "categoriaPai" => $request->query("categoriaPai"),
+                "dataInicio" => $request->query("dataInicio"),
+                "dataFim" => $request->query("dataFim"),
+                "tipoData" => $request->query("tipoData"),
+                "busca" => $request->query("busca"),
+            ],
+            fn($valor) => $valor !== null && trim((string) $valor) !== "",
+        );
 
-        if (empty($filtros['dataInicio']) && empty($filtros['dataFim'])) {
-            unset($filtros['tipoData']);
+        if (empty($filtros["dataInicio"]) && empty($filtros["dataFim"])) {
+            unset($filtros["tipoData"]);
         }
 
         return $filtros;

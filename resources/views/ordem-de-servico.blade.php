@@ -13,257 +13,649 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 32px;
   }
-
-  /* ── Faixa de números ── */
-  .os-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius);
-    background: var(--white);
-    overflow: hidden;
-  }
-  .os-stat {
-    flex: 1 1 120px;
-    padding: 14px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    border-right: 1px solid var(--gray-100);
-  }
-  .os-stat:last-child { border-right: none; }
-  .os-stat-n {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--gray-950);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.2;
-  }
-  .os-stat-l {
-    font-size: 12px;
-    color: var(--gray-500);
-  }
-  .os-stat--aberta .os-stat-n { color: #2563eb; }
-  .os-stat--andamento .os-stat-n { color: #d97706; }
-  .os-stat--finalizada .os-stat-n { color: #16a34a; }
-
-  /* ── Filtros compactos ── */
-  .os-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-  }
-  .os-toolbar-search {
-    flex: 1 1 200px;
-    min-width: 160px;
-    height: 36px;
-    padding: 0 12px;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    background: var(--white);
-    font-family: inherit;
-    font-size: 13px;
-    color: var(--gray-950);
-    outline: none;
-  }
-  .os-toolbar-search:focus { border-color: var(--blue-600); }
-  .os-toolbar-search::placeholder { color: var(--gray-400); }
-  .os-toolbar select,
-  .os-toolbar input[type="date"] {
-    height: 36px;
-    padding: 0 10px;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    background: var(--white);
-    font-family: inherit;
-    font-size: 13px;
-    color: var(--gray-800);
-    outline: none;
-    min-width: 0;
-  }
-  .os-toolbar select:focus,
-  .os-toolbar input[type="date"]:focus { border-color: var(--blue-600); }
-  .os-toolbar-btn {
-    height: 36px;
-    padding: 0 12px;
-    border: none;
-    background: transparent;
-    color: var(--gray-500);
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-  }
-  .os-toolbar-btn:hover { color: var(--gray-950); background: var(--gray-50); }
-  .os-toolbar-btn--export {
-    border: 1px solid var(--gray-200);
-    background: var(--white);
-    color: var(--gray-700);
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .os-toolbar-btn--export:hover {
-    border-color: var(--blue-600);
-    color: var(--blue-600);
-    background: var(--blue-50);
-  }
-  .os-toolbar-btn--export:disabled { opacity: 0.5; cursor: not-allowed; }
-  [data-theme="dark"] .os-toolbar-btn--export {
-    background: #161b22;
-    border-color: #30363d;
-    color: #e6edf3;
-  }
-  [data-theme="dark"] .os-toolbar-btn--export:hover {
-    border-color: #58a6ff;
-    color: #58a6ff;
-    background: #0d2340;
-  }
-  .os-filtros-extra {
-    display: none;
-    flex-wrap: wrap;
-    gap: 8px;
-    width: 100%;
-    padding-top: 4px;
-  }
-  .os-filtros-extra.open { display: flex; }
-  .os-periodo-hint {
-    font-size: 12px;
-    color: var(--gray-500);
-    width: 100%;
-    display: none;
-  }
-  .os-periodo-hint.visible { display: block; }
-
-  [data-theme="dark"] .os-stats,
-  [data-theme="dark"] .os-toolbar-search,
-  [data-theme="dark"] .os-toolbar select,
-  [data-theme="dark"] .os-toolbar input[type="date"] {
-    background: #161b22;
-    border-color: #30363d;
-    color: #e6edf3;
-  }
-  [data-theme="dark"] .os-stat { border-right-color: #21262d; }
-  [data-theme="dark"] .os-toolbar-btn:hover { background: #21262d; color: #e6edf3; }
-
-  /* ── Painéis ── */
-  .os-layout {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 16px;
-    align-items: start;
-  }
-  @media (max-width: 960px) { .os-layout { grid-template-columns: 1fr; } }
 
   .os-panel {
     border: 1px solid var(--gray-200);
     border-radius: var(--radius);
     background: var(--white);
     overflow: hidden;
+    margin-top: 20px;
+    margin-bottom: 20px;
   }
+
   .os-panel-head {
-    padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--gray-950);
+    padding: 12px 14px;
     border-bottom: 1px solid var(--gray-100);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
   }
-  .os-panel-meta {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--gray-500);
-  }
-  [data-theme="dark"] .os-panel {
-    background: #161b22;
-    border-color: #30363d;
-  }
-  [data-theme="dark"] .os-panel-head { border-bottom-color: #21262d; }
 
-  /* ── Lista de técnicos (minimal) ── */
-  .os-tech-list { padding: 4px 0; }
-  .os-tech-row {
-    display: grid;
-    grid-template-columns: 1fr auto auto auto auto;
-    gap: 12px;
-    align-items: center;
-    padding: 10px 16px;
+  .os-panel-title {
     font-size: 13px;
-    cursor: pointer;
-    transition: background 0.1s;
-    border-bottom: 1px solid var(--gray-50);
-  }
-  .os-tech-row:last-child { border-bottom: none; }
-  .os-tech-row:hover { background: var(--gray-50); }
-  .os-tech-name { font-weight: 500; color: var(--gray-950); }
-  .os-tech-reg { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
-  .os-tech-num {
-    font-variant-numeric: tabular-nums;
-    font-size: 12px;
-    color: var(--gray-600);
-    min-width: 28px;
-    text-align: center;
-  }
-  .os-tech-num.is-zero { color: var(--gray-300); }
-  .os-tech-total {
     font-weight: 600;
     color: var(--gray-950);
-    min-width: 32px;
-    text-align: right;
+  }
+
+  .os-panel-meta {
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  .os-analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 2px;
+  }
+
+  .os-heatmap-panel,
+  .os-donut-panel,
+  .os-kpi-panel {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .os-heatmap-controls {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--gray-200);
+    border-radius: 999px;
+    background: var(--gray-50);
+  }
+
+  .os-toggle-btn {
+    border: none;
+    background: transparent;
+    color: var(--gray-500);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .os-toggle-btn.is-active {
+    background: var(--white);
+    color: var(--gray-950);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+
+  .os-heatmap-body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+  }
+
+  #heatmap-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .os-heatmap-month {
+    font-size: 11px;
+    color: var(--gray-500);
+  }
+
+  .os-heatmap-month strong {
+    color: var(--gray-900);
+    font-weight: 600;
+  }
+
+  .os-heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(20px, 26px));
+    gap: 6px;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .os-heatmap-header {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gray-400);
+    text-align: center;
+    line-height: 1;
+  }
+
+  .os-heatmap-cell,
+  .os-heatmap-cell-empty {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 4px;
+  }
+
+  .os-heatmap-cell {
+    border: 2px solid transparent;
+    padding: 0;
+    display: block;
+    color: #fff;
+    cursor: default;
+    position: relative;
+  }
+
+  .os-heatmap-cell-empty {
+    background: transparent;
+  }
+
+  .os-heatmap-day,
+  .os-heatmap-score {
+    display: none;
+  }
+
+  .os-heatmap-cell--success { background: #22c55e; }
+  .os-heatmap-cell--good { background: #84cc16; }
+  .os-heatmap-cell--alert { background: #eab308; color: #111827; }
+  .os-heatmap-cell--critical { background: #f97316; }
+  .os-heatmap-cell--danger { background: #ef4444; }
+  .os-heatmap-cell--nodata {
+    background: transparent;
+    color: var(--gray-500);
+    
+    box-shadow: inset 0 0 0 1px #374151;
+  }
+  .os-heatmap-cell--future {
+    background: transparent;
+    color: #cbd5e1;
+   
+    box-shadow: inset 0 0 0 1px #374151;
+  }
+
+  .os-heatmap-week {
+    display: grid;
+    grid-template-columns: 92px repeat(7, minmax(20px, 26px));
+    gap: 6px;
+    align-items: center;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .os-heatmap-week-head {
+    font-size: 9px;
+    color: var(--gray-400);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .os-heatmap-week-label {
+    font-size: 11px;
+    color: var(--gray-900);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+  }
+
+  .os-heatmap-week-row {
+    grid-column: 2 / span 7;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(20px, 26px));
+    gap: 6px;
+  }
+
+  .os-heatmap-legend {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    color: var(--gray-500);
+    width: 100%;
+  }
+
+  .os-heatmap-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .os-heatmap-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  .os-donut-body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .os-donut-chart {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: conic-gradient(#e5e7eb 0deg 360deg);
+    position: relative;
+  }
+
+  .os-donut-chart::after {
+    content: '';
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+  }
+
+  .os-donut-center {
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .os-donut-total {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gray-950);
+    line-height: 1;
+  }
+
+  .os-donut-caption {
+    font-size: 11px;
+    color: var(--gray-500);
+  }
+
+  .os-donut-legend {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .os-donut-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--gray-700);
+  }
+
+  .os-donut-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  .os-donut-empty {
+    font-size: 13px;
+    color: var(--gray-400);
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .os-kpi-panel {
+    background: var(--white);
+    border-color: var(--gray-200);
+  }
+
+  .os-kpi-panel .os-panel-head {
+    border-bottom-color: var(--gray-100);
+  }
+
+  .os-kpi-panel .os-panel-title,
+  .os-kpi-panel .os-panel-meta {
+    color: var(--gray-900);
+  }
+
+  .os-kpi-grid {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    flex: 1;
+  }
+
+  .os-kpi-card {
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    background: var(--gray-50);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 72px;
+  }
+
+  .os-kpi-value {
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
-  .os-tech-head {
+
+  .os-kpi-label {
+    margin-top: 4px;
+    font-size: 14px;
+    color: var(--gray-500);
+  }
+
+  .os-kpi-card--aberta .os-kpi-value { color: #2563eb; }
+  .os-kpi-card--andamento .os-kpi-value { color: #d97706; }
+  .os-kpi-card--tecnicos .os-kpi-value { color: var(--gray-950); }
+  .os-kpi-card--finalizada .os-kpi-value { color: #16a34a; }
+
+  .os-filters-panel {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  .os-filters-fields {
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto;
-    gap: 12px;
-    padding: 6px 16px 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 18px;
+  }
+
+  .os-filter-group--search {
+    grid-column: span 2;
+  }
+
+  .os-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .os-filter-label {
     font-size: 10px;
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--gray-400);
+    padding-left: 2px;
   }
-  .os-tech-head span:not(:first-child) { text-align: center; min-width: 28px; }
-  .os-tech-head span:last-child { text-align: right; min-width: 32px; }
 
-  [data-theme="dark"] .os-tech-row { border-bottom-color: #21262d; }
-  [data-theme="dark"] .os-tech-row:hover { background: #21262d; }
+  .os-filter-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--gray-100);
+  }
 
-  /* ── Aside: região + origem ── */
-  .os-aside { display: flex; flex-direction: column; gap: 16px; }
-  .os-mini-list { padding: 8px 0; }
+  .os-filter-actions .os-toolbar-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-theme="dark"] .os-filter-actions {
+    border-top-color: #21262d;
+  }
+
+  .os-toolbar-search,
+  .os-toolbar-select,
+  .os-toolbar-date {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--gray-950);
+    outline: none;
+  }
+
+  .os-toolbar-search::placeholder { color: var(--gray-400); }
+
+  .os-toolbar-search:focus,
+  .os-toolbar-select:focus,
+  .os-toolbar-date:focus {
+    border-color: var(--blue-600);
+  }
+
+  .os-toolbar-btn {
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-700);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 14px;
+    white-space: nowrap;
+  }
+
+  .os-toolbar-btn:hover {
+    border-color: var(--gray-400);
+    color: var(--gray-950);
+  }
+
+  .os-toolbar-btn--primary {
+    background: var(--blue-600);
+    border-color: var(--blue-600);
+    color: #fff;
+    min-width: 110px;
+  }
+
+  .os-toolbar-btn--primary:hover {
+    background: var(--blue-700);
+    border-color: var(--blue-700);
+    color: #fff;
+  }
+
+  .os-toolbar-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--gray-500);
+  }
+
+  .os-toolbar-btn--ghost:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-100);
+    color: var(--gray-950);
+  }
+
+  .os-toolbar-btn--export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .os-toolbar-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .os-filtros-extra {
+    display: none;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px 18px;
+    padding-top: 4px;
+  }
+
+  .os-filtros-extra.open {
+    display: grid;
+  }
+
+  .os-periodo-hint {
+    font-size: 12px;
+    color: var(--gray-500);
+    display: none;
+    padding-top: 2px;
+  }
+
+  .os-periodo-hint.visible {
+    display: block;
+  }
+
+  .os-summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.05fr) minmax(0, 0.85fr);
+    gap: 14px;
+    align-items: start;
+    margin-top: 2px;
+  }
+
+  .os-summary-panel {
+    min-width: 0;
+  }
+
+  .os-tech-list {
+    padding: 10px 0 14px;
+  }
+
+  .os-tech-row {
+    display: grid;
+    grid-template-columns: minmax(0, 130px) minmax(140px, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+
+  .os-tech-row:hover { background: var(--gray-50); }
+
+  .os-tech-row + .os-tech-row { border-top: 1px solid var(--gray-50); }
+
+  .os-tech-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-950);
+  }
+
+  .os-tech-reg {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--gray-400);
+  }
+
+  .os-tech-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .os-tech-bar {
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--gray-100);
+    display: flex;
+  }
+
+  .os-tech-bar-segment--aberta { background: #3b82f6; }
+  .os-tech-bar-segment--andamento { background: #eab308; }
+  .os-tech-bar-segment--finalizada { background: #22c55e; }
+
+  .os-tech-legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .os-tech-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .os-tech-legend i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  .os-tech-total {
+    min-width: 36px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-950);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .os-mini-list {
+    padding: 8px 0;
+  }
+
   .os-mini-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 16px;
+    gap: 12px;
+    padding: 10px 16px;
     font-size: 13px;
-    cursor: pointer;
-    transition: background 0.1s;
+    transition: background 0.12s ease;
   }
-  .os-mini-item:hover { background: var(--gray-50); }
-  .os-mini-label { color: var(--gray-700); }
+
+  .os-mini-item + .os-mini-item { border-top: 1px solid var(--gray-50); }
+
+  .os-mini-item--clickable {
+    cursor: pointer;
+  }
+
+  .os-mini-item--clickable:hover { background: var(--gray-50); }
+
+  .os-mini-label {
+    color: var(--gray-700);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .os-mini-count {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--gray-950);
     font-variant-numeric: tabular-nums;
   }
-  [data-theme="dark"] .os-mini-item:hover { background: #21262d; }
 
-  /* ── Tabela OS ── */
   .os-table-wrap { overflow-x: auto; }
+
   .os-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
   }
+
   .os-table th {
     text-align: left;
     padding: 10px 16px;
@@ -273,21 +665,37 @@
     border-bottom: 1px solid var(--gray-100);
     white-space: nowrap;
   }
+
   .os-table td {
     padding: 11px 16px;
     border-bottom: 1px solid var(--gray-50);
     color: var(--gray-800);
     vertical-align: middle;
   }
+
   .os-table tbody tr {
     cursor: pointer;
     transition: background 0.1s;
   }
+
   .os-table tbody tr:hover { background: var(--gray-50); }
   .os-table tbody tr:last-child td { border-bottom: none; }
-  .os-cell-main { font-weight: 500; color: var(--gray-950); }
-  .os-cell-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
-  .os-cell-muted { color: var(--gray-500); font-size: 12px; }
+
+  .os-cell-main {
+    font-weight: 500;
+    color: var(--gray-950);
+  }
+
+  .os-cell-sub {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-top: 2px;
+  }
+
+  .os-cell-muted {
+    color: var(--gray-500);
+    font-size: 12px;
+  }
 
   .status-dot {
     display: inline-flex;
@@ -296,6 +704,7 @@
     font-size: 12px;
     color: var(--gray-700);
   }
+
   .status-dot::before {
     content: '';
     width: 6px;
@@ -303,6 +712,7 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
+
   .status-dot--aberta::before { background: #3b82f6; }
   .status-dot--andamento::before { background: #f59e0b; }
   .status-dot--finalizada::before { background: #22c55e; }
@@ -316,8 +726,17 @@
     gap: 12px;
     flex-wrap: wrap;
   }
-  .os-list-foot-info { font-size: 12px; color: var(--gray-500); }
-  .os-pag { display: flex; gap: 4px; }
+
+  .os-list-foot-info {
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  .os-pag {
+    display: flex;
+    gap: 4px;
+  }
+
   .os-pag-btn {
     border: 1px solid var(--gray-200);
     background: var(--white);
@@ -328,162 +747,481 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .os-pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .os-pag-btn:not(:disabled):hover { border-color: var(--gray-400); color: var(--gray-950); }
 
-  .os-empty {
-    padding: 32px 16px;
-    text-align: center;
-    font-size: 13px;
-    color: var(--gray-400);
+  .os-pag-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
+
+  .os-pag-btn:not(:disabled):hover {
+    border-color: var(--gray-400);
+    color: var(--gray-950);
+  }
+
+  .os-empty,
   .os-loading {
     padding: 32px 16px;
     text-align: center;
     font-size: 13px;
     color: var(--gray-400);
   }
-  .os-loading i { animation: os-spin 0.8s linear infinite; display: inline-block; }
-  @keyframes os-spin { to { transform: rotate(360deg); } }
 
-  [data-theme="dark"] .os-table th { border-bottom-color: #21262d; }
-  [data-theme="dark"] .os-table td { border-bottom-color: #161b22; }
-  [data-theme="dark"] .os-table tbody tr:hover { background: #21262d; }
-  [data-theme="dark"] .os-list-foot { border-top-color: #21262d; }
-  [data-theme="dark"] .os-pag-btn { background: #21262d; border-color: #30363d; color: #8b949e; }
+  .os-loading i {
+    animation: os-spin 0.8s linear infinite;
+    display: inline-block;
+  }
 
-  /* ── Modal detalhe ── */
-  .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .detail-field { display: flex; flex-direction: column; gap: 4px; }
+  @keyframes os-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .detail-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
   .detail-field.span-2 { grid-column: span 2; }
   .detail-field.span-3 { grid-column: span 3; }
-  .detail-label { font-size: 11px; color: var(--gray-400); }
+
+  .detail-label {
+    font-size: 11px;
+    color: var(--gray-400);
+  }
+
   .detail-value {
     font-size: 13px;
     color: var(--gray-950);
     line-height: 1.45;
     word-break: break-word;
   }
-  @media (max-width: 700px) {
-    .detail-grid { grid-template-columns: 1fr 1fr; }
-    .detail-field.span-2, .detail-field.span-3 { grid-column: span 2; }
+
+  [data-theme="dark"] .os-panel {
+    background: #161b22;
+    border-color: #30363d;
   }
+
+  [data-theme="dark"] .os-kpi-panel {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  [data-theme="dark"] .os-kpi-card {
+    border-color: #4b5563;
+    background: rgba(13, 17, 23, 0.55);
+  }
+
+  [data-theme="dark"] .os-kpi-label {
+    color: #8b949e;
+  }
+
+  [data-theme="dark"] .os-kpi-card--tecnicos .os-kpi-value {
+    color: #e6edf3;
+  }
+
+  [data-theme="dark"] .os-panel-head { border-bottom-color: #21262d; }
+  [data-theme="dark"] .os-panel-title { color: #e6edf3; }
+  [data-theme="dark"] .os-panel-meta { color: #8b949e; }
+  [data-theme="dark"] .os-toggle-btn.is-active {
+    background: #161b22;
+    color: #e6edf3;
+  }
+  [data-theme="dark"] .os-heatmap-controls {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+  [data-theme="dark"] .os-toolbar-search,
+  [data-theme="dark"] .os-toolbar-select,
+  [data-theme="dark"] .os-toolbar-date,
+  [data-theme="dark"] .os-toolbar-btn,
+  [data-theme="dark"] .os-pag-btn {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+  [data-theme="dark"] .os-toolbar-btn--ghost {
+    background: transparent;
+    color: #8b949e;
+  }
+  [data-theme="dark"] .os-toolbar-btn--ghost:hover {
+    background: #21262d;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+  [data-theme="dark"] .os-toolbar-btn--primary {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+  }
+  [data-theme="dark"] .os-toolbar-btn--primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+  }
+  [data-theme="dark"] .os-tech-row:hover,
+  [data-theme="dark"] .os-mini-item--clickable:hover,
+  [data-theme="dark"] .os-table tbody tr:hover {
+    background: #21262d;
+  }
+  [data-theme="dark"] .os-tech-row + .os-tech-row,
+  [data-theme="dark"] .os-mini-item + .os-mini-item,
+  [data-theme="dark"] .os-table td,
+  [data-theme="dark"] .os-table th,
+  [data-theme="dark"] .os-list-foot {
+    border-color: #21262d;
+  }
+  [data-theme="dark"] .os-tech-name,
+  [data-theme="dark"] .os-tech-total,
+  [data-theme="dark"] .os-mini-count,
+  [data-theme="dark"] .os-cell-main,
+  [data-theme="dark"] .detail-value,
+  [data-theme="dark"] .os-donut-total,
+  [data-theme="dark"] .os-heatmap-week-label,
+  [data-theme="dark"] .os-heatmap-month strong {
+    color: #e6edf3;
+  }
+  [data-theme="dark"] .os-mini-label,
+  [data-theme="dark"] .status-dot,
+  [data-theme="dark"] .os-donut-legend-item,
+  [data-theme="dark"] .os-cell-muted {
+    color: #c9d1d9;
+  }
+  [data-theme="dark"] .os-donut-chart::after {
+    background: #161b22;
+    border-color: #30363d;
+  }
+  [data-theme="dark"] .os-tech-bar { background: transparent; }
+  [data-theme="dark"] .os-heatmap-cell--nodata {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #30363d;
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 1180px) {
+    .os-analytics-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .os-summary-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .os-page {
+      gap: 24px;
+    }
+
+    .os-filters-fields,
+    .os-filtros-extra {
+      grid-template-columns: 1fr;
+    }
+
+    .os-filter-group--search {
+      grid-column: auto;
+    }
+
+    .os-filter-actions {
+      flex-wrap: wrap;
+    }
+
+    .os-filter-actions .os-toolbar-btn {
+      flex: 1 1 calc(50% - 5px);
+    }
+
+    .os-heatmap-week {
+      grid-template-columns: 110px repeat(7, minmax(20px, 26px));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .os-page {
+      gap: 20px;
+    }
+
+    .os-panel-head,
+    .os-heatmap-body,
+    .os-donut-body,
+    .os-kpi-grid,
+    .os-filters-panel {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .detail-grid { grid-template-columns: 1fr 1fr; }
+    .detail-field.span-2,
+    .detail-field.span-3 { grid-column: span 2; }
+
+    .os-tech-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .os-tech-total {
+      text-align: left;
+    }
+
+    #heatmap-content {
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .os-heatmap-grid {
+      grid-template-columns: repeat(7, 14px);
+      gap: 4px;
+      min-width: max-content;
+    }
+
+    .os-heatmap-cell,
+    .os-heatmap-cell-empty {
+      width: 14px;
+      height: 14px;
+      min-height: 14px;
+    }
+
+    .os-heatmap-week {
+      grid-template-columns: 84px repeat(7, 14px);
+      gap: 4px;
+      min-width: max-content;
+      width: max-content;
+      margin: 0;
+    }
+
+    .os-heatmap-week-head {
+      display: block;
+      font-size: 8px;
+    }
+
+    .os-heatmap-week-label {
+      font-size: 10px;
+    }
+
+    .os-heatmap-week-row {
+      grid-column: 2 / span 7;
+      display: grid;
+      grid-template-columns: repeat(7, 14px);
+      gap: 4px;
+    }
+
+    .os-filter-actions .os-toolbar-btn {
+      flex: 1 1 100%;
+    }
+  }
+
   @media (max-width: 480px) {
+    .os-page {
+      gap: 18px;
+    }
+
+    .os-kpi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .os-analytics-grid,
+    .os-summary-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .os-filters-panel {
+      gap: 14px;
+    }
+
+    .os-filters-fields,
+    .os-filtros-extra {
+      gap: 12px;
+    }
+
     .detail-grid { grid-template-columns: 1fr; }
-    .detail-field.span-2, .detail-field.span-3 { grid-column: span 1; }
+    .detail-field.span-2,
+    .detail-field.span-3 { grid-column: span 1; }
   }
 </style>
 @endsection
 
 @section('content')
-
 <div class="os-page">
+  <section class="os-analytics-grid">
+    <div class="os-panel os-heatmap-panel">
+      <div class="os-panel-head">
+        <div>
+          <div class="os-panel-title">Atividade</div>
+          <div class="os-panel-meta" id="heatmap-subtitle">Eficiência diária das ordens de serviço</div>
+        </div>
+        <div class="os-heatmap-controls">
+          <button type="button" class="os-toggle-btn is-active" data-heatmap-tipo="mensal">mês</button>
+          <button type="button" class="os-toggle-btn" data-heatmap-tipo="semanal">semana</button>
+        </div>
+      </div>
+      <div class="os-heatmap-body">
+        <div class="os-heatmap-month" id="heatmap-month-label">Mês atual</div>
+        <div id="heatmap-content">
+          <div class="os-loading">Carregando atividade…</div>
+        </div>
+        <div class="os-heatmap-legend">
+          <span><i style="background:#22c55e"></i>91–100</span>
+          <span><i style="background:#84cc16"></i>71–90</span>
+          <span><i style="background:#eab308"></i>51–70</span>
+          <span><i style="background:#f97316"></i>31–50</span>
+          <span><i style="background:#ef4444"></i>0–30</span>
+          <span><i style="background:#1f2937"></i>Hoje / futuro</span>
+        </div>
+      </div>
+    </div>
 
-  <div class="os-stats" id="metrics-row">
-    <div class="os-stat">
-      <span class="os-stat-n" id="metric-total">—</span>
-      <span class="os-stat-l">ordens de serviço</span>
+    <div class="os-panel os-donut-panel">
+      <div class="os-panel-head">
+        <div class="os-panel-title">Prioridade</div>
+        <div class="os-panel-meta">Abertas + em andamento</div>
+      </div>
+      <div class="os-donut-body" id="donut-wrap">
+        <div class="os-loading">Carregando prioridades…</div>
+      </div>
     </div>
-    <div class="os-stat os-stat--aberta">
-      <span class="os-stat-n" id="metric-aberta">—</span>
-      <span class="os-stat-l">abertas</span>
-    </div>
-    <div class="os-stat os-stat--andamento">
-      <span class="os-stat-n" id="metric-andamento">—</span>
-      <span class="os-stat-l">em andamento</span>
-    </div>
-    <div class="os-stat os-stat--finalizada">
-      <span class="os-stat-n" id="metric-finalizada">—</span>
-      <span class="os-stat-l">finalizadas</span>
-    </div>
-    <div class="os-stat">
-      <span class="os-stat-n" id="metric-tecnicos">—</span>
-      <span class="os-stat-l">técnicos</span>
-    </div>
-  </div>
 
-  <div class="os-toolbar">
-    <input type="text" id="filtro-busca" placeholder="Buscar OS, código, técnico…"
-      oninput="aplicarFiltrosDebounce()" class="os-toolbar-search"/>
-    <select id="filtro-regiao" onchange="aplicarFiltros()">
-      <option value="">Região</option>
-      <option>Goval</option>
-      <option>Vale do Aço</option>
-      <option>Caratinga</option>
-      <option>Teste</option>
-    </select>
-    <select id="filtro-tecnico" onchange="aplicarFiltros()">
-      <option value="">Técnico</option>
-    </select>
-    <select id="filtro-status" onchange="aplicarFiltros()">
-      <option value="">Status</option>
-      <option value="Aberta">Aberta</option>
-      <option value="Em andamento">Em andamento</option>
-      <option value="Finalizada">Finalizada</option>
-    </select>
-    <button type="button" class="os-toolbar-btn" onclick="toggleFiltrosExtra()">
-      <span id="btn-filtros-extra-label">Mais filtros</span>
-    </button>
-    <button type="button" class="os-toolbar-btn" onclick="limparFiltros()">Limpar</button>
-    <button type="button" class="os-toolbar-btn os-toolbar-btn--export" id="btn-exportar-planilha" onclick="exportarPlanilha()" title="Exportar planilha com os filtros atuais">
-      <i class="ti ti-download" style="font-size:14px;"></i> Exportar
-    </button>
+    <div class="os-panel os-kpi-panel">
+      <div class="os-panel-head">
+        <div class="os-panel-title">Panorama de OS</div>
+        <div class="os-panel-meta">Resumo operacional</div>
+      </div>
+      <div class="os-kpi-grid">
+        <div class="os-kpi-card os-kpi-card--aberta">
+          <div class="os-kpi-value" id="metric-aberta">—</div>
+          <div class="os-kpi-label">abertas</div>
+        </div>
+        <div class="os-kpi-card os-kpi-card--andamento">
+          <div class="os-kpi-value" id="metric-andamento">—</div>
+          <div class="os-kpi-label">em andamento</div>
+        </div>
+        <div class="os-kpi-card os-kpi-card--tecnicos">
+          <div class="os-kpi-value" id="metric-tecnicos">—</div>
+          <div class="os-kpi-label">técnicos</div>
+        </div>
+        <div class="os-kpi-card os-kpi-card--finalizada">
+          <div class="os-kpi-value" id="metric-finalizada">—</div>
+          <div class="os-kpi-label">finalizadas</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="os-panel os-filters-panel">
+    <div class="os-filters-fields">
+      <div class="os-filter-group os-filter-group--search">
+        <label class="os-filter-label" for="filtro-busca">Buscar</label>
+        <input type="text" id="filtro-busca" class="os-toolbar-search" placeholder="OS, código, técnico...." oninput="aplicarFiltrosDebounce()" />
+      </div>
+
+      <div class="os-filter-group">
+        <label class="os-filter-label" for="filtro-data-inicio">Início</label>
+        <input type="date" id="filtro-data-inicio" class="os-toolbar-date" title="Data início" />
+      </div>
+
+      <div class="os-filter-group">
+        <label class="os-filter-label" for="filtro-data-fim">Fim</label>
+        <input type="date" id="filtro-data-fim" class="os-toolbar-date" title="Data fim" />
+      </div>
+
+      <div class="os-filter-group">
+        <label class="os-filter-label" for="filtro-tecnico">Técnicos</label>
+        <select id="filtro-tecnico" class="os-toolbar-select">
+          <option value="">Todos os técnicos</option>
+        </select>
+      </div>
+
+      <div class="os-filter-group">
+        <label class="os-filter-label" for="filtro-tipo-data">Filtrar por data</label>
+        <select id="filtro-tipo-data" class="os-toolbar-select">
+          <option value="criacao">Data criação</option>
+          <option value="conclusao">Data conclusão</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="os-filter-actions">
+      <button type="button" class="os-toolbar-btn os-toolbar-btn--primary" onclick="aplicarFiltros()">Filtrar</button>
+      <button type="button" class="os-toolbar-btn" onclick="toggleFiltrosExtra()"><span id="btn-filtros-extra-label">Mais filtros</span></button>
+      <button type="button" class="os-toolbar-btn os-toolbar-btn--ghost" onclick="limparFiltros()">Limpar</button>
+      <button type="button" class="os-toolbar-btn os-toolbar-btn--export" id="btn-exportar-planilha" onclick="exportarPlanilha()" title="Exportar planilha com os filtros atuais">
+        <i class="ti ti-download" style="font-size:14px;"></i> Exportar
+      </button>
+    </div>
 
     <div class="os-filtros-extra" id="filtros-extra">
-      <select id="filtro-categoria-pai" onchange="aplicarFiltros()">
-        <option value="">Origem</option>
+      <select id="filtro-regiao" class="os-toolbar-select">
+        <option value="">Todas as regiões</option>
+        <option>Goval</option>
+        <option>Vale do Aço</option>
+        <option>Caratinga</option>
+        <option>Teste</option>
+      </select>
+      <select id="filtro-status" class="os-toolbar-select">
+        <option value="">Todos os status</option>
+        <option value="Aberta">Aberta</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Finalizada">Finalizada</option>
+      </select>
+      <select id="filtro-categoria-pai" class="os-toolbar-select">
+        <option value="">Todas as origens</option>
         <option value="rompimentos">Rompimentos</option>
         <option value="troca-poste">Troca de poste</option>
         <option value="troca-etiqueta">Troca de etiqueta</option>
         <option value="otimizacao-rede">Otimização de rede</option>
         <option value="atendimento-cliente">Atendimento</option>
       </select>
-      <select id="filtro-prioridade" onchange="aplicarFiltros()">
-        <option value="">Prioridade</option>
+      <select id="filtro-prioridade" class="os-toolbar-select">
+        <option value="">Todas as prioridades</option>
         <option>Alta</option>
         <option>Média</option>
         <option>Baixa</option>
       </select>
-      <select id="filtro-tipo-data" onchange="aplicarFiltros()">
-        <option value="criacao">Criação</option>
-        <option value="conclusao">Conclusão</option>
-      </select>
-      <input type="date" id="filtro-data-inicio" onchange="aplicarFiltros()" title="Data início"/>
-      <input type="date" id="filtro-data-fim" onchange="aplicarFiltros()" title="Data fim"/>
-      <span id="filtro-periodo-ativo" class="os-periodo-hint"></span>
     </div>
+
+    <div id="filtro-periodo-ativo" class="os-periodo-hint"></div>
   </div>
 
-  <div class="os-layout">
-    <div class="os-panel">
+  <section class="os-summary-grid">
+    <div class="os-panel os-summary-panel">
       <div class="os-panel-head">
-        Por técnico
-        <span class="os-panel-meta" id="total-tecnicos-label">—</span>
+        <div class="os-panel-title">Por técnico</div>
+        <div class="os-panel-meta" id="total-tecnicos-label">—</div>
       </div>
       <div id="tabela-tecnicos-wrap">
         <div class="os-loading">Carregando…</div>
       </div>
     </div>
 
-    <div class="os-aside">
-      <div class="os-panel">
-        <div class="os-panel-head">Região</div>
-        <div class="os-mini-list" id="lista-regioes">
-          <div class="os-loading">…</div>
-        </div>
+    <div class="os-panel os-summary-panel">
+      <div class="os-panel-head">
+        <div class="os-panel-title">Origem</div>
+        <div class="os-panel-meta">Totais</div>
       </div>
-      <div class="os-panel">
-        <div class="os-panel-head">Origem</div>
-        <div class="os-mini-list" id="lista-categorias">
-          <div class="os-loading">…</div>
-        </div>
+      <div class="os-mini-list" id="lista-categorias">
+        <div class="os-loading">…</div>
       </div>
     </div>
-  </div>
+
+    <div class="os-panel os-summary-panel">
+      <div class="os-panel-head">
+        <div class="os-panel-title">Região</div>
+        <div class="os-panel-meta">Totais</div>
+      </div>
+      <div class="os-mini-list" id="lista-regioes">
+        <div class="os-loading">…</div>
+      </div>
+    </div>
+  </section>
 
   <div class="os-panel">
     <div class="os-panel-head">
-      Ordens de serviço
+      <div class="os-panel-title">Ordens de serviço</div>
       <span class="os-panel-meta"><span id="lista-total">0</span> registros</span>
     </div>
     <div class="os-table-wrap" id="tabela-os-wrap">
@@ -497,7 +1235,6 @@
       </div>
     </div>
   </div>
-
 </div>
 
 <x-modal id="detalhe-overlay" titulo-id="detalhe-titulo" subtitulo-id="detalhe-subtitulo" fechar="fecharDetalhe()">
@@ -506,7 +1243,6 @@
     <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
   </x-slot>
 </x-modal>
-
 @endsection
 
 @section('scripts')
@@ -524,22 +1260,63 @@
   import { getUrl } from '{{ asset("js/api/client.js") }}';
 
   const PAGE_SIZE = 50;
+  const HEATMAP_MONTH = new Date().toISOString().slice(0, 7);
+  const DIA_SIGLAS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const DIA_ROTULOS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
   let offsetAtual = 0;
   let totalLista = 0;
   let debounceTimer = null;
   let filtrosExtraAbertos = false;
+  let heatmapTipoAtual = 'mensal';
 
   function esc(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  window.toggleFiltrosExtra = function() {
-    filtrosExtraAbertos = !filtrosExtraAbertos;
-    document.getElementById('filtros-extra').classList.toggle('open', filtrosExtraAbertos);
-    document.getElementById('btn-filtros-extra-label').textContent =
-      filtrosExtraAbertos ? 'Menos filtros' : 'Mais filtros';
-  };
+  function criarDataLocal(iso) {
+    if (!iso) return null;
+    const [ano, mes, dia] = String(iso).slice(0, 10).split('-').map(Number);
+    if (!ano || !mes || !dia) return null;
+    return new Date(ano, mes - 1, dia);
+  }
+
+  function hojeIso() {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  function formatarData(valor) {
+    if (!valor) return '—';
+    const d = criarDataLocal(valor);
+    if (!d) return esc(String(valor).slice(0, 10));
+    return d.toLocaleDateString('pt-BR');
+  }
+
+  function formatarMesAno(valor) {
+    const d = criarDataLocal(`${valor}-01`);
+    if (!d) return valor;
+    return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  }
+
+  function statusDot(status) {
+    const cls = status === 'Finalizada'
+      ? 'status-dot--finalizada'
+      : status === 'Em andamento'
+        ? 'status-dot--andamento'
+        : 'status-dot--aberta';
+
+    return `<span class="status-dot ${cls}">${esc(status)}</span>`;
+  }
 
   function obterFiltros() {
     return {
@@ -555,20 +1332,16 @@
     };
   }
 
-  function atualizarIndicadorPeriodo(filtros) {
-    const el = document.getElementById('filtro-periodo-ativo');
-    if (!el) return;
-    if (!filtros.dataInicio && !filtros.dataFim) {
-      el.classList.remove('visible');
-      el.textContent = '';
-      return;
+  function validarPeriodoFiltros(filtros) {
+    if (filtros.dataInicio && filtros.dataFim && filtros.dataInicio > filtros.dataFim) {
+      document.getElementById('filtro-data-fim').value = filtros.dataInicio;
+      filtros.dataFim = filtros.dataInicio;
     }
-    const tipo = filtros.tipoData === 'conclusao' ? 'conclusão' : 'criação';
-    const de = filtros.dataInicio ? formatarData(filtros.dataInicio) : '…';
-    const ate = filtros.dataFim ? formatarData(filtros.dataFim) : '…';
-    el.textContent = `Período (${tipo}): ${de} – ${ate}`;
-    el.classList.add('visible');
-    if (!filtrosExtraAbertos) toggleFiltrosExtra();
+    return filtros;
+  }
+
+  function obterFiltrosParaApi() {
+    return validarPeriodoFiltros(obterFiltros());
   }
 
   function filtrosParaQuery(filtros) {
@@ -580,64 +1353,283 @@
     }
 
     Object.entries(ativos).forEach(([chave, valor]) => {
-      if (valor != null && String(valor).trim() !== '') params.set(chave, valor);
+      if (valor != null && String(valor).trim() !== '') {
+        params.set(chave, valor);
+      }
     });
 
     return params.toString();
   }
 
-  function obterFiltrosParaApi() {
-    return validarPeriodoFiltros(obterFiltros());
+  function atualizarIndicadorPeriodo(filtros) {
+    const el = document.getElementById('filtro-periodo-ativo');
+    if (!el) return;
+
+    if (!filtros.dataInicio && !filtros.dataFim) {
+      el.classList.remove('visible');
+      el.textContent = '';
+      return;
+    }
+
+    const tipo = filtros.tipoData === 'conclusao' ? 'conclusão' : 'criação';
+    const de = filtros.dataInicio ? formatarData(filtros.dataInicio) : '…';
+    const ate = filtros.dataFim ? formatarData(filtros.dataFim) : '…';
+    el.textContent = `Período (${tipo}): ${de} – ${ate}`;
+    el.classList.add('visible');
   }
 
-  function statusDot(status) {
-    const cls = status === 'Finalizada' ? 'status-dot--finalizada'
-      : status === 'Em andamento' ? 'status-dot--andamento' : 'status-dot--aberta';
-    return `<span class="status-dot ${cls}">${esc(status)}</span>`;
+  function percentual(parte, total) {
+    if (!total) return 0;
+    return (parte / total) * 100;
   }
 
-  function techNum(n) {
-    return `<span class="os-tech-num${n ? '' : ' is-zero'}">${n}</span>`;
+  function corHeatmapPorEficiencia(eficiencia) {
+    if (eficiencia >= 91) return 'os-heatmap-cell--success';
+    if (eficiencia >= 71) return 'os-heatmap-cell--good';
+    if (eficiencia >= 51) return 'os-heatmap-cell--alert';
+    if (eficiencia >= 31) return 'os-heatmap-cell--critical';
+    return 'os-heatmap-cell--danger';
+  }
+
+  function obterEstadoCelulaHeatmap(dataIso, info) {
+    const hoje = hojeIso();
+
+    if (!dataIso) {
+      return {
+        classe: 'os-heatmap-cell-empty',
+        dia: '',
+        valor: '',
+        title: '',
+      };
+    }
+
+    const dia = Number(dataIso.slice(-2));
+
+    if (dataIso >= hoje) {
+      return {
+        classe: 'os-heatmap-cell os-heatmap-cell--future',
+        dia,
+        valor: '—',
+        title: `${formatarData(dataIso)} · sem dado`,
+      };
+    }
+
+    if (!info || !info.total) {
+      return {
+        classe: 'os-heatmap-cell os-heatmap-cell--nodata',
+        dia,
+        valor: '0',
+        title: `${formatarData(dataIso)} · sem registros`,
+      };
+    }
+
+    return {
+      classe: `os-heatmap-cell ${corHeatmapPorEficiencia(info.eficiencia || 0)}`,
+      dia,
+      valor: `${Math.round(info.eficiencia || 0)}`,
+      title: `${formatarData(dataIso)} · ${info.finalizadas} finalizadas, ${info.em_andamento} em andamento, ${info.abertas} abertas · eficiência ${Number(info.eficiencia || 0).toFixed(1)}`,
+    };
+  }
+
+  function renderHeatmapMensal(payload) {
+    const diasPorData = Object.fromEntries((payload.dias || []).map(item => [item.dia, item]));
+    const dataBase = criarDataLocal(`${payload.mes}-01`);
+    const ano = dataBase.getFullYear();
+    const mes = dataBase.getMonth();
+    const totalDias = new Date(ano, mes + 1, 0).getDate();
+    const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+
+    const cabecalho = DIA_ROTULOS.map(dia => `<div class="os-heatmap-header">${dia}</div>`).join('');
+    const celulas = [];
+
+    for (let i = 0; i < primeiroDiaSemana; i += 1) {
+      celulas.push('<div class="os-heatmap-cell-empty"></div>');
+    }
+
+    for (let dia = 1; dia <= totalDias; dia += 1) {
+      const iso = `${payload.mes}-${String(dia).padStart(2, '0')}`;
+      const estado = obterEstadoCelulaHeatmap(iso, diasPorData[iso]);
+      celulas.push(`
+        <div class="${estado.classe}" title="${esc(estado.title)}">
+          <span class="os-heatmap-day">${estado.dia}</span>
+          <span class="os-heatmap-score">${estado.valor}</span>
+        </div>
+      `);
+    }
+
+    while (celulas.length % 7 !== 0) {
+      celulas.push('<div class="os-heatmap-cell-empty"></div>');
+    }
+
+    return `<div class="os-heatmap-grid">${cabecalho}${celulas.join('')}</div>`;
+  }
+
+  function obterSemanaReferencia(mesIso) {
+    const agora = new Date();
+    const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
+    const referencia = mesIso === mesAtual
+      ? new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
+      : criarDataLocal(`${mesIso}-01`);
+
+    const inicio = new Date(referencia);
+    inicio.setDate(referencia.getDate() - referencia.getDay());
+    return inicio;
+  }
+
+  function adicionarDias(data, quantidade) {
+    const d = new Date(data);
+    d.setDate(d.getDate() + quantidade);
+    return d;
+  }
+
+  function dataParaIso(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  function renderHeatmapSemanal(payload) {
+    const inicioSemana = obterSemanaReferencia(payload.mes);
+    const headers = DIA_SIGLAS.map(sigla => `<div class="os-heatmap-week-head">${sigla}</div>`).join('');
+    const regioes = Array.isArray(payload.regioes) ? payload.regioes : [];
+
+    if (!regioes.length) {
+      return '<div class="os-empty">Nenhum registro na semana atual.</div>';
+    }
+
+    return `
+      <div class="os-heatmap-week">
+        <div></div>
+        ${headers}
+        ${regioes.map(regiao => {
+          const mapaDias = Object.fromEntries((regiao.dias || []).map(item => [item.dia, item]));
+          const blocos = Array.from({ length: 7 }, (_, indice) => {
+            const data = adicionarDias(inicioSemana, indice);
+            const iso = dataParaIso(data);
+            const estado = obterEstadoCelulaHeatmap(iso, mapaDias[iso]);
+            return `
+              <div class="${estado.classe}" title="${esc(`${regiao.regiao} · ${estado.title}`)}">
+                <span class="os-heatmap-day">${DIA_SIGLAS[indice]}</span>
+                <span class="os-heatmap-score">${estado.valor}</span>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="os-heatmap-week-label" title="${esc(regiao.regiao)}">${esc(regiao.regiao)}</div>
+            <div class="os-heatmap-week-row">${blocos}</div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function atualizarHeatmap(payload) {
+    const label = document.getElementById('heatmap-month-label');
+    const wrap = document.getElementById('heatmap-content');
+
+    label.innerHTML = `Visão de <strong>${formatarMesAno(payload.mes)}</strong>`;
+    wrap.innerHTML = payload.tipo === 'semanal'
+      ? renderHeatmapSemanal(payload)
+      : renderHeatmapMensal(payload);
+  }
+
+  function renderDonut(porPrioridade) {
+    const wrap = document.getElementById('donut-wrap');
+    const prioridades = {
+      Alta: { total: 0, cor: '#ef4444' },
+      'Média': { total: 0, cor: '#f97316' },
+      Baixa: { total: 0, cor: '#22c55e' },
+    };
+
+    (porPrioridade || []).forEach(item => {
+      if (prioridades[item.prioridade]) {
+        prioridades[item.prioridade].total = Number(item.total || 0);
+      }
+    });
+
+    const total = Object.values(prioridades).reduce((sum, item) => sum + item.total, 0);
+
+    if (!total) {
+      wrap.innerHTML = '<div class="os-donut-empty">Nenhuma OS aberta ou em andamento no período.</div>';
+      return;
+    }
+
+    let acumulado = 0;
+    const gradiente = Object.entries(prioridades).map(([, item]) => {
+      const inicio = acumulado;
+      acumulado += (item.total / total) * 360;
+      return `${item.cor} ${inicio}deg ${acumulado}deg`;
+    }).join(', ');
+
+    wrap.innerHTML = `
+      <div class="os-donut-chart" style="background: conic-gradient(${gradiente});">
+        <div class="os-donut-center">
+          <div class="os-donut-total">${total}</div>
+          <div class="os-donut-caption">ativas</div>
+        </div>
+      </div>
+      <div class="os-donut-legend">
+        ${Object.entries(prioridades).map(([label, item]) => `
+          <div class="os-donut-legend-item">
+            <span class="os-donut-legend-dot" style="background:${item.cor}"></span>
+            <span>${esc(label)} <strong>${item.total}</strong></span>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   function renderTabelaTecnicos(porTecnico) {
     const wrap = document.getElementById('tabela-tecnicos-wrap');
+
     if (!porTecnico.length) {
       wrap.innerHTML = '<div class="os-empty">Nenhuma OS com os filtros atuais</div>';
       return;
     }
+
     wrap.innerHTML = `
-      <div class="os-tech-head">
-        <span>Técnico</span>
-        <span title="Aberta">Ab</span>
-        <span title="Em andamento">And</span>
-        <span title="Finalizada">Fin</span>
-        <span>Total</span>
-      </div>
       <div class="os-tech-list">
+        <div class="os-tech-row" style="cursor:default;">
+          <div class="os-tech-legend">
+            <span><i style="background:#3b82f6"></i>Ab</span>
+            <span><i style="background:#eab308"></i>And</span>
+            <span><i style="background:#22c55e"></i>Fin</span>
+          </div>
+          <div></div>
+          <div></div>
+        </div>
         ${porTecnico.map(row => `
           <div class="os-tech-row row-tecnico-filter" data-tecnico="${esc(row.tecnico)}">
             <div>
               <div class="os-tech-name">${esc(row.tecnico)}</div>
               ${row.regiao ? `<div class="os-tech-reg">${esc(row.regiao)}</div>` : ''}
             </div>
-            ${techNum(row.aberta)}
-            ${techNum(row.em_andamento)}
-            ${techNum(row.finalizada)}
-            <span class="os-tech-total">${row.total}</span>
+            <div class="os-tech-bar-wrap">
+              <div class="os-tech-bar">
+                <span class="os-tech-bar-segment--aberta" style="width:${percentual(row.aberta, row.total)}%"></span>
+                <span class="os-tech-bar-segment--andamento" style="width:${percentual(row.em_andamento, row.total)}%"></span>
+                <span class="os-tech-bar-segment--finalizada" style="width:${percentual(row.finalizada, row.total)}%"></span>
+              </div>
+            </div>
+            <div class="os-tech-total">${row.total}</div>
           </div>
         `).join('')}
-      </div>`;
+      </div>
+    `;
   }
 
   function renderListaRegioes(porRegiao) {
     const el = document.getElementById('lista-regioes');
+
     if (!porRegiao.length) {
       el.innerHTML = '<div class="os-empty">—</div>';
       return;
     }
+
     el.innerHTML = porRegiao.map(r => `
-      <div class="os-mini-item row-regiao-filter" data-regiao="${esc(r.regiao)}">
+      <div class="os-mini-item os-mini-item--clickable row-regiao-filter" data-regiao="${esc(r.regiao)}">
         <span class="os-mini-label">${esc(r.regiao)}</span>
         <span class="os-mini-count">${r.total}</span>
       </div>
@@ -646,10 +1638,12 @@
 
   function renderListaCategorias(porCategoria) {
     const el = document.getElementById('lista-categorias');
+
     if (!porCategoria.length) {
       el.innerHTML = '<div class="os-empty">—</div>';
       return;
     }
+
     el.innerHTML = porCategoria.map(c => `
       <div class="os-mini-item">
         <span class="os-mini-label">${esc(c.categoria)}</span>
@@ -660,10 +1654,12 @@
 
   function renderTabelaOs(items) {
     const wrap = document.getElementById('tabela-os-wrap');
+
     if (!items.length) {
       wrap.innerHTML = '<div class="os-empty">Nenhuma ordem de serviço encontrada</div>';
       return;
     }
+
     wrap.innerHTML = `
       <table class="os-table">
         <thead>
@@ -692,31 +1688,26 @@
             </tr>
           `).join('')}
         </tbody>
-      </table>`;
-  }
-
-  function formatarData(valor) {
-    if (!valor) return '—';
-    const d = new Date(valor);
-    if (isNaN(d)) return esc(String(valor).slice(0, 10));
-    return d.toLocaleDateString('pt-BR');
+      </table>
+    `;
   }
 
   function atualizarMetricas(totais) {
-    document.getElementById('metric-total').textContent = totais.total;
     document.getElementById('metric-aberta').textContent = totais.aberta;
     document.getElementById('metric-andamento').textContent = totais.em_andamento;
     document.getElementById('metric-finalizada').textContent = totais.finalizada;
     document.getElementById('metric-tecnicos').textContent = totais.tecnicos;
-    document.getElementById('total-tecnicos-label').textContent = totais.tecnicos + ' técnicos';
+    document.getElementById('total-tecnicos-label').textContent = `${totais.tecnicos} técnicos`;
   }
 
   function atualizarPaginacao() {
     const inicio = totalLista === 0 ? 0 : offsetAtual + 1;
     const fim = Math.min(offsetAtual + PAGE_SIZE, totalLista);
+
     document.getElementById('lista-total').textContent = totalLista;
-    document.getElementById('lista-paginacao-info').textContent =
-      totalLista ? `${inicio}–${fim} de ${totalLista}` : 'Nenhum registro';
+    document.getElementById('lista-paginacao-info').textContent = totalLista
+      ? `${inicio}–${fim} de ${totalLista}`
+      : 'Nenhum registro';
     document.getElementById('btn-pag-anterior').disabled = offsetAtual <= 0;
     document.getElementById('btn-pag-proxima').disabled = offsetAtual + PAGE_SIZE >= totalLista;
   }
@@ -725,9 +1716,10 @@
     const select = document.getElementById('filtro-tecnico');
     const valorAtual = select.value;
     const qs = regiao ? `?regiao=${encodeURIComponent(regiao)}` : '';
+
     try {
       const tecnicos = await getUrl('tecnicos' + qs);
-      select.innerHTML = '<option value="">Técnico</option>' +
+      select.innerHTML = '<option value="">Todos os técnicos</option>' +
         (Array.isArray(tecnicos) ? tecnicos : []).map(t =>
           `<option value="${esc(t.nome)}">${esc(t.nome)}</option>`
         ).join('');
@@ -737,30 +1729,31 @@
     }
   }
 
-  function validarPeriodoFiltros(filtros) {
-    if (filtros.dataInicio && filtros.dataFim && filtros.dataInicio > filtros.dataFim) {
-      document.getElementById('filtro-data-fim').value = filtros.dataInicio;
-      filtros.dataFim = filtros.dataInicio;
-    }
-    return filtros;
+  async function carregarHeatmap() {
+    const payload = await getUrl(`ordem-servico/heatmap?tipo=${heatmapTipoAtual}&mes=${HEATMAP_MONTH}`);
+    atualizarHeatmap(payload);
   }
 
   async function carregarOrdemServicoDashboard(resetPagina = true) {
     const gen = window.plannerBeginReload?.() ?? 0;
     if (resetPagina) offsetAtual = 0;
+
     const filtros = obterFiltrosParaApi();
     const qs = filtrosParaQuery(filtros);
     atualizarIndicadorPeriodo(filtros);
 
     try {
-      const [dashboard, lista] = await Promise.all([
+      const [dashboard, lista, heatmap] = await Promise.all([
         getUrl('ordem-servico/dashboard' + (qs ? '?' + qs : '')),
         getUrl(`ordem-servico?limit=${PAGE_SIZE}&offset=${offsetAtual}` + (qs ? '&' + qs : '')),
+        getUrl(`ordem-servico/heatmap?tipo=${heatmapTipoAtual}&mes=${HEATMAP_MONTH}`),
       ]);
 
       if (window.plannerIsReloadCurrent && !window.plannerIsReloadCurrent(gen)) return;
 
       atualizarMetricas(dashboard.totais);
+      renderDonut(dashboard.por_prioridade || []);
+      atualizarHeatmap(heatmap);
       renderTabelaTecnicos(dashboard.por_tecnico || []);
       renderListaRegioes(dashboard.por_regiao || []);
       renderListaCategorias(dashboard.por_categoria_pai || []);
@@ -772,12 +1765,24 @@
       console.error(err);
       document.getElementById('tabela-tecnicos-wrap').innerHTML =
         '<div class="os-empty" style="color:#dc2626;">Erro ao carregar. Verifique o login.</div>';
+      document.getElementById('heatmap-content').innerHTML =
+        '<div class="os-empty" style="color:#dc2626;">Não foi possível carregar o heatmap.</div>';
+      document.getElementById('donut-wrap').innerHTML =
+        '<div class="os-empty" style="color:#dc2626;">Não foi possível carregar o gráfico.</div>';
     }
   }
 
   window.carregarOrdemServicoDashboard = carregarOrdemServicoDashboard;
   window.abrirNovoItem = function () {
     carregarOrdemServicoDashboard(true);
+  };
+
+  window.toggleFiltrosExtra = function() {
+    filtrosExtraAbertos = !filtrosExtraAbertos;
+    document.getElementById('filtros-extra').classList.toggle('open', filtrosExtraAbertos);
+    document.getElementById('btn-filtros-extra-label').textContent = filtrosExtraAbertos
+      ? 'Menos filtros'
+      : 'Mais filtros';
   };
 
   window.exportarPlanilha = async function () {
@@ -817,8 +1822,8 @@
   };
 
   window.aplicarFiltros = function() {
-    carregarTecnicosSelect(document.getElementById('filtro-regiao').value)
-      .then(() => carregarOrdemServicoDashboard(true));
+    const regiao = document.getElementById('filtro-regiao').value;
+    carregarTecnicosSelect(regiao).then(() => carregarOrdemServicoDashboard(true));
   };
 
   window.aplicarFiltrosDebounce = function() {
@@ -827,11 +1832,12 @@
   };
 
   window.limparFiltros = function() {
-    ['filtro-busca','filtro-regiao','filtro-tecnico','filtro-status','filtro-categoria-pai',
-     'filtro-prioridade','filtro-data-inicio','filtro-data-fim'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
+    ['filtro-busca', 'filtro-regiao', 'filtro-tecnico', 'filtro-status', 'filtro-categoria-pai', 'filtro-prioridade', 'filtro-data-inicio', 'filtro-data-fim']
+      .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
     document.getElementById('filtro-tipo-data').value = 'criacao';
     atualizarIndicadorPeriodo(obterFiltros());
     carregarTecnicosSelect('').then(() => carregarOrdemServicoDashboard(true));
@@ -902,7 +1908,39 @@
     carregarTecnicosSelect(document.getElementById('filtro-regiao').value);
   });
 
-  carregarTecnicosSelect('').then(() => carregarOrdemServicoDashboard(true));
+  document.getElementById('filtro-data-inicio').addEventListener('change', () => {
+    atualizarIndicadorPeriodo(obterFiltrosParaApi());
+  });
+
+  document.getElementById('filtro-data-fim').addEventListener('change', () => {
+    atualizarIndicadorPeriodo(obterFiltrosParaApi());
+  });
+
+  document.getElementById('filtro-tipo-data').addEventListener('change', () => {
+    atualizarIndicadorPeriodo(obterFiltrosParaApi());
+  });
+
+  document.querySelectorAll('[data-heatmap-tipo]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const novoTipo = button.dataset.heatmapTipo;
+      if (!novoTipo || novoTipo === heatmapTipoAtual) return;
+
+      heatmapTipoAtual = novoTipo;
+      document.querySelectorAll('[data-heatmap-tipo]').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.heatmapTipo === heatmapTipoAtual);
+      });
+
+      document.getElementById('heatmap-content').innerHTML = '<div class="os-loading">Carregando atividade…</div>';
+
+      try {
+        await carregarHeatmap();
+      } catch (error) {
+        console.error(error);
+        document.getElementById('heatmap-content').innerHTML =
+          '<div class="os-empty" style="color:#dc2626;">Não foi possível carregar o heatmap.</div>';
+      }
+    });
+  });
 
   document.getElementById('tabela-tecnicos-wrap').addEventListener('click', (e) => {
     const row = e.target.closest('.row-tecnico-filter');
@@ -913,5 +1951,7 @@
     const row = e.target.closest('.row-regiao-filter');
     if (row?.dataset.regiao && row.dataset.regiao !== 'Sem região') filtrarPorRegiao(row.dataset.regiao);
   });
+
+  carregarTecnicosSelect('').then(() => carregarOrdemServicoDashboard(true));
 </script>
 @endsection
