@@ -587,6 +587,11 @@
     gap: 12px;
     width: 100%;
   }
+  .modal-foot-os-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   .modal-foot-os-actions {
     display: flex;
     align-items: center;
@@ -613,6 +618,156 @@
     border-color: #166ac4;
   }
   .os-btn-anexo-round:active { transform: scale(0.96); }
+  .os-btn-historico-round {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-600);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+  }
+  .os-btn-historico-round i { font-size: 18px; }
+  .os-btn-historico-round:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-400);
+    color: var(--gray-900);
+  }
+  .os-btn-historico-round:active { transform: scale(0.96); }
+  .modal-historico-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0,0,0,0);
+    visibility: hidden;
+    pointer-events: none;
+    transition: background 0.28s ease, visibility 0.28s;
+  }
+  .modal-historico-overlay.open {
+    visibility: visible;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.45);
+  }
+  .modal-historico-box {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-historico-overlay.open .modal-historico-box {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  .historico-loading,
+  .historico-erro,
+  .historico-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 36px 16px;
+    color: var(--gray-500);
+    font-size: 13px;
+    text-align: center;
+  }
+  .historico-loading i,
+  .historico-vazio i { font-size: 28px; color: var(--gray-300); }
+  .historico-loading i { animation: spin 0.9s linear infinite; }
+  .historico-erro { color: #dc2626; }
+  .historico-timeline { display: flex; flex-direction: column; gap: 0; }
+  .historico-item {
+    display: flex;
+    gap: 12px;
+    padding: 0 0 18px;
+  }
+  .historico-item--ultimo .historico-item-user { color: #166ac4; }
+  .historico-item-rail {
+    width: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .historico-item-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--blue-50);
+    color: #166ac4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .historico-item-dot i { font-size: 14px; }
+  .historico-item-line {
+    width: 2px;
+    flex: 1;
+    min-height: 12px;
+    margin-top: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+  }
+  .historico-item-body { flex: 1; min-width: 0; }
+  .historico-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .historico-item-user {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+  .historico-item-time {
+    font-size: 11px;
+    color: var(--gray-400);
+    white-space: nowrap;
+  }
+  .historico-item-desc {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--gray-700);
+    line-height: 1.45;
+  }
+  .historico-item-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+    font-size: 12px;
+    color: var(--gray-600);
+  }
+  .historico-item-change i { font-size: 12px; color: var(--gray-400); }
+  .historico-item-date {
+    display: block;
+    font-size: 11px;
+    color: var(--gray-400);
+  }
   .descricao-editor-wrap--compact .descricao-editor {
     min-height: 88px;
   }
@@ -842,6 +997,25 @@
     background: #0d2340;
     border-color: #58a6ff;
   }
+  [data-theme="dark"] .os-btn-historico-round {
+    background: #161b22;
+    border-color: #30363d;
+    color: #c9d1d9;
+  }
+  [data-theme="dark"] .os-btn-historico-round:hover {
+    background: #21262d;
+    border-color: #8b949e;
+    color: #f0f6fc;
+  }
+  [data-theme="dark"] .modal-historico-box {
+    background: #161b22;
+    border-color: #30363d;
+  }
+  [data-theme="dark"] .historico-item-dot { background: #0d2340; color: #58a6ff; }
+  [data-theme="dark"] .historico-item-line { background: #30363d; }
+  [data-theme="dark"] .historico-item-user { color: #e6edf3; }
+  [data-theme="dark"] .historico-item-desc { color: #c9d1d9; }
+  [data-theme="dark"] .historico-item-change { background: #0d1117; color: #c9d1d9; }
   .modal-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0; }
   .modal-sub { font-size: 12px; color: var(--gray-500); margin: 0; }
   .modal-close { background: transparent; border: none; cursor: pointer; color: var(--gray-500); font-size: 18px; display: flex; align-items: center; padding: 4px; transition: color 0.15s; }
@@ -1197,7 +1371,7 @@
       <a href="/troca-de-etiqueta" class="nav-item {{ request()->is('troca-de-etiqueta*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-tag"></i><span>Troca de etiqueta</span></div></a>
       <a href="/otimizacao-de-rede" class="nav-item {{ request()->is('otimizacao-de-rede*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-wifi"></i><span>Otimização de rede</span></div></a>
       <a href="/atendimento" class="nav-item {{ request()->is('atendimento*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-headset"></i><span>Atendimento</span></div></a>
-      <a href="#" class="nav-item"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div></a>
+      <a href="/manutencao-corretiva" class="nav-item {{ request()->is('manutencao-corretiva*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-tool"></i><span>Manutenção</span></div></a>
       <a href="/ordem-de-servico" class="nav-item {{ request()->is('ordem-de-servico*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-file-check"></i><span>Ordem de serviço</span></div></a>
       <a href="/certificacao-cemig" class="nav-item {{ request()->is('certificacao-cemig*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-certificate"></i><span>Certificação</span></div></a>
       <a href="/correcao-de-sinal" class="nav-item {{ request()->is('correcao-de-sinal*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-wave-sine"></i><span>Correção de sinal</span></div></a>
@@ -1293,12 +1467,33 @@
               <button type="button" class="os-btn-anexo-round" id="os-detalhe-btn-anexo" title="Anexar imagem">
                 <i class="ti ti-paperclip"></i>
               </button>
+              <button type="button" class="os-btn-historico-round" id="os-detalhe-btn-historico" title="Histórico da tarefa" aria-label="Histórico da tarefa">
+                <i class="ti ti-history"></i>
+              </button>
               <input type="file" id="os-detalhe-input-anexo" accept="image/*" multiple hidden />
             </div>
             <div class="modal-foot-os-actions">
               <button type="button" onclick="fecharDetalheOs()" class="btn-modal btn-modal-ghost">Fechar</button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-historico-overlay" class="modal-historico-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-historico-titulo">
+      <div class="modal-historico-box">
+        <div class="modal-head">
+          <div>
+            <p class="modal-title" id="modal-historico-titulo">Histórico da tarefa</p>
+            <p class="modal-sub" id="modal-historico-subtitulo">Linha do tempo de alterações</p>
+          </div>
+          <button type="button" onclick="fecharHistorico()" class="modal-close" aria-label="Fechar">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-historico-conteudo"></div>
+        <div class="modal-foot">
+          <button type="button" onclick="fecharHistorico()" class="btn-modal btn-modal-ghost">Fechar</button>
         </div>
       </div>
     </div>
@@ -1559,6 +1754,7 @@
     request()->is('otimizacao-de-rede*') => ['categorias' => ['otimizacao-rede', 'otimizacao de rede', 'otimização de rede', 'OTIMIZACAO DE REDE', 'OTIMIZAÇÃO DE REDE'], 'reload' => 'carregarOtimizacoes'],
     request()->is('atendimento*') => ['categorias' => ['atendimento-cliente', 'atendimento ao cliente'], 'reload' => 'carregarAtendimentos'],
     request()->is('correcao-de-sinal*') => ['categorias' => ['correcao-atenuacao', 'correção de atenuação'], 'reload' => 'carregarCorrecoes'],
+    request()->is('manutencao-corretiva*') => ['categorias' => ['manutencao-corretiva', 'manutenção corretiva'], 'reload' => 'carregarManutencoes'],
     request()->is('certificacao-cemig*') => ['categorias' => ['certificacao-cemig', 'certificação cemig'], 'reload' => 'carregarCertificacoes'],
     request()->is('ordem-de-servico*') => ['categorias' => ['ordem-servico'], 'reload' => 'carregarOrdemServicoDashboard'],
     request()->is('tarefas*') => ['categorias' => ['tarefas'], 'reload' => 'carregarTarefas'],
@@ -1588,6 +1784,7 @@
 @endphp
 
 <script src="{{ $plannerAssetV('js/planner-notificacoes.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-historico.js') }}"></script>
 
 @if($realtimePage)
 <script src="{{ $plannerAssetV('js/planner-reload-guard.js') }}"></script>

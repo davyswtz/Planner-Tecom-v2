@@ -1255,6 +1255,9 @@
         <button type="button" class="os-btn-anexo-round" id="ordem-os-detalhe-btn-anexo" title="Anexar imagem">
           <i class="ti ti-paperclip"></i>
         </button>
+        <button type="button" class="os-btn-historico-round" id="ordem-os-detalhe-btn-historico" title="Histórico da tarefa" aria-label="Histórico da tarefa">
+          <i class="ti ti-history"></i>
+        </button>
         <input type="file" id="ordem-os-detalhe-input-anexo" accept="image/*" multiple hidden />
       </div>
       <div class="modal-foot-os-actions">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CertificacaoCemigController;
 use App\Http\Controllers\Api\CorrecaoDadosController;
 use App\Http\Controllers\Api\CorrecaoDeSinalController;
 use App\Http\Controllers\Api\GeoGridController;
+use App\Http\Controllers\Api\ManutencaoCorretivaController;
 use App\Http\Controllers\Api\MensagemTemplateController;
 use App\Http\Controllers\Api\NiconController;
 use App\Http\Controllers\Api\NotificacaoController;
@@ -42,6 +43,11 @@ Route::middleware("auth:sanctum")->group(function () {
         "marcarLida",
     ])->whereNumber("id");
     Route::apiResource("op-tasks", OpTaskController::class);
+    Route::get("op-tasks/{opTask}/historico", [OpTaskController::class, "historico"]);
+    Route::get("op-tasks/{opTask}/anexos", [OpTaskAnexoController::class, "index"]);
+    Route::post("op-tasks/{opTask}/anexos", [OpTaskAnexoController::class, "store"]);
+    Route::delete("op-tasks/{opTask}/anexos/{anexo}", [OpTaskAnexoController::class, "destroy"])->whereNumber("anexo");
+    Route::get("op-tasks/{opTask}/anexos/{anexo}/arquivo", [OpTaskAnexoController::class, "arquivo"])->whereNumber("anexo");
     Route::apiResource("rompimentos", RompimentoController::class);
     Route::get("rompimentos/{id}/os", [
         RompimentoController::class,
@@ -90,6 +96,15 @@ Route::middleware("auth:sanctum")->group(function () {
         "listarOS",
     ]);
     Route::apiResource("atendimento", AtendimentoController::class);
+    Route::get("manutencao-corretiva/coordenada", [
+        ManutencaoCorretivaController::class,
+        "buscarEndereco",
+    ]);
+    Route::get("manutencao-corretiva/{id}/os", [
+        ManutencaoCorretivaController::class,
+        "listarOS",
+    ]);
+    Route::apiResource("manutencao-corretiva", ManutencaoCorretivaController::class);
     Route::get("correcao-sinal/coordenada", [
         CorrecaoDeSinalController::class,
         "buscarEndereco",

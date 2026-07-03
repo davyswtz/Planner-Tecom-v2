@@ -36,6 +36,11 @@ class OpTask extends Model
         'certificação cemig',
     ];
 
+    public const CATEGORIAS_MANUTENCAO_CORRETIVA = [
+        'manutencao-corretiva',
+        'manutenção corretiva',
+    ];
+
     protected $table = 'op_tasks';
 
     protected $primaryKey = 'id';
@@ -245,6 +250,11 @@ class OpTask extends Model
     public function isCertificacaoCemigPai(): bool
     {
         return $this->isTarefaPaiOf(self::CATEGORIAS_CERTIFICACAO_CEMIG);
+    }
+
+    public function isManutencaoCorretivaPai(): bool
+    {
+        return $this->isTarefaPaiOf(self::CATEGORIAS_MANUTENCAO_CORRETIVA);
     }
 
     public function isTarefaPai(): bool

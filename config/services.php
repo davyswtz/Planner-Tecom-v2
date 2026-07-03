@@ -51,7 +51,6 @@ return [
         'base_url' => rtrim(env('NICON_BASE_URL', ''), '/'),
         'email' => env('NICON_EMAIL'),
         'password' => env('NICON_PASSWORD'),
-        'two_factor' => env('NICON_2FA'),
         'timeout' => (int) env('NICON_TIMEOUT', 120),
         'status_servico' => array_map('intval', array_filter(explode(',', env('NICON_STATUS_SERVICO', '10,12,11,13')))),
         'caixas_cache_minutes' => (int) env('NICON_CAIXAS_CACHE_MINUTES', 360),
