@@ -270,6 +270,7 @@ class MensagemTemplateService
             'otimizacao-rede', 'otimizacao de rede', 'otimização de rede' => 'otimizacao-rede',
             'atendimento-cliente', 'atendimento ao cliente' => 'atendimento-cliente',
             'correcao-atenuacao', 'correção de atenuação', 'correcao-de-sinal', 'correção de sinal' => 'correcao-atenuacao',
+            'manutencao-corretiva', 'manutenção corretiva', 'manutencao corretiva', 'manutenção-corretiva' => 'manutencao-corretiva',
             'certificacao-cemig', 'certificação cemig' => 'certificacao-cemig',
             'ordem-servico' => 'ordem-servico',
             default => str_replace(' ', '-', $categoria),

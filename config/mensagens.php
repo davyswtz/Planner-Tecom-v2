@@ -95,6 +95,11 @@ return [
             'grupo' => 'operacional',
             'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
         ],
+        'manutencao-corretiva' => [
+            'label' => 'Manutenção corretiva',
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
+        ],
         'certificacao-cemig' => [
             'label' => 'Certificação CEMIG',
             'grupo' => 'operacional',
@@ -140,6 +145,11 @@ return [
             'Em andamento' => "🔧 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Impedimento' => "🚨 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Finalizada' => "✅ *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
+        ],
+        'manutencao-corretiva' => [
+            'Em andamento' => "🔧 *Alerta: MANUTENÇÃO CORRETIVA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
+            'Impedimento' => "🚨 *Alerta: MANUTENÇÃO CORRETIVA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: MANUTENÇÃO CORRETIVA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'certificacao-cemig' => [
             'Pendente' => "📋 *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",

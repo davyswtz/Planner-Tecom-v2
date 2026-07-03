@@ -19,6 +19,7 @@ const ICONES_CATEGORIA = {
   'otimizacao-rede': 'ti-network',
   'atendimento-cliente': 'ti-headset',
   'correcao-atenuacao': 'ti-antenna-bars-5',
+  'manutencao-corretiva': 'ti-tool',
   'certificacao-cemig': 'ti-certificate',
   'ordem-servico': 'ti-clipboard-list',
 };

@@ -289,6 +289,7 @@ class GoogleChatService
             'otimizacao-rede' => 'OTIMIZAÇÃO DE REDE',
             'atendimento-cliente' => 'ATENDIMENTO',
             'correcao-atenuacao' => 'CORREÇÃO DE SINAL',
+            'manutencao-corretiva' => 'MANUTENÇÃO CORRETIVA',
             default => strtoupper(str_replace('-', ' ', $categoria ?: 'TAREFA')),
         };
 
