@@ -47,6 +47,31 @@ APP_URL=https://planner.seudominio.com.br
 DB_PASSWORD="sua_senha"
 ```
 
+### Atualizar `.env` em produção (sem derrubar o site)
+
+**Não** substitua o arquivo inteiro por `deploy/env/*.env.example` — isso apaga `APP_KEY` e `DB_PASSWORD`.
+
+Adicione apenas ao `.env` que já funciona:
+
+```env
+PLANNER_PUBLIC_URL=https://chutepremiadoplanner.chutepremiado.com
+PLANNER_ANEXOS_CHAT_TTL_HORAS=72
+```
+
+Depois no terminal:
+
+```bash
+cd ~/planner
+php artisan config:clear
+php artisan config:cache
+```
+
+Se o site cair com timeout ou erro 500, confira no `.env`:
+
+- `APP_KEY=base64:...` (não pode estar vazio)
+- `DB_PASSWORD="..."` (senha real do MySQL)
+- `BROADCAST_CONNECTION=log` (não use `pusher` sem chaves Pusher)
+
 O resto já vem configurado para seu banco:
 
 ```env

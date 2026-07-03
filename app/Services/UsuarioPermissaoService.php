@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Schema;
 
 class UsuarioPermissaoService
 {
+    private static ?bool $temTabelaPermissoes = null;
+
     public function catalogo(): array
     {
         return collect(config('permissions', []))
@@ -24,7 +26,18 @@ class UsuarioPermissaoService
     {
         $permissao = $this->normalizarChaveLegada($permissao);
 
-        return in_array($permissao, $this->listarPorUsuario($username), true);
+        if (! in_array($permissao, $this->chavesValidas(), true)) {
+            return false;
+        }
+
+        if (! $this->temTabelaPermissoes()) {
+            return false;
+        }
+
+        return UsuarioPermissao::query()
+            ->where('username', $username)
+            ->where('permissao', $permissao)
+            ->exists();
     }
 
     public function normalizarChaveLegada(string $permissao): string
@@ -47,7 +60,7 @@ class UsuarioPermissaoService
 
     public function listarPorUsuario(string $username): array
     {
-        if (! Schema::hasTable('usuario_permissoes')) {
+        if (! $this->temTabelaPermissoes()) {
             return [];
         }
 
@@ -62,7 +75,7 @@ class UsuarioPermissaoService
 
     public function listarPorUsuarios(array $usernames): array
     {
-        if (! Schema::hasTable('usuario_permissoes') || $usernames === []) {
+        if (! $this->temTabelaPermissoes() || $usernames === []) {
             return [];
         }
 
@@ -77,7 +90,7 @@ class UsuarioPermissaoService
 
     public function sincronizar(string $username, ?array $permissoes): void
     {
-        if (! Schema::hasTable('usuario_permissoes')) {
+        if (! $this->temTabelaPermissoes()) {
             return;
         }
 
@@ -94,5 +107,14 @@ class UsuarioPermissaoService
                 'permissao' => $permissao,
             ]);
         }
+    }
+
+    private function temTabelaPermissoes(): bool
+    {
+        if (self::$temTabelaPermissoes === null) {
+            self::$temTabelaPermissoes = Schema::hasTable('usuario_permissoes');
+        }
+
+        return self::$temTabelaPermissoes;
     }
 }

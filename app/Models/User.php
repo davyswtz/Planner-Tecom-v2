@@ -26,6 +26,7 @@ class User extends Authenticatable
         'pass_salt',
         'pass_hash',
         'pass_iterations',
+        'cargo',
     ];
 
     protected $hidden = [

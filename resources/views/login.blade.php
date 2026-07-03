@@ -453,14 +453,20 @@
     btn.innerHTML = '<i class="ti ti-loader"></i> Entrando...';
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -478,7 +484,9 @@
         btn.innerHTML = '<i class="ti ti-login"></i> Entrar';
       }
     } catch (err) {
-      errorText.textContent = 'Erro de conexão. Tente novamente.';
+      errorText.textContent = err.name === 'AbortError'
+        ? 'Servidor demorou para responder. Verifique o .env e o banco na Hostinger.'
+        : 'Erro de conexão. Tente novamente.';
       errorMsg.classList.remove('hidden');
       btn.classList.remove('loading');
       btn.innerHTML = '<i class="ti ti-login"></i> Entrar';

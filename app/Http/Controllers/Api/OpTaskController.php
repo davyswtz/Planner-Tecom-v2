@@ -65,7 +65,7 @@ class OpTaskController extends Controller
             'titulo' => ['required', 'string', 'max:255'],
             'categoria' => ['required', 'string', 'max:64'],
             'descricao' => ['nullable', 'string'],
-            'responsavel' => ['nullable', 'string', 'max:120'],
+            'responsavel' => ['nullable', 'string', 'max:500'],
             'prazo' => ['nullable', 'date'],
             'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
             'status' => ['nullable', 'string', 'max:64'],
@@ -130,7 +130,7 @@ class OpTaskController extends Controller
                 $request->validate([
                     'titulo' => ['sometimes', 'required', 'string', 'max:255'],
                     'descricao' => ['nullable', 'string'],
-                    'responsavel' => ['nullable', 'string', 'max:120'],
+                    'responsavel' => ['nullable', 'string', 'max:500'],
                     'prazo' => ['nullable', 'date'],
                     'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
                     'status' => ['nullable', 'string', 'max:64'],

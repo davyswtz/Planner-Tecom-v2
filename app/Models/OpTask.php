@@ -117,6 +117,11 @@ class OpTask extends Model
         return $this->hasMany(OsTecnico::class, 'parent_task_id');
     }
 
+    public function anexos(): HasMany
+    {
+        return $this->hasMany(OpTaskAnexo::class, 'op_task_id');
+    }
+
     public function getCtoAttribute(): string
     {
         return (string) ($this->attributes['setor'] ?? '');

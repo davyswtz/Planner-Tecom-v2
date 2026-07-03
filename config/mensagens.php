@@ -3,6 +3,17 @@
 return [
     'storage_key' => 'mensagensTemplates',
 
+    'grupos' => [
+        'operacional' => [
+            'label' => 'Tarefas operacionais',
+            'descricao' => 'Mensagens ao mudar o status das tarefas no kanban.',
+        ],
+        'ordem-servico' => [
+            'label' => 'Ordens de serviço',
+            'descricao' => 'Mensagens postadas no tópico da tarefa pai no Google Chat quando a OS muda de status.',
+        ],
+    ],
+
     'placeholders' => [
         ['key' => 'id', 'label' => 'ID interno'],
         ['key' => 'task_code', 'label' => 'Código da tarefa'],
@@ -36,84 +47,111 @@ return [
         ['key' => 'atualizada_em', 'label' => 'Atualizada em'],
         ['key' => 'duracao_ativa', 'label' => 'Duração ativa (minutos)'],
         ['key' => 'parent_task_id', 'label' => 'ID da tarefa pai'],
+        ['key' => 'parent_task_code', 'label' => 'Código da tarefa pai'],
+        ['key' => 'parent_titulo', 'label' => 'Título da tarefa pai'],
+        ['key' => 'parent_categoria', 'label' => 'Categoria da tarefa pai (chave)'],
+        ['key' => 'parent_categoria_label', 'label' => 'Categoria da tarefa pai (nome)'],
+        ['key' => 'os_tipo', 'label' => 'Tipo da OS'],
         ['key' => 'is_parent_task', 'label' => 'É tarefa pai'],
         ['key' => 'historico', 'label' => 'Histórico'],
         ['key' => 'enviado_por', 'label' => 'Enviado por'],
+        ['key' => 'os_total', 'label' => 'Total de OS vinculadas'],
+        ['key' => 'os_finalizadas', 'label' => 'Quantidade de OS finalizadas'],
+        ['key' => 'os_resumo_tecnicos', 'label' => 'Resumo de OS por técnico'],
+        ['key' => 'os_resumo', 'label' => 'Bloco completo do resumo de OS'],
+        ['key' => 'etiquetas', 'label' => 'Nomes das etiquetas'],
+        ['key' => 'etiquetas_localizacao', 'label' => 'Etiquetas com localização (ordenadas por proximidade)'],
+        ['key' => 'etiquetas_coordenadas', 'label' => 'Etiquetas com coordenadas (ordenadas por proximidade)'],
     ],
 
     'categorias' => [
         'rompimentos' => [
             'label' => 'Rompimentos',
-            'statuses' => ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'],
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
         ],
         'troca-poste' => [
             'label' => 'Troca de poste',
-            'statuses' => ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'],
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
+        ],
+        'troca-etiqueta' => [
+            'label' => 'Troca de etiqueta',
+            'grupo' => 'operacional',
+            'statuses' => ['Pendente', 'Em andamento', 'Impedimento', 'Concluída', 'Finalizada'],
         ],
         'otimizacao-rede' => [
             'label' => 'Otimização de rede',
-            'statuses' => ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'],
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
         ],
         'atendimento-cliente' => [
             'label' => 'Atendimento',
-            'statuses' => ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'],
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
         ],
         'correcao-atenuacao' => [
             'label' => 'Correção de sinal',
-            'statuses' => ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'],
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
         ],
         'certificacao-cemig' => [
             'label' => 'Certificação CEMIG',
+            'grupo' => 'operacional',
             'statuses' => ['Pendente', 'Em andamento', 'Validação', 'Precisa de adequação', 'Concluído'],
         ],
         'ordem-servico' => [
             'label' => 'Ordem de serviço',
-            'statuses' => ['Aberta', 'Em andamento', 'Finalizada'],
+            'grupo' => 'ordem-servico',
+            'descricao' => 'Use variáveis como {parent_titulo}, {os_tipo} e {responsavel}. A mensagem é enviada como resposta no tópico criado pela tarefa pai.',
+            'statuses' => ['Em andamento', 'Finalizada', 'Aberta'],
         ],
     ],
 
     'padroes' => [
         'rompimentos' => [
-            'Criada' => "📋 *Alerta: ROMPIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n👥 *Clientes afetados:* {clientes_afetados}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
             'Em andamento' => "🚨 *ROMPIMENTO - {cto}*\n\n🗺️ *Endereço:* {localizacao}\n📍 *Localização inicial:* {coordenadas}\n\n🧾 *OS HubSpot:* {numero_os}\n👥 *Clientes afetados:* {clientes_afetados}\n🆔 {task_code}",
             'Impedimento' => "🚨 *Alerta: ROMPIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n👥 *Clientes afetados:* {clientes_afetados}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
-            'Finalizada' => "✅ *Alerta: ROMPIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n👥 *Clientes afetados:* {clientes_afetados}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: ROMPIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n👥 *Clientes afetados:* {clientes_afetados}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'troca-poste' => [
-            'Criada' => "📋 *Alerta: TROCA DE POSTE*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
             'Em andamento' => "🔧 *Alerta: TROCA DE POSTE*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
             'Impedimento' => "🚨 *Alerta: TROCA DE POSTE*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
-            'Finalizada' => "✅ *Alerta: TROCA DE POSTE*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: TROCA DE POSTE*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
+        ],
+        'troca-etiqueta' => [
+            'Pendente' => "📋 *Alerta: TROCA DE ETIQUETA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📌 *Região:* {regiao}\n👤 *Responsável:* {responsavel}\n🔄 *Status:* {status_anterior} → {status_novo}\n\n🏷️ *Etiquetas:*\n{etiquetas_localizacao}\n\n🔑 *Código:* {task_code}",
+            'Em andamento' => "🏷️ *TROCA DE ETIQUETA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📌 *Região:* {regiao}\n👤 *Responsável:* {responsavel}\n🔄 *Status:* {status_anterior} → {status_novo}\n\n🏷️ *Etiquetas:*\n{etiquetas_localizacao}\n\n🔑 *Código:* {task_code}",
+            'Impedimento' => "🚨 *Alerta: TROCA DE ETIQUETA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📌 *Região:* {regiao}\n👤 *Responsável:* {responsavel}\n🔄 *Status:* {status_anterior} → {status_novo}\n\n🏷️ *Etiquetas:*\n{etiquetas_localizacao}\n\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *TROCA DE ETIQUETA — Concluída*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📌 *Região:* {regiao}\n👤 *Responsável:* {responsavel}\n🔄 *Status:* {status_anterior} → {status_novo}\n\n🏷️ *Etiquetas:*\n{etiquetas_localizacao}\n\n🔑 *Código:* {task_code}\n\n{os_resumo}",
+            'Concluída' => "✅ *TROCA DE ETIQUETA — Concluída*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📌 *Região:* {regiao}\n👤 *Responsável:* {responsavel}\n🔄 *Status:* {status_anterior} → {status_novo}\n\n🏷️ *Etiquetas:*\n{etiquetas_localizacao}\n\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'otimizacao-rede' => [
-            'Criada' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n\n🆔 {task_code}",
             'Em andamento' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n\n🆔 {task_code}",
             'Impedimento' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n\n🆔 {task_code}",
-            'Finalizada' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n\n🆔 {task_code}",
+            'Finalizada' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n\n🆔 {task_code}\n\n{os_resumo}",
         ],
         'atendimento-cliente' => [
-            'Criada' => "📋 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}",
             'Em andamento' => "🔧 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}",
             'Impedimento' => "🚨 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}",
-            'Finalizada' => "✅ *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'correcao-atenuacao' => [
-            'Criada' => "📋 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Em andamento' => "🔧 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Impedimento' => "🚨 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
-            'Finalizada' => "✅ *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'certificacao-cemig' => [
             'Pendente' => "📋 *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Em andamento' => "🔧 *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Validação' => "📋 *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Precisa de adequação' => "🚨 *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
-            'Concluído' => "✅ *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
+            'Concluído' => "✅ *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'ordem-servico' => [
             'Aberta' => "📋 *Atualização de Ordem de Serviço*\n\n📌 *Nome da OS:* {titulo}\n🔄 *Status da OS:* {status_novo}",
-            'Em andamento' => "📋 *Atualização de Ordem de Serviço*\n\n📌 *Nome da OS:* {titulo}\n🔄 *Status da OS:* {status_novo}\n📝 *Descrição:* {descricao}",
-            'Finalizada' => "✅ *OS Finalizada*\n\n📌 *Nome da OS:* {titulo}\n✅ *Status da OS:* {status_novo}",
+            'Em andamento' => "📋 *OS em andamento*\n━━━━━━━━━━━━━━━━━━━━\n🔗 *Tarefa pai:* {parent_titulo} ({parent_task_code})\n📂 *Categoria:* {parent_categoria_label}\n📌 *Tipo:* {os_tipo}\n👤 *Técnicos:* {responsavel}\n📝 *Descrição:* {descricao}\n📌 *Região:* {regiao}\n🔑 *Código OS:* {task_code}",
+            'Finalizada' => "✅ *OS Finalizada*\n━━━━━━━━━━━━━━━━━━━━\n🔗 *Tarefa pai:* {parent_titulo} ({parent_task_code})\n📌 *Tipo:* {os_tipo}\n👤 *Técnicos:* {responsavel}\n📝 *Descrição:* {descricao}\n🔑 *Código OS:* {task_code}",
         ],
     ],
 ];

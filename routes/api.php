@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\GeoGridController;
 use App\Http\Controllers\Api\MensagemTemplateController;
 use App\Http\Controllers\Api\NiconController;
 use App\Http\Controllers\Api\NotificacaoController;
+use App\Http\Controllers\Api\OpTaskAnexoController;
 use App\Http\Controllers\Api\OpTaskController;
 use App\Http\Controllers\Api\OrdemServicoController;
 use App\Http\Controllers\Api\OtimizacaoDeRedeController;

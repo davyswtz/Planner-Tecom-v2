@@ -24,6 +24,7 @@
 *.env.local
 deploy/env/*.local
 deploy/env/*-secrets.*
+deploy/env/chutepremiadoplanner.env
 
 # Docker sensível
 docker/mysql/init.sql

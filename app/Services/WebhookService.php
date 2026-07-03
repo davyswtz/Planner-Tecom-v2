@@ -180,11 +180,18 @@ class WebhookService
             'finalizada' => true,
         ]);
 
-        return match ($status) {
-            'Em andamento', 'em_andamento' => (bool) ($events['andamento'] ?? true),
-            'Concluída' => (bool) ($events['concluida'] ?? true),
-            'Finalizada', 'Finalizar', 'finalizada' => (bool) ($events['finalizada'] ?? true),
-            default => true,
+        $chave = mb_strtolower(str_replace('_', ' ', trim($status)));
+
+        if (in_array($chave, ['criada', 'pendente', 'backlog', 'aberta'], true)) {
+            return false;
+        }
+
+        return match ($chave) {
+            'em andamento' => (bool) ($events['andamento'] ?? true),
+            'concluída', 'concluida', 'concluído', 'concluido' => (bool) ($events['concluida'] ?? true),
+            'finalizada', 'finalizar', 'finalizado' => (bool) ($events['finalizada'] ?? true),
+            'impedimento', 'validação', 'validacao', 'precisa de adequação', 'precisa de adequacao' => true,
+            default => false,
         };
     }
 

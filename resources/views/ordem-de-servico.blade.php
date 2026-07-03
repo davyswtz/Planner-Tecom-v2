@@ -1043,6 +1043,16 @@
     .detail-field.span-2,
     .detail-field.span-3 { grid-column: span 1; }
   }
+  .detail-descricao {
+    font-size: 13px;
+    color: var(--gray-800);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .detail-descricao img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
+  .detail-error { color: #dc2626; font-size: 13px; padding: 8px 0; }
+  .os-table tbody tr.is-active { background: var(--blue-50); }
+  [data-theme="dark"] .os-table tbody tr.is-active { background: #0d2340; }
 </style>
 @endsection
 
@@ -1240,7 +1250,17 @@
 <x-modal id="detalhe-overlay" titulo-id="detalhe-titulo" subtitulo-id="detalhe-subtitulo" fechar="fecharDetalhe()">
   <div id="detalhe-conteudo"></div>
   <x-slot name="footer">
-    <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
+    <div class="modal-foot-os">
+      <div class="modal-foot-os-left">
+        <button type="button" class="os-btn-anexo-round" id="ordem-os-detalhe-btn-anexo" title="Anexar imagem">
+          <i class="ti ti-paperclip"></i>
+        </button>
+        <input type="file" id="ordem-os-detalhe-input-anexo" accept="image/*" multiple hidden />
+      </div>
+      <div class="modal-foot-os-actions">
+        <button onclick="fecharDetalhe()" class="btn-modal btn-modal-ghost">Fechar</button>
+      </div>
+    </div>
   </x-slot>
 </x-modal>
 @endsection
@@ -1673,7 +1693,7 @@
         </thead>
         <tbody>
           ${items.map(os => `
-            <tr data-id="${os.id}" onclick="abrirDetalhe(${os.id})">
+            <tr data-id="${os.id}" class="os-row-detalhe">
               <td>
                 <div class="os-cell-main">${esc(os.numero_os || os.taskCode || '—')}</div>
                 ${os.titulo ? `<div class="os-cell-sub">${esc(os.titulo)}</div>` : ''}
@@ -1691,6 +1711,175 @@
       </table>
     `;
   }
+
+  function formatarDataHora(valor) {
+    if (!valor) return '—';
+    const d = new Date(valor);
+    if (isNaN(d)) return esc(String(valor));
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  function preenchido(valor) {
+    if (valor == null || valor === undefined) return false;
+    if (typeof valor === 'number' && !Number.isNaN(valor)) return true;
+    const texto = String(valor).trim();
+    return texto !== '' && texto !== '—' && texto !== '-';
+  }
+
+  function dataValida(valor) {
+    if (!preenchido(valor)) return false;
+    const d = new Date(valor);
+    return !Number.isNaN(d.getTime());
+  }
+
+  function campoDetalhe(label, valor, span = 1) {
+    if (!preenchido(valor)) return '';
+    const spanClass = span === 3 ? ' span-3' : span === 2 ? ' span-2' : '';
+    return `
+      <div class="detail-field${spanClass}">
+        <span class="detail-label">${label}</span>
+        <div class="detail-value">${valor}</div>
+      </div>`;
+  }
+
+  function renderDescricaoDetalhe(descricao) {
+    const bruto = String(descricao || '').trim();
+    if (!bruto) return '';
+    const texto = /<[a-z][\s\S]*>/i.test(bruto)
+      ? bruto.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      : bruto;
+    if (!texto) return '';
+    return esc(texto).replace(/\r?\n/g, '<br>');
+  }
+
+  async function carregarBlobAutenticado(url) {
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(url, {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  }
+
+  async function montarGaleriaAnexosDetalhe(osId) {
+    const token = localStorage.getItem('planner_token');
+    const response = await fetch(`/api/op-tasks/${osId}/anexos`, {
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !Array.isArray(payload.anexos) || !payload.anexos.length) {
+      return '<div class="os-anexos-vazio">Nenhum anexo vinculado a esta OS.</div>';
+    }
+
+    const cards = await Promise.all(payload.anexos.map(async (anexo) => {
+      const blobUrl = await carregarBlobAutenticado(anexo.url);
+      if (!blobUrl) return '';
+      const nome = esc(anexo.nome_arquivo || 'Imagem');
+      return `
+        <div class="os-anexo-detalhe-item">
+          <button type="button" class="os-anexo-detalhe-card"
+            data-anexo-src="${blobUrl}"
+            data-anexo-nome="${nome}"
+            data-anexo-download="${anexo.url}"
+            title="Clique para ampliar">
+            <img src="${blobUrl}" alt="${nome}">
+          </button>
+          <button type="button" class="os-anexo-detalhe-remover" data-anexo-id="${anexo.id}" title="Excluir anexo">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>`;
+    }));
+
+    const conteudo = cards.filter(Boolean).join('');
+    return conteudo || '<div class="os-anexos-vazio">Nenhum anexo vinculado a esta OS.</div>';
+  }
+
+  async function montarAnexosDetalhe(osId) {
+    const galeria = await montarGaleriaAnexosDetalhe(osId);
+
+    return `
+      <div class="detail-field span-3" id="ordem-os-detalhe-anexos-wrap" style="margin-top:16px">
+        <span class="detail-label">Anexos</span>
+        <div class="detail-value" style="min-height:auto;padding:10px">
+          <div class="os-anexos-detalhe" id="ordem-os-detalhe-anexos-galeria">${galeria}</div>
+        </div>
+      </div>`;
+  }
+
+  async function atualizarAnexosOrdemOs(osId) {
+    const galeria = document.getElementById('ordem-os-detalhe-anexos-galeria');
+    if (!galeria) return;
+    galeria.innerHTML = '<div class="os-anexos-vazio"><i class="ti ti-loader-2"></i> Atualizando anexos…</div>';
+    galeria.innerHTML = await montarGaleriaAnexosDetalhe(osId);
+  }
+
+  function renderDetalheLoading() {
+    document.getElementById('detalhe-titulo').textContent = 'Ordem de serviço';
+    document.getElementById('detalhe-subtitulo').textContent = 'Carregando…';
+    document.getElementById('detalhe-conteudo').innerHTML = '<div class="os-loading"><i class="ti ti-loader-2"></i> Carregando detalhes…</div>';
+  }
+
+  function renderDetalheErro(mensagem) {
+    document.getElementById('detalhe-titulo').textContent = 'Ordem de serviço';
+    document.getElementById('detalhe-subtitulo').textContent = 'Erro';
+    document.getElementById('detalhe-conteudo').innerHTML = `<div class="detail-error">${esc(mensagem)}</div>`;
+  }
+
+  async function renderDetalheOs(os) {
+    const tituloModal = os.numero_os || os.taskCode || `OS #${os.id}`;
+    const setorCto = [os.setor, os.cto].filter((valor) => preenchido(valor)).join(' · ');
+    const regiao = os.regiao || os.tecnico_regiao || '';
+    const numeroOs = os.numero_os || os.ordem_servico || '';
+    const origemLabel = os.categoria_pai_label || '';
+    const origemCompleta = preenchido(os.task_code_pai)
+      ? `${origemLabel} · ${os.task_code_pai}`
+      : origemLabel;
+    const tecnicos = Array.isArray(os.tecnicos) && os.tecnicos.length
+      ? os.tecnicos.map((nome) => esc(nome)).join(', ')
+      : (preenchido(os.tecnico) ? esc(os.tecnico) : '');
+    const dataCriacao = os.criadaEm || os.data_criacao;
+    const dataConclusao = os.data_conclusao || os.assinada_em;
+    const descricaoHtml = renderDescricaoDetalhe(os.descricao);
+    const campos = [
+      campoDetalhe('Técnico(s)', tecnicos),
+      campoDetalhe('Status', preenchido(os.status) ? statusDot(os.status) : ''),
+      campoDetalhe('Região', preenchido(regiao) ? esc(regiao) : ''),
+      campoDetalhe('Número da OS', preenchido(numeroOs) ? esc(numeroOs) : ''),
+      campoDetalhe('Código', preenchido(os.taskCode) ? esc(os.taskCode) : ''),
+      campoDetalhe('Prioridade', preenchido(os.prioridade) ? esc(os.prioridade) : ''),
+      campoDetalhe('Título', preenchido(os.titulo) ? esc(os.titulo) : '', 3),
+      campoDetalhe('Origem', preenchido(origemCompleta) && origemCompleta !== 'Sem vínculo' ? esc(origemCompleta) : ''),
+      campoDetalhe('Protocolo', preenchido(os.protocolo) ? esc(os.protocolo) : ''),
+      campoDetalhe('Cliente', preenchido(os.nome_cliente) ? esc(os.nome_cliente) : ''),
+      campoDetalhe('Setor / CTO', preenchido(setorCto) ? esc(setorCto) : '', 2),
+      campoDetalhe('Localização', preenchido(os.localizacao_texto) ? esc(os.localizacao_texto) : '', 2),
+      campoDetalhe('Coordenadas', preenchido(os.coordenadas) ? esc(os.coordenadas) : ''),
+      campoDetalhe('Criada em', dataValida(dataCriacao) ? formatarDataHora(dataCriacao) : ''),
+      campoDetalhe('Concluída em', dataValida(dataConclusao) ? formatarData(dataConclusao) : ''),
+      campoDetalhe('Assinada por', preenchido(os.assinada_por) ? esc(os.assinada_por) : ''),
+      campoDetalhe('Descrição', descricaoHtml, 3),
+    ].filter(Boolean).join('');
+
+    const anexosHtml = await montarAnexosDetalhe(os.id);
+
+    document.getElementById('detalhe-titulo').textContent = tituloModal;
+    document.getElementById('detalhe-subtitulo').textContent = os.titulo || 'Ordem de serviço';
+    document.getElementById('detalhe-conteudo').innerHTML = campos || anexosHtml
+      ? `<div class="detail-grid">${campos}${anexosHtml}</div>`
+      : `<div class="detail-grid">${anexosHtml || ''}<div class="os-empty">Nenhum detalhe adicional para esta OS.</div></div>`;
+  }
+
+  window.getOrdemOsDetalheAtualId = () => osDetalheAtivaId;
+  window.atualizarAnexosOrdemOs = atualizarAnexosOrdemOs;
 
   function atualizarMetricas(totais) {
     document.getElementById('metric-aberta').textContent = totais.aberta;
@@ -1866,43 +2055,43 @@
     }
   };
 
-  window.fecharDetalhe = function() {
-    document.getElementById('detalhe-overlay').classList.remove('open');
-  };
-
   window.abrirDetalhe = async function(id) {
     const overlay = document.getElementById('detalhe-overlay');
-    const conteudo = document.getElementById('detalhe-conteudo');
-    document.getElementById('detalhe-titulo').textContent = 'Ordem de serviço';
-    document.getElementById('detalhe-subtitulo').textContent = 'Carregando…';
-    conteudo.innerHTML = '<div class="os-loading">Carregando…</div>';
+    if (!overlay || !id) return;
+
+    osDetalheAtivaId = String(id);
+    document.querySelectorAll('.os-table tbody tr.is-active').forEach((row) => {
+      row.classList.toggle('is-active', row.dataset.id === osDetalheAtivaId);
+    });
+
     overlay.classList.add('open');
+    renderDetalheLoading();
 
     try {
       const resp = await getUrl('ordem-servico/' + id);
-      const os = resp.os;
-      document.getElementById('detalhe-subtitulo').textContent = os.numero_os || os.taskCode || ('#' + os.id);
-      conteudo.innerHTML = `
-        <div class="detail-grid">
-          <div class="detail-field"><span class="detail-label">Técnico</span><div class="detail-value">${esc(os.tecnico)}</div></div>
-          <div class="detail-field"><span class="detail-label">Status</span><div class="detail-value">${statusDot(os.status)}</div></div>
-          <div class="detail-field"><span class="detail-label">Região</span><div class="detail-value">${esc(os.regiao || '—')}</div></div>
-          <div class="detail-field"><span class="detail-label">Número OS</span><div class="detail-value">${esc(os.numero_os || '—')}</div></div>
-          <div class="detail-field"><span class="detail-label">Código</span><div class="detail-value">${esc(os.taskCode || '—')}</div></div>
-          <div class="detail-field"><span class="detail-label">Prioridade</span><div class="detail-value">${esc(os.prioridade)}</div></div>
-          <div class="detail-field span-3"><span class="detail-label">Título</span><div class="detail-value">${esc(os.titulo || '—')}</div></div>
-          <div class="detail-field"><span class="detail-label">Origem</span><div class="detail-value">${esc(os.categoria_pai_label)}${os.task_code_pai ? ' · ' + esc(os.task_code_pai) : ''}</div></div>
-          <div class="detail-field"><span class="detail-label">Protocolo</span><div class="detail-value">${esc(os.protocolo || '—')}</div></div>
-          <div class="detail-field"><span class="detail-label">Cliente</span><div class="detail-value">${esc(os.nome_cliente || '—')}</div></div>
-          <div class="detail-field span-2"><span class="detail-label">Localização</span><div class="detail-value">${esc(os.localizacao_texto || '—')}</div></div>
-          <div class="detail-field"><span class="detail-label">Criada em</span><div class="detail-value">${formatarData(os.data_criacao || os.criadaEm)}</div></div>
-          <div class="detail-field"><span class="detail-label">Concluída em</span><div class="detail-value">${formatarData(os.data_conclusao) || '—'}</div></div>
-          <div class="detail-field span-3"><span class="detail-label">Descrição</span><div class="detail-value">${esc(os.descricao || '—')}</div></div>
-        </div>`;
+      if (osDetalheAtivaId !== String(id)) return;
+      await renderDetalheOs(resp.os || {});
     } catch (e) {
-      conteudo.innerHTML = '<div class="os-empty" style="color:#dc2626;">Não foi possível carregar.</div>';
+      if (osDetalheAtivaId !== String(id)) return;
+      renderDetalheErro(e.message || 'Não foi possível carregar os detalhes.');
     }
   };
+
+  document.getElementById('tabela-os-wrap').addEventListener('click', (e) => {
+    const row = e.target.closest('.os-row-detalhe');
+    if (!row?.dataset.id) return;
+    window.abrirDetalhe(row.dataset.id);
+  });
+
+  document.getElementById('detalhe-overlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'detalhe-overlay') window.fecharDetalhe();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      window.fecharDetalhe();
+    }
+  });
 
   document.getElementById('filtro-regiao').addEventListener('change', () => {
     carregarTecnicosSelect(document.getElementById('filtro-regiao').value);

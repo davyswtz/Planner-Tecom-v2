@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Otimização de Rede — Planner Telecom')
 @section('page-title', 'Otimização de Rede')
@@ -373,52 +373,7 @@
 </div>
 
 <!-- MODAL NOVA OS (vinculada à tarefa) -->
-<x-modal
-  id="modal-os-overlay"
-  titulo="Nova Ordem de Serviço"
-  titulo-id="os-modal-titulo"
-  subtitulo-id="os-modal-sub"
-  fechar="fecharNovaOS()">
-
-  <div class="os-field">
-    <label class="os-label">Tipo de serviço</label>
-    <input type="text" id="os-input-tipo" class="os-input"
-      placeholder="Ex: OTIMIZAÇÃO DE REDE"
-      oninput="this.value = this.value.toUpperCase()"/>
-  </div>
-
-  <div class="os-field">
-    <label class="os-label">Descrição</label>
-    <textarea id="os-input-descricao" rows="3" placeholder="Descreva a ordem de serviço..." class="os-input"
-      style="height:auto;padding:8px 10px;resize:vertical;min-height:72px"></textarea>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div class="os-field">
-      <label class="os-label">Vincular técnico responsável</label>
-      <select id="os-input-tecnico" class="os-input">
-        <option value="">Selecione...</option>
-      </select>
-    </div>
-    <div class="os-field">
-      <label class="os-label">Status</label>
-      <select id="os-input-status" class="os-input">
-        <option value="Aberta">Aberta</option>
-        <option value="Em andamento">Em andamento</option>
-        <option value="Finalizada">Finalizada</option>
-      </select>
-    </div>
-  </div>
-
-  <x-slot name="footer">
-    <button type="button" onclick="fecharNovaOS()" class="btn-modal btn-modal-ghost">Cancelar</button>
-    <button type="button" class="btn-modal btn-modal-primary" id="os-btn-salvar" onclick="salvarOs()">
-      <i class="ti ti-clipboard-check" style="font-size:14px" id="os-btn-icon"></i>
-      <span id="os-btn-label">Criar OS</span>
-    </button>
-  </x-slot>
-
-</x-modal>
+<x-modal-os tipo-placeholder="Ex: OTIMIZAÇÃO DE REDE" status-variant="titulo" />
 
 <!-- FILTROS -->
 <div class="card filtros-card">
@@ -647,13 +602,13 @@
     osEditandoId = null;
     document.getElementById('modal-os-overlay').classList.add('open');
     const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
-    carregarTecnicos(regiao, 'os-input-tecnico');
+    window.carregarTecnicosOsModal?.(regiao);
     document.getElementById('os-modal-titulo').textContent = 'Nova Ordem de Serviço';
     document.getElementById('os-btn-icon').className = 'ti ti-clipboard-check';
     document.getElementById('os-btn-label').textContent = 'Criar OS';
     document.getElementById('os-input-tipo').value = '';
-    document.getElementById('os-input-descricao').value = '';
-    document.getElementById('os-input-tecnico').value = '';
+    window.resetOsAnexosModal?.();
+    window.resetOsTecnicosModal?.();
     document.getElementById('os-input-status').value = 'Aberta';
   };
 
@@ -668,26 +623,13 @@
 
     const tipoValue = (os.titulo || '').replace(/^OS\s*[—\-]\s*/i, '');
     document.getElementById('os-input-tipo').value = tipoValue;
-    document.getElementById('os-input-descricao').value = os.descricao || '';
+    window.setOsDescricaoValor?.(os.descricao || '');
+    window.carregarAnexosOsModal?.(id);
     document.getElementById('os-input-status').value = os.status || 'Aberta';
 
     const regiao = document.getElementById('detalhe-conteudo').dataset.regiao || '';
-    carregarTecnicos(regiao, 'os-input-tecnico').then(() => {
-      const tecnicoSelect = document.getElementById('os-input-tecnico');
-      let encontrou = false;
-      Array.from(tecnicoSelect.options).forEach(opt => {
-        if (opt.value === os.responsavel || opt.text === os.responsavel) {
-          opt.selected = true;
-          encontrou = true;
-        }
-      });
-      if (!encontrou && os.responsavel) {
-        const opt = document.createElement('option');
-        opt.value = os.responsavel;
-        opt.text = os.responsavel;
-        opt.selected = true;
-        tecnicoSelect.appendChild(opt);
-      }
+    window.carregarTecnicosOsModal?.(regiao).then(() => {
+      window.setOsTecnicosValor?.(os.responsavel || '');
     });
 
     document.getElementById('modal-os-overlay').classList.add('open');
@@ -695,6 +637,7 @@
 
   window.fecharNovaOS = function() {
     osEditandoId = null;
+    window.resetOsAnexosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   };
 
@@ -727,8 +670,8 @@
   async function salvarOs() {
     const trocaId = document.getElementById('detalhe-conteudo')?.dataset?.id;
     const tipo = document.getElementById('os-input-tipo').value.trim();
-    const descricao = document.getElementById('os-input-descricao').value.trim();
-    const tecnico = document.getElementById('os-input-tecnico').value;
+    const descricao = window.getOsDescricaoValor?.() || '';
+    const tecnico = window.getOsTecnicosValor?.() || '';
     const status = document.getElementById('os-input-status').value;
     const token = localStorage.getItem('planner_token');
 
@@ -749,6 +692,7 @@
           responsavel: tecnico,
           status,
         };
+        await window.enviarAnexosPendentesOs?.(osEditandoId);
         const response = await fetch(`/api/op-tasks/${osEditandoId}`, {
           method: 'PUT',
           headers: {
@@ -786,6 +730,8 @@
           body: JSON.stringify(dados),
         });
         if (response.ok) {
+          const criada = await response.json();
+          await window.enviarAnexosPendentesOs?.(criada.id);
           fecharNovaOS();
           carregarOS(trocaId);
           if (window.carregarOtimizacoes) window.carregarOtimizacoes();
@@ -922,7 +868,7 @@
         const badge  = statusBadge[os.status]  || 'b-media';
         const av     = (os.responsavel || '?').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
         return `
-        <div class="os-card" style="border-left-color:${border}">
+        <div class="os-card" data-os-id="${os.id}" style="border-left-color:${border}">
           <div class="os-card-row">
             <span class="os-card-title">${escOs(os.titulo)}</span>
             <div class="os-card-actions">
@@ -1015,6 +961,11 @@
     document.getElementById('detalhe-tab-os').style.display = aba === 'os' ? 'block' : 'none';
     document.getElementById('tab-btn-detalhes').classList.toggle('active', aba === 'detalhes');
     document.getElementById('tab-btn-os').classList.toggle('active', aba === 'os');
+    const naAbaOs = aba === 'os';
+    const btnExcluir = document.getElementById('btn-excluir');
+    const btnEditar = document.getElementById('btn-editar');
+    if (btnExcluir) btnExcluir.style.display = naAbaOs ? 'none' : '';
+    if (btnEditar) btnEditar.style.display = naAbaOs ? 'none' : '';
     if (aba === 'os') {
       const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
       if (id) carregarOS(id);
@@ -1694,6 +1645,6 @@
   initKanbanDragDrop();
   carregarOtimizacoes();
   carregarTecnicos(null, 'filtro-tecnico');
-  carregarTecnicos(null, 'os-input-tecnico');
+  window.carregarTecnicosOsModal?.();
 </script>
 @endsection
