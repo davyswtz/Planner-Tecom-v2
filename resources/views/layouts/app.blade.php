@@ -1462,6 +1462,174 @@
     #btn-colapsar { display: none; }
   }
 
+  /* Tutorial / onboarding */
+  body.planner-tutorial-open { overflow: hidden; }
+  .planner-tutorial-root {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+  }
+  .planner-tutorial-root.is-active {
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+  }
+  .planner-tutorial-backdrop {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+  }
+  .planner-tutorial-spotlight {
+    position: fixed;
+    z-index: 12001;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(3, 5, 8, 0.72);
+    pointer-events: none;
+    transition: top 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  [data-theme="dark"] .planner-tutorial-spotlight {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.78);
+  }
+  .planner-tutorial-card {
+    position: fixed;
+    z-index: 12002;
+    width: min(380px, calc(100vw - 32px));
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 20px 20px 16px;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: plannerTutorialIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .planner-tutorial-card.is-center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  @keyframes plannerTutorialIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .planner-tutorial-card.is-center {
+    animation-name: plannerTutorialInCenter;
+  }
+  @keyframes plannerTutorialInCenter {
+    from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  .planner-tutorial-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .planner-tutorial-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--blue-500) 0%, var(--blue-600) 100%);
+    color: #fff;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .planner-tutorial-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gray-500);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .planner-tutorial-close:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+  }
+  .planner-tutorial-progress {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--blue-600);
+    margin-bottom: 6px;
+  }
+  .planner-tutorial-title {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-950);
+    line-height: 1.3;
+  }
+  .planner-tutorial-body {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--gray-600);
+  }
+  .planner-tutorial-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .planner-tutorial-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .planner-tutorial-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+    font-family: inherit;
+  }
+  .planner-tutorial-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .planner-tutorial-btn-ghost {
+    background: transparent;
+    color: var(--gray-600);
+  }
+  .planner-tutorial-btn-ghost:hover:not(:disabled) {
+    background: var(--gray-100);
+    color: var(--gray-900);
+  }
+  .planner-tutorial-btn-primary {
+    background: var(--blue-600);
+    color: #fff;
+  }
+  .planner-tutorial-btn-primary:hover {
+    background: var(--blue-700);
+  }
+  [data-theme="dark"] .planner-tutorial-card {
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  }
+  [data-theme="dark"] .planner-tutorial-progress { color: var(--blue-400); }
+  [data-theme="dark"] .planner-tutorial-body { color: var(--gray-500); }
+
   @yield('styles')
 </style>
 </head>
@@ -1507,7 +1675,7 @@
       <a href="/tarefas" id="nav-item-tarefas" data-permissao="visualizar_aba_tarefas" class="nav-item {{ request()->is('tarefas*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-checklist"></i><span>Tarefas</span></div></a>
     </div>
 
-    <div class="nav-section">
+    <div class="nav-section" id="tutorial-nav-categorias">
       <div class="nav-section-label">Categorias</div>
       <a href="/rompimento" class="nav-item {{ request()->is('rompimento*') ? 'active' : '' }}">
         <div class="nav-left"><i class="ti ti-bolt"></i><span>Rompimentos</span></div>
@@ -1537,13 +1705,13 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="user-card">
+    <div class="user-card" id="sidebar-user-card">
       <div class="avatar" id="sidebar-user-avatar">--</div>
       <div class="user-info">
         <div class="user-name user-name-btn" id="sidebar-user-name" role="button" tabindex="0" title="Sair do sistema">Usuário</div>
         <div class="user-role" id="sidebar-user-role">—</div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+      <button class="theme-toggle" id="btn-theme-toggle" onclick="toggleTheme()" title="Alternar tema">
         <i class="ti ti-moon" id="theme-icon"></i>
       </button>
     </div>
@@ -1580,9 +1748,10 @@
           </div>
         </div>
       </div>
+      <button class="icon-btn" type="button" id="btn-tutorial" title="Ver tutorial"><i class="ti ti-help-circle"></i></button>
       <button class="icon-btn" type="button" id="btn-topbar-atualizar" title="Atualizar"><i class="ti ti-refresh"></i></button>
       @unless(View::hasSection('hide-topbar-btn'))
-      <button class="btn-primary" type="button" onclick="abrirNovoItem()">
+      <button class="btn-primary" type="button" id="btn-topbar-criar" onclick="abrirNovoItem()">
         <i class="ti @yield('btn-icon', 'ti-plus')"></i> @yield('btn-label', 'Nova tarefa')
       </button>
       @endunless
@@ -1793,9 +1962,13 @@
     aplicarPermissoesNav();
   }
 
+  window.plannerUserReady = false;
+
   async function initUsuarioSidebar() {
     await sincronizarPermissoesUsuario();
     atualizarUsuarioSidebar();
+    window.plannerUserReady = true;
+    window.dispatchEvent(new CustomEvent('planner-user-ready'));
   }
 
   initUsuarioSidebar();
@@ -1945,6 +2118,11 @@
 @endif
 
 <script src="{{ $plannerAssetV('js/planner-prioridade.js') }}"></script>
+<script>
+  window.PLANNER_TUTORIAL_VERSION = @json(config('planner.tutorial.version', '20260703'));
+  window.PLANNER_TUTORIAL_ENABLED = @json((bool) config('planner.tutorial.enabled', true));
+</script>
+<script src="{{ $plannerAssetV('js/planner-tutorial.js') }}"></script>
 @yield('scripts')
 
 @if($realtimePage && $realtimeEnabled)
