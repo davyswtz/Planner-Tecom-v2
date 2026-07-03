@@ -123,6 +123,33 @@ class OpTaskController extends Controller
         ]);
     }
 
+    public function reordenarOs(Request $request, int $parentId)
+    {
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct', 'min:1'],
+        ], [
+            'ids.required' => 'Informe a nova sequência das ordens de serviço.',
+            'ids.min' => 'Informe a nova sequência das ordens de serviço.',
+        ]);
+
+        $parent = OpTask::find($parentId);
+        if (! $parent) {
+            return response()->json(['message' => 'Tarefa pai não encontrada.'], 404);
+        }
+
+        try {
+            $this->opTaskService->reordenarOsVinculadas($parentId, $request->input('ids', []));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'message' => 'Sequência das ordens de serviço atualizada.',
+            'os' => $this->opTaskService->listarOsVinculadas($parentId),
+        ]);
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

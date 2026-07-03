@@ -66,6 +66,7 @@ class OpTask extends Model
         'status',
         'is_parent_task',
         'parent_task_id',
+        'sequencia',
         'criadaEm',
         'historico',
         'active_duration_minutes',
@@ -89,6 +90,7 @@ class OpTask extends Model
             'correcao_dados' => 'boolean',
             'prazo' => 'date',
             'active_duration_minutes' => 'integer',
+            'sequencia' => 'integer',
             'updated_at' => 'datetime',
         ];
     }

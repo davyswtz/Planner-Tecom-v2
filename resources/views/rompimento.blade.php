@@ -1109,7 +1109,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     try {
       if (osEditandoId) {
         const dados = {
-          titulo:      `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel: tecnico,
           status,
@@ -1130,7 +1130,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
         }
       } else {
         const dados = {
-          titulo:         `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel:    tecnico,
           status,

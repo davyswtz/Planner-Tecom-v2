@@ -43,6 +43,7 @@ Route::middleware("auth:sanctum")->group(function () {
         "marcarLida",
     ])->whereNumber("id");
     Route::apiResource("op-tasks", OpTaskController::class);
+    Route::put("op-tasks/{parentId}/os/sequencia", [OpTaskController::class, "reordenarOs"])->whereNumber("parentId");
     Route::get("op-tasks/{opTask}/historico", [OpTaskController::class, "historico"]);
     Route::get("op-tasks/{opTask}/anexos", [OpTaskAnexoController::class, "index"]);
     Route::post("op-tasks/{opTask}/anexos", [OpTaskAnexoController::class, "store"]);

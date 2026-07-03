@@ -156,7 +156,15 @@
       `<div class="os-detalhe-erro">${esc(mensagem)}</div>`;
   }
 
+  function tituloOsLimpo(titulo) {
+    if (typeof window.tituloOsLimpo === 'function') {
+      return window.tituloOsLimpo(titulo);
+    }
+    return String(titulo || '').replace(/^OS\s*[—\-]\s*/i, '').trim();
+  }
+
   async function renderDetalhe(os) {
+    const tituloOs = tituloOsLimpo(os.titulo);
     const titulo = os.numero_os || os.ordem_servico || os.taskCode || `OS #${os.id}`;
     const setorCto = [os.setor, os.cto].filter((valor) => preenchido(valor)).join(' · ');
     const numeroOs = os.numero_os || os.ordem_servico || '';
@@ -168,7 +176,7 @@
       campoDetalhe('Número da OS', preenchido(numeroOs) ? esc(numeroOs) : ''),
       campoDetalhe('Código', preenchido(os.taskCode) ? esc(os.taskCode) : ''),
       campoDetalhe('Prioridade', preenchido(os.prioridade) ? esc(os.prioridade) : ''),
-      campoDetalhe('Título', preenchido(os.titulo) ? esc(os.titulo) : '', 3),
+      campoDetalhe('Título', preenchido(tituloOs) ? esc(tituloOs) : '', 3),
       campoDetalhe('Protocolo', preenchido(os.protocolo) ? esc(os.protocolo) : ''),
       campoDetalhe('Cliente', preenchido(os.nome_cliente) ? esc(os.nome_cliente) : ''),
       campoDetalhe('Setor / CTO', preenchido(setorCto) ? esc(setorCto) : '', 2),
@@ -183,7 +191,7 @@
     const anexosHtml = await montarAnexosDetalhe(os.id);
 
     document.getElementById('modal-os-detalhe-titulo').textContent = titulo;
-    document.getElementById('modal-os-detalhe-subtitulo').textContent = os.titulo || 'Ordem de serviço';
+    document.getElementById('modal-os-detalhe-subtitulo').textContent = tituloOs || 'Ordem de serviço';
     document.getElementById('modal-os-detalhe-conteudo').innerHTML = campos
       ? `<div class="detail-grid">${campos}${anexosHtml}</div>`
       : `<div class="detail-grid">${anexosHtml}<div class="os-detalhe-loading">Nenhum detalhe adicional para esta OS.</div></div>`;
@@ -235,7 +243,7 @@
 
   function deveIgnorarClique(target) {
     return Boolean(target.closest(
-      '.os-card-actions, .btn-edit-os, .btn-delete-os, .os-status-wrap, .os-status-badge, .os-status-pills, .os-status-pill, .os-status-close'
+      '.os-card-actions, .btn-edit-os, .btn-delete-os, .os-status-wrap, .os-status-badge, .os-status-pills, .os-status-pill, .os-status-close, .os-seq-controls'
     ));
   }
 

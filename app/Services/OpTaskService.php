@@ -42,6 +42,15 @@ class OpTaskService
 
         $dados['taskCode'] = $this->gerarTaskCode($dados);
         $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
+
+        if (
+            ! empty($dados['parent_task_id'])
+            && ($dados['categoria'] ?? '') === 'ordem-servico'
+            && ! isset($dados['sequencia'])
+        ) {
+            $dados['sequencia'] = $this->proximaSequenciaOs((int) $dados['parent_task_id']);
+        }
+
         $task = OpTask::create($dados);
 
         if (! empty($dados['parent_task_id'])) {
@@ -174,8 +183,57 @@ class OpTaskService
                     $query->orWhereIn('id', $taskIdsFromOsTecnicos);
                 }
             })
-            ->orderBy('criadaEm', 'desc')
+            ->orderBy('sequencia')
+            ->orderBy('criadaEm')
+            ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * @param  list<int|string>  $ids
+     */
+    public function reordenarOsVinculadas(int $parentId, array $ids): void
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+
+        if ($ids === []) {
+            throw new \InvalidArgumentException('Informe a nova sequência das ordens de serviço.');
+        }
+
+        if (in_array(0, $ids, true)) {
+            throw new \InvalidArgumentException('Identificadores de OS inválidos.');
+        }
+
+        $vinculadasIds = $this->listarOsVinculadas($parentId)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        sort($vinculadasIds);
+        $idsOrdenados = $ids;
+        sort($idsOrdenados);
+
+        if ($vinculadasIds !== $idsOrdenados) {
+            throw new \InvalidArgumentException('A sequência enviada não corresponde às ordens de serviço vinculadas.');
+        }
+
+        DB::transaction(function () use ($ids, $parentId): void {
+            foreach ($ids as $indice => $id) {
+                OpTask::query()
+                    ->whereKey($id)
+                    ->where('parent_task_id', $parentId)
+                    ->update(['sequencia' => $indice + 1]);
+            }
+        });
+    }
+
+    private function proximaSequenciaOs(int $parentId): int
+    {
+        $max = (int) OpTask::query()
+            ->where('parent_task_id', $parentId)
+            ->max('sequencia');
+
+        return $max + 1;
     }
 
     public function updateOpTask(OpTask $opTask, array $dados): OpTask

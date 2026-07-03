@@ -1699,7 +1699,7 @@
             <tr data-id="${os.id}" class="os-row-detalhe">
               <td>
                 <div class="os-cell-main">${esc(os.numero_os || os.taskCode || '—')}</div>
-                ${os.titulo ? `<div class="os-cell-sub">${esc(os.titulo)}</div>` : ''}
+                ${os.titulo ? `<div class="os-cell-sub">${esc(String(os.titulo).replace(/^OS\s*[—\-]\s*/i, ''))}</div>` : ''}
               </td>
               <td>
                 <div>${esc(os.tecnico)}</div>
@@ -1859,7 +1859,7 @@
       campoDetalhe('Número da OS', preenchido(numeroOs) ? esc(numeroOs) : ''),
       campoDetalhe('Código', preenchido(os.taskCode) ? esc(os.taskCode) : ''),
       campoDetalhe('Prioridade', preenchido(os.prioridade) ? esc(os.prioridade) : ''),
-      campoDetalhe('Título', preenchido(os.titulo) ? esc(os.titulo) : '', 3),
+      campoDetalhe('Título', preenchido(os.titulo) ? esc(String(os.titulo).replace(/^OS\s*[—\-]\s*/i, '')) : '', 3),
       campoDetalhe('Origem', preenchido(origemCompleta) && origemCompleta !== 'Sem vínculo' ? esc(origemCompleta) : ''),
       campoDetalhe('Protocolo', preenchido(os.protocolo) ? esc(os.protocolo) : ''),
       campoDetalhe('Cliente', preenchido(os.nome_cliente) ? esc(os.nome_cliente) : ''),
@@ -1875,7 +1875,7 @@
     const anexosHtml = await montarAnexosDetalhe(os.id);
 
     document.getElementById('detalhe-titulo').textContent = tituloModal;
-    document.getElementById('detalhe-subtitulo').textContent = os.titulo || 'Ordem de serviço';
+    document.getElementById('detalhe-subtitulo').textContent = (os.titulo || '').replace(/^OS\s*[—\-]\s*/i, '') || 'Ordem de serviço';
     document.getElementById('detalhe-conteudo').innerHTML = campos || anexosHtml
       ? `<div class="detail-grid">${campos}${anexosHtml}</div>`
       : `<div class="detail-grid">${anexosHtml || ''}<div class="os-empty">Nenhum detalhe adicional para esta OS.</div></div>`;

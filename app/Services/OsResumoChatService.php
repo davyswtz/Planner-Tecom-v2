@@ -40,12 +40,59 @@ class OsResumoChatService
     {
         $dados = $this->calcular($parentTaskId);
 
-        return [
+        return array_merge([
             'os_total' => (string) $dados['os_total'],
             'os_finalizadas' => (string) $dados['os_finalizadas'],
             'os_resumo_tecnicos' => $this->formatarTecnicos($dados['por_tecnico']),
             'os_resumo' => $this->formatarBloco($dados),
+        ], $this->sequenciaParaPayload($parentTaskId));
+    }
+
+    /**
+     * Dados de sequência das OS vinculadas à tarefa pai.
+     *
+     * - os_sequencia: posição da OS atual (1, 2, 3…), ou "—" na mensagem da tarefa pai
+     * - os_lista: nomes de todas as OS numerados na ordem definida
+     *
+     * @return array{os_sequencia: string, os_lista: string}
+     */
+    public function sequenciaParaPayload(int $parentTaskId, ?int $osId = null): array
+    {
+        $lista = $this->listarOsVinculadas($parentTaskId);
+
+        if ($lista->isEmpty()) {
+            return [
+                'os_sequencia' => '—',
+                'os_lista' => '—',
+            ];
+        }
+
+        $linhas = [];
+        $sequenciaAtual = '—';
+
+        foreach ($lista->values() as $indice => $os) {
+            $posicao = $indice + 1;
+            $nome = $this->tituloOsLimpo($os->titulo);
+            if ($nome === '') {
+                $nome = trim((string) ($os->taskCode ?? '')) ?: "OS #{$os->id}";
+            }
+
+            $linhas[] = "{$posicao}. {$nome}";
+
+            if ($osId !== null && (int) $os->id === $osId) {
+                $sequenciaAtual = (string) $posicao;
+            }
+        }
+
+        return [
+            'os_sequencia' => $sequenciaAtual,
+            'os_lista' => implode("\n", $linhas),
         ];
+    }
+
+    public function tituloOsLimpo(?string $titulo): string
+    {
+        return trim((string) preg_replace('/^OS\s*[—\-–]\s*/u', '', (string) $titulo));
     }
 
     public function formatarBloco(array $dados): string
@@ -115,11 +162,13 @@ class OsResumoChatService
     }
 
     /** @return Collection<int, OpTask> */
-    private function listarOsVinculadas(int $parentTaskId): Collection
+    public function listarOsVinculadas(int $parentTaskId): Collection
     {
         return OpTask::query()
             ->where('parent_task_id', $parentTaskId)
             ->where('categoria', 'ordem-servico')
+            ->orderBy('sequencia')
+            ->orderBy('criadaEm')
             ->orderBy('id')
             ->get();
     }

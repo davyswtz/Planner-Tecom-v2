@@ -725,7 +725,7 @@
     try {
       if (osEditandoId) {
         const dados = {
-          titulo: `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel: tecnico,
           status,
@@ -751,7 +751,7 @@
         }
       } else {
         const dados = {
-          titulo: `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel: tecnico,
           status,
