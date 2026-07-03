@@ -7,7 +7,6 @@
 @section('styles')
 <style>
   .usuarios-page { width: 100%; max-width: 100%; }
-  .usuarios-actions { display: flex; justify-content: flex-end; margin-bottom: 12px; }
   .usuarios-filtros {
     display: flex; align-items: center; gap: 8px; padding: 10px 16px;
     border-bottom: 1px solid var(--gray-100);
@@ -89,18 +88,18 @@
   }
   .permissoes-empty { font-size: 12px; color: var(--gray-400); }
   [data-theme="dark"] .permissoes-wrap {
-    background: #21262d; border-color: #30363d;
+    background: #12151a; border-color: #1e2228;
   }
   [data-theme="dark"] .permissao-tag { background: #0d2340; color: #79c0ff; }
   [data-theme="dark"] .usuario-input,
   [data-theme="dark"] .usuario-select {
-    background: #21262d; border-color: #30363d; color: #e6edf3;
+    background: #12151a; border-color: #1e2228; color: #e6edf3;
   }
   [data-theme="dark"] .usuarios-filtro-select {
-    background: #21262d; border-color: #30363d; color: #e6edf3;
+    background: #12151a; border-color: #1e2228; color: #e6edf3;
   }
   [data-theme="dark"] .usuario-action-btn {
-    background: #21262d; border-color: #30363d; color: #e6edf3;
+    background: #12151a; border-color: #1e2228; color: #e6edf3;
   }
   [data-theme="dark"] .usuario-error { background: #2d1117; color: #ff7b72; }
 </style>
@@ -108,12 +107,6 @@
 
 @section('content')
 <div class="usuarios-page">
-  <div class="usuarios-actions">
-    <button type="button" class="btn-primary" onclick="abrirModalUsuario()">
-      <i class="ti ti-user-plus"></i> Novo usuário
-    </button>
-  </div>
-
   <div class="card">
     <div class="card-header">
       <span class="card-title">Usuários cadastrados</span>

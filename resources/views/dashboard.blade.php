@@ -9,6 +9,7 @@
 <style>
   .suas-tarefas-card .card-header {
     padding-bottom: 10px;
+    flex-shrink: 0;
   }
   .suas-tarefas-count {
     font-size: 11px;
@@ -17,12 +18,11 @@
   }
   .suas-tarefas-card {
     min-height: 0;
-    max-height: 100%;
+    height: 100%;
   }
   .suas-tarefas-body {
     flex: 1;
     min-height: 0;
-    max-height: 380px;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -52,14 +52,14 @@
     background: var(--gray-400);
   }
   [data-theme="dark"] .suas-tarefas-body {
-    scrollbar-color: #484f58 #161b22;
+    scrollbar-color: #282e36 #0a0c10;
   }
   [data-theme="dark"] .suas-tarefas-body::-webkit-scrollbar-track {
-    background: #161b22;
+    background: #0a0c10;
   }
   [data-theme="dark"] .suas-tarefas-body::-webkit-scrollbar-thumb {
-    background: #484f58;
-    border-color: #161b22;
+    background: #282e36;
+    border-color: #0a0c10;
   }
   [data-theme="dark"] .suas-tarefas-body::-webkit-scrollbar-thumb:hover {
     background: #6e7681;
@@ -193,8 +193,8 @@
     transform: translateX(2px);
   }
   [data-theme="dark"] .starefa-item {
-    background: #161b22;
-    border-color: #30363d;
+    background: #0a0c10;
+    border-color: #1e2228;
   }
   [data-theme="dark"] .starefa-item:hover {
     border-color: #388bfd66;
@@ -207,7 +207,7 @@
   [data-theme="dark"] .starefa-item--andamento .starefa-item-status { background: #3d2a12; color: #fbbf24; }
   [data-theme="dark"] .starefa-item--concluida .starefa-item-status { background: #0f2f27; color: #34d399; }
   [data-theme="dark"] .starefa-item--finalizar .starefa-item-status { background: #0f2f1a; color: #4ade80; }
-  [data-theme="dark"] .starefa-item-action { color: #484f58; }
+  [data-theme="dark"] .starefa-item-action { color: #282e36; }
   [data-theme="dark"] .starefa-item:hover .starefa-item-action { color: #58a6ff; }
   .suas-tarefas-empty {
     display: flex;
@@ -233,7 +233,7 @@
   .suas-tarefas-loading i { animation: spin 0.9s linear infinite; }
   .modal-foot-inner { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-  .btn-modal-danger { border: 1px solid #fecaca; background: #fff; color: #dc2626; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-modal-danger { border: 1px solid #fecaca; background: #fff; color: #dc2626; font-weight: 500; }
   .btn-modal-danger:hover { background: #fef2f2; border-color: #f87171; }
   .confirm-excluir-overlay {
     position: fixed; inset: 0; z-index: 110;
@@ -255,8 +255,8 @@
   }
   .confirm-excluir-title { font-size: 15px; font-weight: 600; color: var(--gray-950); margin: 0 0 6px; }
   .confirm-excluir-text { font-size: 13px; color: var(--gray-500); margin: 0 0 18px; line-height: 1.5; }
-  .confirm-excluir-foot { display: flex; justify-content: flex-end; gap: 8px; }
-  [data-theme="dark"] .btn-modal-danger { background: #21262d; border-color: #7f1d1d; color: #ff7b72; }
+  .confirm-excluir-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  [data-theme="dark"] .btn-modal-danger { background: #12151a; border-color: #7f1d1d; color: #ff7b72; }
   .tarefa-status-checks {
     display: flex;
     align-items: center;
@@ -284,8 +284,8 @@
     cursor: pointer;
   }
   [data-theme="dark"] .tarefa-status-checks {
-    background: #161b22;
-    border-color: #30363d;
+    background: #0a0c10;
+    border-color: #1e2228;
   }
   [data-theme="dark"] .tarefa-status-check { color: #e6edf3; }
   .responsaveis-wrap {
@@ -304,7 +304,7 @@
     padding: 0; display: inline-flex; font-size: 13px; line-height: 1;
   }
   .responsaveis-empty { font-size: 12px; color: var(--gray-400); }
-  [data-theme="dark"] .responsaveis-wrap { background: #21262d; border-color: #30363d; }
+  [data-theme="dark"] .responsaveis-wrap { background: #12151a; border-color: #1e2228; }
   [data-theme="dark"] .responsavel-tag { background: #0d2340; color: #79c0ff; }
 </style>
 @endsection
@@ -340,6 +340,21 @@
     width: 100%;
     min-height: 420px;
     background: #1a2744;
+  }
+  [data-theme="dark"] #mapa-calor-expandido,
+  [data-theme="dark"] #mapa-calor {
+    background: #030405;
+  }
+  [data-theme="dark"] .card-action-btn:hover { color: #58a6ff; }
+  [data-theme="dark"] .mapa-pin-caixa__dot {
+    background: #58a6ff;
+    border-color: #0a0c10;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+  }
+  [data-theme="dark"] .mapa-caixas-loading {
+    background: rgba(10, 12, 16, 0.9);
+    color: #8b949e;
+    border: 1px solid var(--gray-200);
   }
   #mapa-expandido-overlay .leaflet-pane,
   #mapa-expandido-overlay .leaflet-top,
@@ -378,6 +393,20 @@
   }
   .mapa-caixas-loading i { animation: spin 0.9s linear infinite; }
   .card-mapa .map-body { position: relative; }
+
+  /* Dashboard: lista de tarefas ocupa toda a altura disponível */
+  .content {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .metrics-row {
+    flex-shrink: 0;
+  }
+  .bottom-grid {
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+  }
 </style>
     <div class="metrics-row">
       <div class="metric-card">
@@ -539,9 +568,48 @@
 <script>
   const MAPA_CENTER = [-18.8517, -41.9494];
   const MAPA_ZOOM = 11;
+  const MAP_TILES = {
+    light: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; OpenStreetMap',
+    },
+    dark: {
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+    },
+  };
   let mapaExpandido = null;
   let caixasGeoGrid = [];
   const camadasCaixasPorMapa = new WeakMap();
+
+  function mapaEmModoEscuro() {
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+  }
+
+  function aplicarTilesAoMapa(map) {
+    if (!map) return;
+
+    const cfg = mapaEmModoEscuro() ? MAP_TILES.dark : MAP_TILES.light;
+    if (map._plannerTileLayer) {
+      map.removeLayer(map._plannerTileLayer);
+    }
+
+    map._plannerTileLayer = L.tileLayer(cfg.url, {
+      attribution: cfg.attribution,
+      subdomains: cfg.subdomains || 'abc',
+      maxZoom: 19,
+    }).addTo(map);
+  }
+
+  function atualizarMapasPorTema() {
+    aplicarTilesAoMapa(mapaPreview);
+    if (mapaExpandido) aplicarTilesAoMapa(mapaExpandido);
+    plotarCaixasNoMapa(mapaPreview, caixasGeoGrid);
+    if (mapaExpandido) plotarCaixasNoMapa(mapaExpandido, caixasGeoGrid);
+  }
+
+  window.addEventListener('planner-theme-change', atualizarMapasPorTema);
 
   function criarIconeCaixa() {
     return L.divIcon({
@@ -579,7 +647,8 @@
 
       const marker = L.marker([lat, lng], { icon: criarIconeCaixa() });
       const sigla = escMapa(caixa.sigla || 'Caixa');
-      const status = caixa.status ? `<br><span style="color:#6b7280">${escMapa(caixa.status)}</span>` : '';
+      const statusCor = mapaEmModoEscuro() ? '#8b949e' : '#6b7280';
+      const status = caixa.status ? `<br><span style="color:${statusCor}">${escMapa(caixa.status)}</span>` : '';
       marker.bindPopup(`<strong>${sigla}</strong>${status}`);
       cluster.addLayer(marker);
     });
@@ -630,10 +699,7 @@
       scrollWheelZoom: true,
     }).setView(MAPA_CENTER, MAPA_ZOOM);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-    }).addTo(map);
-
+    aplicarTilesAoMapa(map);
     return map;
   }
 

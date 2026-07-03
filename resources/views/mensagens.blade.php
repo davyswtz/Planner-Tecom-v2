@@ -361,34 +361,34 @@
   }
 
   /* Dark mode */
-  [data-theme="dark"] .msg-workspace { background: #0d1117; border-color: #30363d; }
+  [data-theme="dark"] .msg-workspace { background: #050608; border-color: #1e2228; }
   [data-theme="dark"] .msg-sidebar,
-  [data-theme="dark"] .mensagens-categorias-mobile { background: #161b22; border-color: #30363d; }
+  [data-theme="dark"] .mensagens-categorias-mobile { background: #0a0c10; border-color: #1e2228; }
   [data-theme="dark"] .msg-sidebar-head,
   [data-theme="dark"] .msg-panel-head,
-  [data-theme="dark"] .msg-format-hints { border-color: #30363d; }
+  [data-theme="dark"] .msg-format-hints { border-color: #1e2228; }
   [data-theme="dark"] .mensagens-cat-btn { color: #c9d1d9; }
-  [data-theme="dark"] .mensagens-cat-btn:hover { background: #21262d; }
+  [data-theme="dark"] .mensagens-cat-btn:hover { background: #12151a; }
   [data-theme="dark"] .mensagens-cat-btn.active { background: #1c2d4a; border-color: #1f6feb; color: #58a6ff; }
   [data-theme="dark"] .mensagens-cat-btn.os-cat.active { background: #0f2419; border-color: #238636; color: #3fb950; }
   [data-theme="dark"] .msg-context-banner.os { background: #0f2419; border-color: #238636; color: #3fb950; }
-  [data-theme="dark"] .msg-vars-destaque { background: #161b22; border-color: #30363d; }
-  [data-theme="dark"] .msg-var-chip { background: #21262d; border-color: #30363d; color: #58a6ff; }
+  [data-theme="dark"] .msg-vars-destaque { background: #0a0c10; border-color: #1e2228; }
+  [data-theme="dark"] .msg-var-chip { background: #12151a; border-color: #1e2228; color: #58a6ff; }
   [data-theme="dark"] .msg-webhook-tag.on { background: #0f2419; color: #3fb950; }
-  [data-theme="dark"] .msg-cat-pill { background: #21262d; border-color: #30363d; color: #c9d1d9; }
+  [data-theme="dark"] .msg-cat-pill { background: #12151a; border-color: #1e2228; color: #c9d1d9; }
   [data-theme="dark"] .msg-cat-pill.active { background: #1f6feb; border-color: #1f6feb; }
   [data-theme="dark"] .msg-panel-title { color: #e6edf3; }
-  [data-theme="dark"] .msg-format-chip { background: #21262d; border-color: #30363d; color: #8b949e; }
-  [data-theme="dark"] .mensagens-status-card { border-color: #30363d; }
+  [data-theme="dark"] .msg-format-chip { background: #12151a; border-color: #1e2228; color: #8b949e; }
+  [data-theme="dark"] .mensagens-status-card { border-color: #1e2228; }
   [data-theme="dark"] .mensagens-status-head,
-  [data-theme="dark"] .msg-toolbar { background: #161b22; border-color: #30363d; }
-  [data-theme="dark"] .mensagens-textarea { background: #0d1117; color: #e6edf3; }
+  [data-theme="dark"] .msg-toolbar { background: #0a0c10; border-color: #1e2228; }
+  [data-theme="dark"] .mensagens-textarea { background: #050608; color: #e6edf3; }
   [data-theme="dark"] .mensagens-btn,
-  [data-theme="dark"] .variaveis-popover-search { background: #21262d; border-color: #30363d; color: #c9d1d9; }
-  [data-theme="dark"] .mensagens-preview { background: #161b22; border-color: #30363d; color: #c9d1d9; }
+  [data-theme="dark"] .variaveis-popover-search { background: #12151a; border-color: #1e2228; color: #c9d1d9; }
+  [data-theme="dark"] .mensagens-preview { background: #0a0c10; border-color: #1e2228; color: #c9d1d9; }
   [data-theme="dark"] .emoji-popover,
-  [data-theme="dark"] .variaveis-popover { background: #161b22; border-color: #30363d; }
-  [data-theme="dark"] .msg-save-mobile { background: #0d1117; border-color: #30363d; }
+  [data-theme="dark"] .variaveis-popover { background: #0a0c10; border-color: #1e2228; }
+  [data-theme="dark"] .msg-save-mobile { background: #050608; border-color: #1e2228; }
   [data-theme="dark"] .mensagens-feedback.ok { background: #0f2419; color: #3fb950; }
   [data-theme="dark"] .mensagens-feedback.err { background: #2d1117; color: #ff7b72; }
 

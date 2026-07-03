@@ -77,10 +77,6 @@ export function createDescricaoEditorMarkup(placeholder = 'Detalhes da tarefa (o
             </button>
             <input type="file" class="descricao-input-anexo" accept="image/*" hidden />
           </div>
-          <div class="descricao-toolbar-hints" aria-hidden="true">
-            <span class="descricao-hint-chip"><i class="ti ti-clipboard"></i> Ctrl+V</span>
-            <span class="descricao-hint-chip"><i class="ti ti-drag-drop"></i> Arrastar</span>
-          </div>
         </div>`;
 
   return `
@@ -88,10 +84,6 @@ export function createDescricaoEditorMarkup(placeholder = 'Detalhes da tarefa (o
       <div class="descricao-editor-shell">
         ${toolbar}
         <div class="descricao-editor-body">
-          <div class="descricao-editor-dropzone" hidden>
-            <i class="ti ti-photo-up"></i>
-            <span>Soltar imagem aqui</span>
-          </div>
           <div
             class="descricao-editor"
             contenteditable="true"
@@ -170,8 +162,6 @@ function inserirImagemNoEditor(editor, dataUrl) {
   }
 
   editor.appendChild(document.createElement('br'));
-  editor.closest('.descricao-editor-shell')?.classList.remove('is-dragover');
-  editor.closest('.descricao-editor-wrap')?.querySelector('.descricao-editor-dropzone')?.setAttribute('hidden', '');
 }
 
 function vincularEditor(wrap) {
@@ -180,20 +170,9 @@ function vincularEditor(wrap) {
 
   const shell = wrap.querySelector('.descricao-editor-shell');
   const editor = wrap.querySelector('.descricao-editor');
-  const dropzone = wrap.querySelector('.descricao-editor-dropzone');
   const btnAnexo = wrap.querySelector('.descricao-btn-anexo');
   const inputAnexo = wrap.querySelector('.descricao-input-anexo');
   if (!editor) return wrap;
-
-  let dragDepth = 0;
-
-  function setDragover(ativo) {
-    shell?.classList.toggle('is-dragover', ativo);
-    if (dropzone) {
-      if (ativo) dropzone.removeAttribute('hidden');
-      else dropzone.setAttribute('hidden', '');
-    }
-  }
 
   async function adicionarImagem(arquivo) {
     try {
@@ -201,9 +180,6 @@ function vincularEditor(wrap) {
       inserirImagemNoEditor(editor, dataUrl);
     } catch (err) {
       alert(err.message || 'Erro ao adicionar imagem.');
-    } finally {
-      dragDepth = 0;
-      setDragover(false);
     }
   }
 
@@ -233,14 +209,10 @@ function vincularEditor(wrap) {
   shell?.addEventListener('dragenter', (event) => {
     if (![...event.dataTransfer?.types || []].includes('Files')) return;
     event.preventDefault();
-    dragDepth += 1;
-    setDragover(true);
   });
 
   shell?.addEventListener('dragleave', (event) => {
     if (![...event.dataTransfer?.types || []].includes('Files')) return;
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (dragDepth === 0) setDragover(false);
   });
 
   shell?.addEventListener('dragover', (event) => {

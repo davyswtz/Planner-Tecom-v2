@@ -53,10 +53,6 @@
     max-width: 420px;
   }
 
-  .brand-block {
-    margin-bottom: 48px;
-  }
-
   .planner-text {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 64px;
@@ -76,43 +72,6 @@
   .logo-wrap svg .fil0, .logo-wrap svg .fil1 { fill: #ffffff !important; }
   .logo-wrap svg .fil2 { fill: rgba(255,255,255,0.7) !important; }
   .logo-wrap svg .fil3 { fill: rgba(255,255,255,0.85) !important; }
-
-  .left-tagline {
-    color: rgba(255,255,255,0.55);
-    font-size: 14px;
-    font-weight: 400;
-    margin-top: 40px;
-    line-height: 1.6;
-  }
-
-  .left-features {
-    margin-top: 36px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    text-align: left;
-  }
-
-  .feature-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: rgba(255,255,255,0.75);
-    font-size: 13px;
-  }
-
-  .feature-icon {
-    width: 32px;
-    height: 32px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    color: rgba(255,255,255,0.8);
-    flex-shrink: 0;
-  }
 
   /* ── COLUNA DIREITA ── */
   .right {
@@ -310,8 +269,7 @@
   <div class="left-pattern"></div>
   <div class="left-grid"></div>
   <div class="left-content">
-    <div class="brand-block">
-      <div class="planner-text">PLANNER</div>
+    <div class="planner-text">PLANNER</div>
       <div class="logo-wrap">
         <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="100%" height="100%" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" viewBox="0 0 2728.77 550.48">
           <defs>
@@ -348,26 +306,6 @@
           </g>
         </svg>
       </div>
-    </div>
-
-    <div class="left-tagline">
-      Gestão operacional de campo para equipes de telecomunicações
-    </div>
-
-    <div class="left-features">
-      <div class="feature-item">
-        <div class="feature-icon"><i class="ti ti-layout-kanban"></i></div>
-        Kanban em tempo real para toda a equipe
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon"><i class="ti ti-map-pin"></i></div>
-        Mapa de calor com localização dos rompimentos
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon"><i class="ti ti-bell"></i></div>
-        Notificações automáticas no Google Chat
-      </div>
-    </div>
   </div>
 </div>
 

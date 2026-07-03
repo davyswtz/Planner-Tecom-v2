@@ -58,12 +58,12 @@
     font-size: 12px; color: var(--gray-500); line-height: 1.5;
   }
   [data-theme="dark"] .config-code {
-    background: #21262d; border-color: #30363d; color: #8b949e;
+    background: #12151a; border-color: #1e2228; color: #8b949e;
   }
   [data-theme="dark"] .config-btn {
-    background: #21262d; border-color: #30363d; color: #e6edf3;
+    background: #12151a; border-color: #1e2228; color: #e6edf3;
   }
-  [data-theme="dark"] .config-help { border-color: #30363d; color: #8b949e; }
+  [data-theme="dark"] .config-help { border-color: #1e2228; color: #8b949e; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 @endsection

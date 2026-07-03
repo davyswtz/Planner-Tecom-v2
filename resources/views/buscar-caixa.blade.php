@@ -108,10 +108,10 @@
   }
   .caixa-cliente-menu-drop button:hover { background: var(--gray-50); color: var(--blue-600); }
   [data-theme="dark"] .caixa-cliente-menu-drop {
-    background: #21262d; border-color: #30363d;
+    background: #12151a; border-color: #1e2228;
   }
   [data-theme="dark"] .caixa-cliente-menu-drop button { color: #e6edf3; }
-  [data-theme="dark"] .caixa-cliente-menu-drop button:hover { background: #30363d; }
+  [data-theme="dark"] .caixa-cliente-menu-drop button:hover { background: #1e2228; }
   .caixa-empty, .caixa-loading, .caixa-erro {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     padding: 48px 16px; color: var(--gray-500); font-size: 13px; text-align: center;
@@ -120,11 +120,11 @@
   .caixa-erro { color: #dc2626; }
   [data-theme="dark"] .caixa-input,
   [data-theme="dark"] .caixa-select {
-    background: #21262d; border-color: #30363d; color: #e6edf3;
+    background: #12151a; border-color: #1e2228; color: #e6edf3;
   }
   [data-theme="dark"] .caixa-badge--ok { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
   [data-theme="dark"] .caixa-badge--off { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-  [data-theme="dark"] .caixa-badge--muted { background: #21262d; color: #8b949e; }
+  [data-theme="dark"] .caixa-badge--muted { background: #12151a; color: #8b949e; }
   @keyframes caixa-spin { to { transform: rotate(360deg); } }
   @media (max-width: 768px) {
     .caixa-filtros { grid-template-columns: 1fr; }

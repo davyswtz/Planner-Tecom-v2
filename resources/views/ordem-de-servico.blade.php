@@ -416,7 +416,7 @@
   }
 
   [data-theme="dark"] .os-filter-actions {
-    border-top-color: #21262d;
+    border-top-color: #12151a;
   }
 
   .os-toolbar-search,
@@ -803,13 +803,13 @@
   }
 
   [data-theme="dark"] .os-panel {
-    background: #161b22;
-    border-color: #30363d;
+    background: #0a0c10;
+    border-color: #1e2228;
   }
 
   [data-theme="dark"] .os-kpi-panel {
-    background: #161b22;
-    border-color: #30363d;
+    background: #0a0c10;
+    border-color: #1e2228;
   }
 
   [data-theme="dark"] .os-kpi-card {
@@ -825,24 +825,24 @@
     color: #e6edf3;
   }
 
-  [data-theme="dark"] .os-panel-head { border-bottom-color: #21262d; }
+  [data-theme="dark"] .os-panel-head { border-bottom-color: #12151a; }
   [data-theme="dark"] .os-panel-title { color: #e6edf3; }
   [data-theme="dark"] .os-panel-meta { color: #8b949e; }
   [data-theme="dark"] .os-toggle-btn.is-active {
-    background: #161b22;
+    background: #0a0c10;
     color: #e6edf3;
   }
   [data-theme="dark"] .os-heatmap-controls {
-    background: #0d1117;
-    border-color: #30363d;
+    background: #050608;
+    border-color: #1e2228;
   }
   [data-theme="dark"] .os-toolbar-search,
   [data-theme="dark"] .os-toolbar-select,
   [data-theme="dark"] .os-toolbar-date,
   [data-theme="dark"] .os-toolbar-btn,
   [data-theme="dark"] .os-pag-btn {
-    background: #0d1117;
-    border-color: #30363d;
+    background: #050608;
+    border-color: #1e2228;
     color: #e6edf3;
   }
   [data-theme="dark"] .os-toolbar-btn--ghost {
@@ -850,8 +850,8 @@
     color: #8b949e;
   }
   [data-theme="dark"] .os-toolbar-btn--ghost:hover {
-    background: #21262d;
-    border-color: #30363d;
+    background: #12151a;
+    border-color: #1e2228;
     color: #e6edf3;
   }
   [data-theme="dark"] .os-toolbar-btn--primary {
@@ -866,14 +866,14 @@
   [data-theme="dark"] .os-tech-row:hover,
   [data-theme="dark"] .os-mini-item--clickable:hover,
   [data-theme="dark"] .os-table tbody tr:hover {
-    background: #21262d;
+    background: #12151a;
   }
   [data-theme="dark"] .os-tech-row + .os-tech-row,
   [data-theme="dark"] .os-mini-item + .os-mini-item,
   [data-theme="dark"] .os-table td,
   [data-theme="dark"] .os-table th,
   [data-theme="dark"] .os-list-foot {
-    border-color: #21262d;
+    border-color: #12151a;
   }
   [data-theme="dark"] .os-tech-name,
   [data-theme="dark"] .os-tech-total,
@@ -892,13 +892,13 @@
     color: #c9d1d9;
   }
   [data-theme="dark"] .os-donut-chart::after {
-    background: #161b22;
-    border-color: #30363d;
+    background: #0a0c10;
+    border-color: #1e2228;
   }
   [data-theme="dark"] .os-tech-bar { background: transparent; }
   [data-theme="dark"] .os-heatmap-cell--nodata {
     background: transparent;
-    box-shadow: inset 0 0 0 1px #30363d;
+    box-shadow: inset 0 0 0 1px #1e2228;
     color: #cbd5e1;
   }
 
