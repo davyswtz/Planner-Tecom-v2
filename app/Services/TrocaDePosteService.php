@@ -18,7 +18,7 @@ class TrocaDePosteService{
         ->when($status, fn($q) => $q->where('status', $status))
         ->when($regiao, fn($q) => $q->where('regiao', $regiao))
         ->when($tecnico, fn($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-        ->when($taskCode, fn($q) => $q->where('taskCode', $taskCode))
+        ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
         ->when($dataInicio, fn($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
         ->when($dataFim, fn($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -35,6 +35,7 @@ class TrocaDePosteService{
     }
 
     public function createTrocaDePoste(array $dados): OpTask{
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'troca-poste';
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
         $task = OpTask::create($dados);
@@ -59,6 +60,7 @@ class TrocaDePosteService{
 
     public function updateTrocaDePoste(OpTask $trocadeposte, array $dados): OpTask{
         $statusAnterior = $trocadeposte->status;
+        $dados = OpTask::filtrarEntradaCliente($dados);
         if (isset($dados['status']) && $dados['status'] === 'Finalizada') {
             $osPendentes = OpTask::where('parent_task_id', $trocadeposte->id)
                 ->where('status', '!=', 'Finalizada')

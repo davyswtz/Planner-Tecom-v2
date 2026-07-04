@@ -478,7 +478,7 @@
 
     <div class="filtro-search">
       <i class="ti ti-search filtro-search-icon"></i>
-      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
+      <input type="text" id="filtro-busca" placeholder="Buscar por nome, código ou ID..."
         oninput="aplicarFiltrosDebounce()"
         class="filtro-search-input"/>
     </div>
@@ -634,7 +634,7 @@
       tecnico:    document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
       dataFim:    document.getElementById('filtro-data-fim').value,
-      taskCode:   document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+      busca: document.getElementById('filtro-busca').value.trim(),
     };
   }
 
@@ -658,7 +658,7 @@
     document.getElementById('filtro-tecnico').value = '';
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
-    document.getElementById('filtro-taskcode').value = '';
+    document.getElementById('filtro-busca').value = '';
     if (window.carregarEtiquetas) window.carregarEtiquetas({});
   }
 
@@ -939,12 +939,7 @@
     window.resetOsAnexosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   };
-
-  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharNovaOS();
-  });
-
-  window.alterarStatusOS = async function(osId, novoStatus) {
+window.alterarStatusOS = async function(osId, novoStatus) {
     const token = localStorage.getItem('planner_token');
     const response = await fetch(`/api/op-tasks/${osId}`, {
       method: 'PUT',
@@ -1334,20 +1329,7 @@
       alert(err.message || 'Erro ao excluir Troca de Etiqueta.');
     }
   }
-
-  document.getElementById('modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
-  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharDetalhe();
-  });
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
-  });
-  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusaoOs();
-  });
-  document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
     if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
@@ -1358,8 +1340,17 @@
       fecharConfirmacaoExclusao();
       return;
     }
-    fecharDetalhe();
-    fecharModal();
+    if (document.getElementById('modal-os-overlay')?.classList.contains('open')) {
+      fecharNovaOS();
+      return;
+    }
+    if (document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      fecharDetalhe();
+      return;
+    }
+    if (document.getElementById('modal-overlay')?.classList.contains('open')) {
+      fecharModal();
+    }
   });
 
   // ─── PRIORIDADE ───
@@ -1395,95 +1386,86 @@
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
-    document.getElementById('btn-excluir').style.display = 'none';
-    document.getElementById('btn-editar').style.display = 'none';
-    document.getElementById('btn-salvar').style.display = 'flex';
-    document.getElementById('btn-cancelar').style.display = 'flex';
+    window.plannerDetalheEdicao.mostrarBotoesEdicao();
 
-    const campos = [
-      { id: 'campo-titulo',          tipo: 'text' },
-      { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
-      { id: 'campo-responsavel',     tipo: 'tecnico' },
-      { id: 'campo-numero-os',       tipo: 'text' },
-      { id: 'campo-status',          tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Impedimento', 'Concluída'] },
-    ];
+    const tituloEl = document.getElementById('campo-titulo');
+    if (tituloEl) {
+      tituloEl.textContent = document.getElementById('detalhe-conteudo')?.dataset?.tituloEtiquetas || '';
+    }
 
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
+    window.plannerDetalheEdicao.ativarCampos([
+      { id: 'campo-titulo', tipo: 'text' },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-numero-os', tipo: 'text' },
+      { id: 'campo-status', tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Impedimento', 'Concluída'] },
+    ]);
 
-    campos.forEach(({ id, tipo, opcoes }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
+    const tituloInput = document.querySelector('#campo-titulo input');
+    if (tituloInput) tituloInput.placeholder = 'IPE1504, IPG1106';
 
-      if (id === 'campo-titulo') {
-        const valor = document.getElementById('detalhe-conteudo')?.dataset?.tituloEtiquetas || '';
-        el.innerHTML = `<input type="text" value="${valor.replace(/"/g, '&quot;')}" style="${inputStyle}" placeholder="IPE1504, IPG1106"/>`;
-        return;
-      }
-
-      if (tipo === 'tecnico') {
-        const valor = document.getElementById('detalhe-conteudo')?.dataset?.responsavel || '';
-        const regiao = document.getElementById('detalhe-conteudo')?.dataset?.regiao || '';
-        el.innerHTML = `<select id="edit-input-tecnico" style="${inputStyle}"><option value="">Selecione...</option></select>`;
-        carregarTecnicos(regiao, 'edit-input-tecnico').then(() => {
-          const select = document.getElementById('edit-input-tecnico');
-          if (!select || !valor) return;
-          if (![...select.options].some(o => o.value === valor)) {
-            const opt = document.createElement('option');
-            opt.value = valor;
-            opt.text = valor;
-            select.add(opt);
-          }
-          select.value = valor;
-        });
-        return;
-      }
-
-      const valorAtual = el.textContent.trim();
-      const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'select') {
-        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
-        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
-        return;
-      }
-      el.innerHTML = `<input type="text" value="${valor}" style="${inputStyle}"/>`;
-    });
+    const respEl = document.getElementById('campo-responsavel');
+    if (respEl) {
+      const valor = document.getElementById('detalhe-conteudo')?.dataset?.responsavel || '';
+      const regiao = document.getElementById('detalhe-conteudo')?.dataset?.regiao || '';
+      const select = document.createElement('select');
+      select.id = 'edit-input-tecnico';
+      select.style.cssText = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);box-sizing:border-box;color:var(--gray-950)';
+      select.innerHTML = '<option value="">Selecione...</option>';
+      respEl.replaceChildren(select);
+      carregarTecnicos(regiao, 'edit-input-tecnico').then(() => {
+        if (!valor) return;
+        if (![...select.options].some(o => o.value === valor)) {
+          const opt = document.createElement('option');
+          opt.value = valor;
+          opt.text = valor;
+          select.add(opt);
+        }
+        select.value = valor;
+      });
+    }
   }
 
   async function salvarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
     if (!id) return;
-    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
 
-    const tituloEditado = getVal('#campo-titulo input');
-    const etiquetasEditadas = parseEtiquetasTitulo(tituloEditado);
-
-    const dados = {
-      titulo:            tituloEditado,
-      descricao:         etiquetasEditadas.map((nome) => `Etiqueta: ${nome}`).join('\n'),
-      regiao:            getVal('#campo-regiao select'),
-      responsavel:       getVal('#campo-responsavel select') || getVal('#edit-input-tecnico'),
-      numero_os:         getVal('#campo-numero-os input'),
-      localizacao_texto: document.querySelector('#campo-localizacao-texto input')?.value ?? document.getElementById('campo-localizacao-texto')?.textContent ?? '',
-      coordenadas:       getVal('#campo-coordenadas input'),
-      status:            getVal('#campo-status select'),
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/troca-etiqueta/${id}`, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(dados)
+    const dados = window.plannerDetalheEdicao.montarDados({
+      titulo: { id: 'campo-titulo', tipo: 'text' },
+      regiao: { id: 'campo-regiao', tipo: 'select' },
+      numero_os: { id: 'campo-numero-os', tipo: 'text' },
+      status: { id: 'campo-status', tipo: 'select' },
     });
 
-    if (response.ok) {
+    const tituloEditado = dados.titulo || '';
+    const etiquetasEditadas = typeof parseEtiquetasTitulo === 'function'
+      ? parseEtiquetasTitulo(tituloEditado)
+      : [];
+    if (etiquetasEditadas.length) {
+      dados.descricao = etiquetasEditadas.map((nome) => `Etiqueta: ${nome}`).join('\n');
+    }
+
+    const tecnico = document.getElementById('edit-input-tecnico')?.value
+      || document.querySelector('#campo-responsavel select')?.value
+      || '';
+    if (tecnico !== undefined) dados.responsavel = tecnico;
+
+    const btn = document.getElementById('btn-salvar');
+    if (btn) btn.disabled = true;
+    try {
+      await window.plannerDetalheEdicao.enviarPut(`/api/troca-etiqueta/${id}`, dados);
       fecharDetalhe();
       window.carregarEtiquetas();
-    } else {
-      const erro = await response.json();
-      console.error('Erro ao salvar:', erro.message);
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert(err.message || 'Erro ao salvar alterações.');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
+
+  window.ativarEdicao = ativarEdicao;
+  window.salvarEdicao = salvarEdicao;
+  window.cancelarEdicao = cancelarEdicao;
 
   async function criarTrocaEtiqueta() {
     const regiao = document.getElementById('input-regiao').value;

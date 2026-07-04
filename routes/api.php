@@ -28,9 +28,10 @@ Route::get("/user", function (Request $request) {
     return $request->user();
 })->middleware("auth:sanctum");
 
-Route::post("login", [AuthController::class, "login"]);
+Route::post("login", [AuthController::class, "login"])
+    ->middleware("throttle:10,1");
 
-Route::middleware("auth:sanctum")->group(function () {
+Route::middleware(["auth:sanctum", "throttle:180,1"])->group(function () {
     Route::post("logout", [AuthController::class, "logout"]);
     Route::get("me", [AuthController::class, "me"]);
     Route::get("notificacoes", [NotificacaoController::class, "index"]);

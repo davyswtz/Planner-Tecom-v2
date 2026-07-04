@@ -2085,12 +2085,7 @@
     if (!row?.dataset.id) return;
     window.abrirDetalhe(row.dataset.id);
   });
-
-  document.getElementById('detalhe-overlay')?.addEventListener('click', (e) => {
-    if (e.target.id === 'detalhe-overlay') window.fecharDetalhe();
-  });
-
-  document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('detalhe-overlay')?.classList.contains('open')) {
       window.fecharDetalhe();
     }

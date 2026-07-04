@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn() => null);
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->api(append: [
             \App\Http\Middleware\PreventApiCaching::class,
         ]);

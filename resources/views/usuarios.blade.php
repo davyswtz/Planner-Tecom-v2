@@ -607,6 +607,11 @@
 
   window.abrirNovoItem = window.abrirModalUsuario;
   document.getElementById('usuario-funcao')?.addEventListener('change', atualizarCamposFuncao);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('modal-usuario')?.classList.contains('open')) {
+      fecharModalUsuario();
+    }
+  });
   atualizarSelectCargos();
   carregarUsuarios();
 </script>

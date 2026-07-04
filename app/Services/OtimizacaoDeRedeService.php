@@ -27,7 +27,7 @@ class OtimizacaoDeRedeService
             ->when($status, fn($q) => $q->where('status', $status))
             ->when($regiao, fn($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-            ->when($taskCode, fn($q) => $q->where('taskCode', $taskCode))
+            ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
             ->when($dataInicio, fn($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
             ->when($dataFim, fn($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -40,8 +40,8 @@ class OtimizacaoDeRedeService
 
     public function createOtimizacaoDeRede(array $dados): OpTask
     {
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'otimizacao-rede';
-        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
 
         return OpTask::create($dados);
@@ -50,6 +50,7 @@ class OtimizacaoDeRedeService
     public function updateOtimizacaoDeRede(OpTask $otimizacaoDeRede, array $dados, ?string $enviadoPor = null): OpTask
     {
         $statusAnterior = $otimizacaoDeRede->status;
+        $dados = OpTask::filtrarEntradaCliente($dados);
 
         if (isset($dados['status']) && $dados['status'] === 'Finalizada') {
             $osPendentes = OpTask::where('parent_task_id', $otimizacaoDeRede->id)

@@ -253,10 +253,6 @@
     abrirDetalheOs(card.dataset.osId);
   });
 
-  document.getElementById('modal-os-detalhe-overlay')?.addEventListener('click', (event) => {
-    if (event.target.id === 'modal-os-detalhe-overlay') fecharDetalheOs();
-  });
-
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && document.getElementById('modal-os-detalhe-overlay')?.classList.contains('open')) {
       event.preventDefault();

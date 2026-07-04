@@ -65,25 +65,42 @@ class OpTaskController extends Controller
     {
         $request->validate([
             'titulo' => ['required', 'string', 'max:255'],
-            'categoria' => ['required', 'string', 'max:64'],
-            'descricao' => ['nullable', 'string'],
+            'categoria' => ['required', 'string', 'in:tarefas,ordem-servico'],
+            'descricao' => ['nullable', 'string', 'max:200000'],
             'responsavel' => ['nullable', 'string', 'max:500'],
             'prazo' => ['nullable', 'date'],
             'prioridade' => ['nullable', 'string', 'in:Baixa,Média,Alta'],
             'status' => ['nullable', 'string', 'max:64'],
+            'parent_task_id' => ['nullable', 'integer', 'min:1'],
+            'regiao' => ['nullable', 'string', 'max:120'],
         ], [
             'titulo.required' => 'Informe o título da tarefa.',
             'categoria.required' => 'Informe a categoria da tarefa.',
+            'categoria.in' => 'Categoria inválida.',
             'prazo.date' => 'Informe uma data de prazo válida.',
         ]);
 
-        $dados = $request->only((new OpTask)->getFillable());
+        $categoria = (string) $request->input('categoria');
+        $permitirParent = $categoria === 'ordem-servico';
+        $dados = OpTask::filtrarEntradaCliente(
+            $request->all(),
+            permitirParent: $permitirParent,
+            permitirCategoria: true,
+        );
+        $dados['categoria'] = $categoria;
 
-        if (($dados['categoria'] ?? '') === 'tarefas' && ! $this->usuarioPodeAcessarAbaTarefas($request)) {
+        if ($categoria === 'tarefas' && ! $this->usuarioPodeAcessarAbaTarefas($request)) {
             return response()->json(['message' => 'Sem permissão para criar tarefas.'], 403);
         }
 
-        if (($dados['categoria'] ?? '') === 'tarefas') {
+        if ($categoria === 'ordem-servico') {
+            $parentId = (int) ($dados['parent_task_id'] ?? 0);
+            if ($parentId <= 0 || ! OpTask::query()->whereKey($parentId)->whereNull('parent_task_id')->exists()) {
+                return response()->json(['message' => 'Tarefa pai inválida para a OS.'], 422);
+            }
+        }
+
+        if ($categoria === 'tarefas') {
             $opTask = $this->opTaskService->createTarefa($dados);
             $this->notificacoes->notificarTarefaAtribuida(
                 $opTask,
@@ -185,7 +202,11 @@ class OpTaskController extends Controller
                 $dados = $request->only(['titulo', 'descricao', 'responsavel', 'prazo', 'prioridade', 'status']);
                 $opTask = $this->opTaskService->updateTarefa($opTask, $dados);
             } else {
-                $opTask = $this->opTaskService->updateOpTask($opTask, $request->all());
+                // Nunca aceitar mass assignment de campos protegidos (taskCode, parent, etc.).
+                $opTask = $this->opTaskService->updateOpTask(
+                    $opTask,
+                    OpTask::filtrarEntradaCliente($request->all())
+                );
             }
 
             return response()->json(['message' => 'OpTask atualizado com sucesso', 'opTask' => $opTask]);

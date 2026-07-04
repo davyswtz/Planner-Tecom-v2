@@ -403,7 +403,7 @@
 
     <div class="filtro-search">
       <i class="ti ti-search filtro-search-icon"></i>
-      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
+      <input type="text" id="filtro-busca" placeholder="Buscar por nome, código ou ID..."
         oninput="aplicarFiltrosDebounce()"
         class="filtro-search-input"/>
     </div>
@@ -580,7 +580,7 @@
       tecnico: document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
       dataFim: document.getElementById('filtro-data-fim').value,
-      taskCode: document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+      busca: document.getElementById('filtro-busca').value.trim(),
     };
   }
 
@@ -604,7 +604,7 @@
     document.getElementById('filtro-tecnico').value = '';
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
-    document.getElementById('filtro-taskcode').value = '';
+    document.getElementById('filtro-busca').value = '';
     if (window.carregarCertificacoes) window.carregarCertificacoes({});
   }
 
@@ -678,12 +678,7 @@
     window.resetOsAnexosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   };
-
-  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharNovaOS();
-  });
-
-  window.alterarStatusOS = async function(osId, novoStatus) {
+window.alterarStatusOS = async function(osId, novoStatus) {
     const token = localStorage.getItem('planner_token');
     const response = await fetch(`/api/op-tasks/${osId}`, {
       method: 'PUT',
@@ -1086,20 +1081,7 @@
       btn.disabled = false;
     }
   }
-
-  document.getElementById('modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
-  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharDetalhe();
-  });
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
-  });
-  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusaoOs();
-  });
-  document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
     if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
@@ -1110,8 +1092,17 @@
       fecharConfirmacaoExclusao();
       return;
     }
-    fecharDetalhe();
-    fecharModal();
+    if (document.getElementById('modal-os-overlay')?.classList.contains('open')) {
+      fecharNovaOS();
+      return;
+    }
+    if (document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      fecharDetalhe();
+      return;
+    }
+    if (document.getElementById('modal-overlay')?.classList.contains('open')) {
+      fecharModal();
+    }
   });
 
   // ─── PRIORIDADE ───
@@ -1258,83 +1249,65 @@
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
-    document.getElementById('btn-excluir').style.display = 'none';
-    document.getElementById('btn-editar').style.display = 'none';
-    document.getElementById('btn-salvar').style.display = 'flex';
-    document.getElementById('btn-cancelar').style.display = 'flex';
+    window.plannerDetalheEdicao.mostrarBotoesEdicao();
 
-    const campos = [
-      { id: 'campo-titulo',     tipo: 'text' },
+    const prazoEl = document.getElementById('campo-prazo');
+    const prazoIso = document.getElementById('detalhe-conteudo')?.dataset?.prazo || '';
+    if (prazoEl) prazoEl.textContent = prazoIso || '—';
+
+    window.plannerDetalheEdicao.ativarCampos([
+      { id: 'campo-titulo', tipo: 'text' },
       { id: 'campo-numero-os', tipo: 'text' },
-      { id: 'campo-prazo',      tipo: 'date' },
-      { id: 'campo-regiao',     tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
-      { id: 'campo-tecnicos',   tipo: 'custom' },
-      { id: 'campo-descricao',  tipo: 'textarea' },
+      { id: 'campo-prazo', tipo: 'date' },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-descricao', tipo: 'textarea' },
       { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
-      { id: 'campo-status',     tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Validação', 'Precisa de adequação', 'Concluído'] },
-    ];
+      { id: 'campo-status', tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Validação', 'Precisa de adequação', 'Concluído'] },
+    ]);
 
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
-
-    campos.forEach(({ id, tipo, opcoes }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const valorAtual = el.textContent.trim();
-      const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'custom') {
-        inicializarSeletorTecnicosEdicao(el, valor);
-        return;
-      }
-      if (tipo === 'select') {
-        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
-        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
-        return;
-      }
-      if (tipo === 'textarea') {
-        el.innerHTML = `<textarea style="${inputStyle};min-height:72px;resize:vertical">${valor}</textarea>`;
-        return;
-      }
-      if (tipo === 'date') {
-        const dataVal = valor && valor !== '—' ? '' : '';
-        el.innerHTML = `<input type="date" value="${dataVal}" style="${inputStyle}"/>`;
-        return;
-      }
-      el.innerHTML = `<input type="text" value="${valor}" style="${inputStyle}"/>`;
-    });
+    const tecnicosEl = document.getElementById('campo-tecnicos');
+    if (tecnicosEl && typeof inicializarSeletorTecnicosEdicao === 'function') {
+      const valor = document.getElementById('detalhe-conteudo')?.dataset?.responsavel
+        || window.plannerDetalheEdicao.valorCampo(tecnicosEl);
+      inicializarSeletorTecnicosEdicao(tecnicosEl, valor);
+    }
   }
 
   async function salvarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
     if (!id) return;
-    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
 
-    const dados = {
-      titulo:      getVal('#campo-titulo input'),
-      numero_os:   getVal('#campo-numero-os input'),
-      prazo:       getVal('#campo-prazo input'),
-      regiao:      getVal('#campo-regiao select'),
-      responsavel: tecnicosSelecionadosEdicao.map(t => t.nome).join(', '),
-      descricao:   document.querySelector('#campo-descricao textarea')?.value ?? '',
-      prioridade:  getVal('#campo-prioridade select'),
-      status:      getVal('#campo-status select'),
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/certificacao-cemig/${id}`, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(dados)
+    const dados = window.plannerDetalheEdicao.montarDados({
+      titulo: { id: 'campo-titulo', tipo: 'text' },
+      numero_os: { id: 'campo-numero-os', tipo: 'text' },
+      prazo: { id: 'campo-prazo', tipo: 'date' },
+      regiao: { id: 'campo-regiao', tipo: 'select' },
+      descricao: { id: 'campo-descricao', tipo: 'textarea' },
+      prioridade: { id: 'campo-prioridade', tipo: 'select' },
+      status: { id: 'campo-status', tipo: 'select' },
     });
 
-    if (response.ok) {
+    if (typeof tecnicosSelecionadosEdicao !== 'undefined') {
+      dados.responsavel = tecnicosSelecionadosEdicao.map(t => t.nome).join(', ');
+    }
+
+    const btn = document.getElementById('btn-salvar');
+    if (btn) btn.disabled = true;
+    try {
+      await window.plannerDetalheEdicao.enviarPut(`/api/certificacao-cemig/${id}`, dados);
       fecharDetalhe();
       window.carregarCertificacoes();
-    } else {
-      const erro = await response.json();
-      console.error('Erro ao salvar:', erro.message);
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert(err.message || 'Erro ao salvar alterações.');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
+
+  window.ativarEdicao = ativarEdicao;
+  window.salvarEdicao = salvarEdicao;
+  window.cancelarEdicao = cancelarEdicao;
 
   async function criarCertificacao() {
     const titulo = document.getElementById('input-titulo').value.trim();
@@ -1625,6 +1598,10 @@
 
     document.getElementById('detalhe-conteudo').dataset.id = r.id;
     document.getElementById('detalhe-conteudo').dataset.regiao = r.regiao || '';
+    document.getElementById('detalhe-conteudo').dataset.responsavel = r.responsavel || '';
+    document.getElementById('detalhe-conteudo').dataset.prazo = r.prazo
+      ? String(r.prazo).slice(0, 10)
+      : '';
     carregarOS(r.id);
   }
 

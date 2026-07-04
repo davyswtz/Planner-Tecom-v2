@@ -374,7 +374,7 @@
 
     <div class="filtro-search">
       <i class="ti ti-search filtro-search-icon"></i>
-      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
+      <input type="text" id="filtro-busca" placeholder="Buscar por nome, código ou ID..."
         oninput="aplicarFiltrosDebounce()"
         class="filtro-search-input"/>
     </div>
@@ -529,7 +529,7 @@
       tecnico:    document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
       dataFim:    document.getElementById('filtro-data-fim').value,
-      taskCode:   document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+      busca: document.getElementById('filtro-busca').value.trim(),
     };
   }
 
@@ -553,7 +553,7 @@
     document.getElementById('filtro-tecnico').value = '';
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
-    document.getElementById('filtro-taskcode').value = '';
+    document.getElementById('filtro-busca').value = '';
     if (window.carregarOtimizacoes) window.carregarOtimizacoes({});
   }
 
@@ -625,12 +625,7 @@
     window.resetOsAnexosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   };
-
-  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharNovaOS();
-  });
-
-  window.alterarStatusOS = async function(osId, novoStatus) {
+window.alterarStatusOS = async function(osId, novoStatus) {
     const token = localStorage.getItem('planner_token');
     const response = await fetch(`/api/op-tasks/${osId}`, {
       method: 'PUT',
@@ -1024,20 +1019,7 @@
       btn.disabled = false;
     }
   }
-
-  document.getElementById('modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
-  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharDetalhe();
-  });
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
-  });
-  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusaoOs();
-  });
-  document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
     if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
@@ -1048,8 +1030,17 @@
       fecharConfirmacaoExclusao();
       return;
     }
-    fecharDetalhe();
-    fecharModal();
+    if (document.getElementById('modal-os-overlay')?.classList.contains('open')) {
+      fecharNovaOS();
+      return;
+    }
+    if (document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      fecharDetalhe();
+      return;
+    }
+    if (document.getElementById('modal-overlay')?.classList.contains('open')) {
+      fecharModal();
+    }
   });
 
   // ─── PRIORIDADE ───
@@ -1088,74 +1079,45 @@
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
-    document.getElementById('btn-excluir').style.display = 'none';
-    document.getElementById('btn-editar').style.display = 'none';
-    document.getElementById('btn-salvar').style.display = 'flex';
-    document.getElementById('btn-cancelar').style.display = 'flex';
-
-    const campos = [
-      { id: 'campo-titulo',          tipo: 'text' },
-      { id: 'campo-tipo',            tipo: 'textarea' },
-      { id: 'campo-regiao',          tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
-      { id: 'campo-numero-os',       tipo: 'text' },
+    window.plannerDetalheEdicao.mostrarBotoesEdicao();
+    window.plannerDetalheEdicao.ativarCampos([
+      { id: 'campo-titulo', tipo: 'text' },
+      { id: 'campo-tipo', tipo: 'textarea' },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-numero-os', tipo: 'text' },
       { id: 'campo-localizacao-texto', tipo: 'text' },
-      { id: 'campo-coordenadas',     tipo: 'text' },
-      { id: 'campo-prioridade',      tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
-      { id: 'campo-status',          tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
-    ];
-
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
-
-    campos.forEach(({ id, tipo, opcoes }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const valorAtual = el.textContent.trim();
-      const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'select') {
-        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
-        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
-        return;
-      }
-      if (tipo === 'textarea') {
-        el.innerHTML = `<textarea rows="3" style="${inputStyle};resize:vertical;min-height:72px">${esc(valor)}</textarea>`;
-        return;
-      }
-      el.innerHTML = `<input type="text" value="${valor}" style="${inputStyle}"/>`;
-    });
+      { id: 'campo-coordenadas', tipo: 'text' },
+      { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
+      { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
+    ]);
   }
 
   async function salvarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
     if (!id) return;
-    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
 
-    const dados = {
-      titulo:            getVal('#campo-titulo input'),
-      descricao:         getVal('#campo-tipo textarea'),
-      regiao:            getVal('#campo-regiao select'),
-      responsavel:       '',
-      numero_os:         getVal('#campo-numero-os input'),
-      localizacao_texto: document.querySelector('#campo-localizacao-texto input')?.value ?? document.getElementById('campo-localizacao-texto')?.textContent ?? '',
-      coordenadas:       getVal('#campo-coordenadas input'),
-      prioridade:        getVal('#campo-prioridade select'),
-      status:            getVal('#campo-status select'),
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/otimizacao-rede/${id}`, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(dados)
+    const dados = window.plannerDetalheEdicao.montarDados({
+      titulo: { id: 'campo-titulo', tipo: 'text' },
+      descricao: { id: 'campo-tipo', tipo: 'textarea' },
+      regiao: { id: 'campo-regiao', tipo: 'select' },
+      numero_os: { id: 'campo-numero-os', tipo: 'text' },
+      localizacao_texto: { id: 'campo-localizacao-texto', tipo: 'text' },
+      coordenadas: { id: 'campo-coordenadas', tipo: 'text' },
+      prioridade: { id: 'campo-prioridade', tipo: 'select' },
+      status: { id: 'campo-status', tipo: 'select' },
     });
 
-    if (response.ok) {
+    const btn = document.getElementById('btn-salvar');
+    if (btn) btn.disabled = true;
+    try {
+      await window.plannerDetalheEdicao.enviarPut(`/api/otimizacao-rede/${id}`, dados);
       fecharDetalhe();
       window.carregarOtimizacoes();
-    } else {
-      const erro = await response.json();
-      console.error('Erro ao salvar:', erro.message);
-      alert(erro.message || 'Erro ao salvar alterações.');
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert(err.message || 'Erro ao salvar alterações.');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 

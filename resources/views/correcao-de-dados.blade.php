@@ -538,6 +538,11 @@
   window.abrirNovoItem = function () {
     abrirModalCorrecao();
   };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('modal-correcao')?.classList.contains('open')) {
+      fecharModalCorrecao();
+    }
+  });
   await carregarTecnicos();
   await carregarLista();
 </script>

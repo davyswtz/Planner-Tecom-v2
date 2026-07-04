@@ -58,10 +58,44 @@
   .caixa-badge {
     display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px;
     border-radius: 999px; font-size: 11px; font-weight: 600;
+    border: 1px solid transparent;
   }
-  .caixa-badge--ok { background: #dcfce7; color: #15803d; }
-  .caixa-badge--off { background: #fee2e2; color: #b91c1c; }
-  .caixa-badge--muted { background: var(--gray-100); color: var(--gray-600); }
+  .caixa-badge--ok,
+  .caixa-badge--online { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .caixa-badge--off,
+  .caixa-badge--offline { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .caixa-badge--alarm { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+  .caixa-badge--warning { background: #fef9c3; color: #a16207; border-color: #fde68a; }
+  .caixa-badge--suspended { background: #ede9fe; color: #6d28d9; border-color: #ddd6fe; }
+  .caixa-badge--blocked { background: #fce7f3; color: #be185d; border-color: #fbcfe8; }
+  .caixa-badge--cancelled { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+  .caixa-badge--muted,
+  .caixa-badge--unknown { background: var(--gray-100); color: var(--gray-600); border-color: var(--gray-200); }
+  .caixa-badge-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: currentColor;
+  }
+  .caixa-table tbody tr.caixa-row--online { background: rgba(34, 197, 94, 0.04); }
+  .caixa-table tbody tr.caixa-row--offline { background: rgba(239, 68, 68, 0.05); }
+  .caixa-table tbody tr.caixa-row--alarm { background: rgba(249, 115, 22, 0.07); }
+  .caixa-table tbody tr.caixa-row--warning { background: rgba(234, 179, 8, 0.07); }
+  .caixa-table tbody tr.caixa-row--suspended { background: rgba(139, 92, 246, 0.06); }
+  .caixa-table tbody tr.caixa-row--blocked { background: rgba(236, 72, 153, 0.06); }
+  .caixa-table tbody tr.caixa-row--online td:first-child { box-shadow: inset 3px 0 0 #22c55e; }
+  .caixa-table tbody tr.caixa-row--offline td:first-child { box-shadow: inset 3px 0 0 #ef4444; }
+  .caixa-table tbody tr.caixa-row--alarm td:first-child { box-shadow: inset 3px 0 0 #f97316; }
+  .caixa-table tbody tr.caixa-row--warning td:first-child { box-shadow: inset 3px 0 0 #eab308; }
+  .caixa-table tbody tr.caixa-row--suspended td:first-child { box-shadow: inset 3px 0 0 #8b5cf6; }
+  .caixa-table tbody tr.caixa-row--blocked td:first-child { box-shadow: inset 3px 0 0 #ec4899; }
+  .caixa-resumo-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  }
+  .caixa-legenda {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px;
+    border-top: 1px solid var(--gray-100); font-size: 11px; color: var(--gray-500);
+  }
+  .caixa-legenda .caixa-badge { font-size: 10px; padding: 2px 7px; }
   .caixa-sinal {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px; font-weight: 600;
@@ -70,6 +104,21 @@
   .caixa-sinal--medio { color: #ca8a04; }
   .caixa-sinal--ruim { color: #dc2626; }
   .caixa-sinal-data { display: block; font-size: 10px; color: var(--gray-500); font-weight: 400; margin-top: 2px; }
+  .caixa-status-ts {
+    display: flex; flex-direction: column; gap: 2px; align-items: center;
+    font-size: 11px; line-height: 1.3; color: var(--gray-700);
+  }
+  .caixa-status-ts span { white-space: nowrap; }
+  .caixa-status-ts .ts-up { color: #15803d; }
+  .caixa-status-ts .ts-down { color: #b91c1c; }
+  .caixa-status-ts .ts-label {
+    font-size: 9px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.03em; color: var(--gray-500); margin-right: 4px;
+  }
+  .caixa-lacre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px; font-weight: 600; color: var(--gray-800);
+  }
   .caixa-sinal-retry {
     display: inline-flex; align-items: center; justify-content: center;
     width: 28px; height: 28px; margin-top: 2px; border: 1px solid var(--gray-200);
@@ -122,9 +171,24 @@
   [data-theme="dark"] .caixa-select {
     background: #12151a; border-color: #1e2228; color: #e6edf3;
   }
-  [data-theme="dark"] .caixa-badge--ok { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-  [data-theme="dark"] .caixa-badge--off { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-  [data-theme="dark"] .caixa-badge--muted { background: #12151a; color: #8b949e; }
+  [data-theme="dark"] .caixa-badge--ok,
+  [data-theme="dark"] .caixa-badge--online { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+  [data-theme="dark"] .caixa-badge--off,
+  [data-theme="dark"] .caixa-badge--offline { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+  [data-theme="dark"] .caixa-badge--alarm { background: rgba(249, 115, 22, 0.15); color: #fb923c; border-color: rgba(249, 115, 22, 0.3); }
+  [data-theme="dark"] .caixa-badge--warning { background: rgba(234, 179, 8, 0.15); color: #facc15; border-color: rgba(234, 179, 8, 0.3); }
+  [data-theme="dark"] .caixa-badge--suspended { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border-color: rgba(139, 92, 246, 0.3); }
+  [data-theme="dark"] .caixa-badge--blocked { background: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.3); }
+  [data-theme="dark"] .caixa-badge--info { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.3); }
+  [data-theme="dark"] .caixa-badge--muted,
+  [data-theme="dark"] .caixa-badge--unknown { background: #12151a; color: #8b949e; border-color: #1e2228; }
+  [data-theme="dark"] .caixa-table tbody tr.caixa-row--online { background: rgba(34, 197, 94, 0.08); }
+  [data-theme="dark"] .caixa-table tbody tr.caixa-row--offline { background: rgba(239, 68, 68, 0.1); }
+  [data-theme="dark"] .caixa-table tbody tr.caixa-row--alarm { background: rgba(249, 115, 22, 0.1); }
+  [data-theme="dark"] .caixa-table tbody tr.caixa-row--warning { background: rgba(234, 179, 8, 0.1); }
+  [data-theme="dark"] .caixa-table tbody tr.caixa-row--suspended { background: rgba(139, 92, 246, 0.1); }
+  [data-theme="dark"] .caixa-table tbody tr.caixa-row--blocked { background: rgba(236, 72, 153, 0.1); }
+  [data-theme="dark"] .caixa-legenda { border-top-color: #1e2228; color: #8b949e; }
   @keyframes caixa-spin { to { transform: rotate(360deg); } }
   @media (max-width: 768px) {
     .caixa-filtros { grid-template-columns: 1fr; }
@@ -561,16 +625,142 @@
     `;
   }
 
+  function formatarLacre(valor) {
+    if (valor == null) return '—';
+    const texto = String(valor).trim();
+    if (!texto) return '—';
+    const norm = texto.toLowerCase();
+    if (['-', '–', '—', 'n/a', 'na', 'null', 'none', '0'].includes(norm)) return '—';
+    if (/^[\s.\-_–—]+$/.test(texto)) return '—';
+    return texto;
+  }
+
+  function normalizarTextoStatus(valor) {
+    return String(valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  /** Classifica status do serviço Nicon (Habilitado, Suspenso, etc.). */
+  function classificarStatusServico(statusServico) {
+    const t = normalizarTextoStatus(statusServico);
+    if (!t || t === '-') return { key: 'unknown', label: statusServico || '—' };
+
+    if (/(cancel|encerr|baixad|inativ)/.test(t)) {
+      return { key: 'blocked', label: statusServico };
+    }
+    if (/(bloque|negativ|inadimpl|cortad)/.test(t)) {
+      return { key: 'blocked', label: statusServico };
+    }
+    if (/(suspens|pausad|interromp)/.test(t)) {
+      return { key: 'suspended', label: statusServico };
+    }
+    if (/(pendente|aguard|ativac|instal|provision)/.test(t)) {
+      return { key: 'warning', label: statusServico };
+    }
+    if (/(habilit|ativ|normal|ok|liberad)/.test(t)) {
+      return { key: 'online', label: statusServico };
+    }
+    if (/(desabilit|inativ|off)/.test(t)) {
+      return { key: 'offline', label: statusServico };
+    }
+    if (/(alarm|critico|falha|erro|problema)/.test(t)) {
+      return { key: 'alarm', label: statusServico };
+    }
+
+    return { key: 'info', label: statusServico };
+  }
+
+  /** Classifica conexão do equipamento (Online / Offline / Alarme). */
+  function classificarConexao(cliente) {
+    const conectado = cliente.conectado === true;
+    const rx = extrairRx(cliente.sinal);
+    const resumo = normalizarTextoStatus(cliente.status_conexao);
+
+    if (!conectado) {
+      return { key: 'offline', label: 'Offline' };
+    }
+
+    if (rx != null && Number(rx) < -27) {
+      return { key: 'alarm', label: 'Alarme' };
+    }
+
+    if (rx != null && Number(rx) < -24) {
+      return { key: 'warning', label: 'Atenção' };
+    }
+
+    if (/(alarm|critico|falha|erro|queda)/.test(resumo)) {
+      return { key: 'alarm', label: 'Alarme' };
+    }
+
+    return { key: 'online', label: 'Online' };
+  }
+
+  /** Prioridade visual da linha: alarme > offline > suspenso > bloqueado > warning > online. */
+  function classificarLinhaCliente(cliente) {
+    const conexao = classificarConexao(cliente);
+    const servico = classificarStatusServico(cliente.status_servico);
+    const ordem = ['alarm', 'offline', 'blocked', 'suspended', 'warning', 'online', 'info', 'unknown'];
+    const key = [conexao.key, servico.key].sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b))[0];
+    return key || 'unknown';
+  }
+
+  function renderBadgeStatus(key, label) {
+    const texto = label || '—';
+    return `<span class="caixa-badge caixa-badge--${esc(key)}"><span class="caixa-badge-dot"></span>${esc(texto)}</span>`;
+  }
+
+  function renderCelulaStatusEquipamento(cliente) {
+    const uptime = cliente.ultimo_uptime || '';
+    const downtime = cliente.ultimo_downtime || '';
+    const resumo = cliente.status_conexao || '';
+
+    if (!uptime && !downtime && !resumo) {
+      return '<span class="caixa-sinal-off">—</span>';
+    }
+
+    return `
+      <div class="caixa-status-ts" ${resumo ? `title="${esc(resumo)}"` : ''}>
+        ${uptime ? `<span class="ts-up"><span class="ts-label">Up</span>${esc(uptime)}</span>` : ''}
+        ${downtime ? `<span class="ts-down"><span class="ts-label">Down</span>${esc(downtime)}</span>` : ''}
+        ${resumo && !uptime && !downtime ? `<span class="caixa-sinal-off">${esc(resumo)}</span>` : ''}
+      </div>
+    `;
+  }
+
   function atualizarResumo(clientes, nomeCaixa) {
-    const conectados = clientes.filter((c) => c.conectado).length;
+    const contagem = {
+      online: 0,
+      offline: 0,
+      alarm: 0,
+      warning: 0,
+      suspended: 0,
+      blocked: 0,
+    };
+
+    clientes.forEach((c) => {
+      const key = classificarLinhaCliente(c);
+      if (contagem[key] != null) contagem[key] += 1;
+    });
+
     const comSinal = clientes.filter((c) => extrairRx(c.sinal) != null).length;
+    const chips = [
+      contagem.online ? renderBadgeStatus('online', `Online ${contagem.online}`) : '',
+      contagem.offline ? renderBadgeStatus('offline', `Offline ${contagem.offline}`) : '',
+      contagem.alarm ? renderBadgeStatus('alarm', `Alarme ${contagem.alarm}`) : '',
+      contagem.warning ? renderBadgeStatus('warning', `Atenção ${contagem.warning}`) : '',
+      contagem.suspended ? renderBadgeStatus('suspended', `Suspenso ${contagem.suspended}`) : '',
+      contagem.blocked ? renderBadgeStatus('blocked', `Bloqueado ${contagem.blocked}`) : '',
+    ].filter(Boolean).join(' ');
 
     resumo.hidden = false;
     resumo.innerHTML = `
       <span><strong>Caixa:</strong> ${esc(clientes[0]?.caixa || nomeCaixa)}</span>
       <span><strong>Clientes:</strong> ${clientes.length}</span>
-      <span><strong>Conectados:</strong> ${conectados}</span>
       <span><strong>Com sinal:</strong> ${comSinal}</span>
+      ${chips}
     `;
     statusLabel.textContent = `${clientes.length} cliente(s)`;
   }
@@ -590,16 +780,18 @@
     atualizarResumo(clientes, nomeCaixa);
 
     const linhas = clientes.map((cliente) => {
-      const badgeConexao = cliente.conectado
-        ? '<span class="caixa-badge caixa-badge--ok">Conectado</span>'
-        : '<span class="caixa-badge caixa-badge--off">Desconectado</span>';
+      const statusServico = classificarStatusServico(cliente.status_servico);
+      const conexao = classificarConexao(cliente);
+      const linhaKey = classificarLinhaCliente(cliente);
 
       return `
-        <tr data-cliente-id="${esc(cliente.id_cliente_servico)}">
+        <tr data-cliente-id="${esc(cliente.id_cliente_servico)}" class="caixa-row--${esc(linhaKey)}">
           ${renderCelulaCliente(cliente)}
           <td class="text-center">${esc(cliente.porta ?? '—')}</td>
-          <td class="text-center"><span class="caixa-badge caixa-badge--muted">${esc(cliente.status_servico || '—')}</span></td>
-          <td class="text-center">${badgeConexao}</td>
+          <td class="text-center">${renderBadgeStatus(statusServico.key, statusServico.label)}</td>
+          <td class="text-center">${renderBadgeStatus(conexao.key, conexao.label)}</td>
+          <td class="text-center">${renderCelulaStatusEquipamento(cliente)}</td>
+          <td class="text-center"><span class="caixa-lacre">${esc(formatarLacre(cliente.lacre))}</span></td>
           <td><code style="font-size:11px;">${esc(cliente.serial || '—')}</code></td>
           ${renderCelulaSinal(cliente, carregandoSinais)}
         </tr>
@@ -607,6 +799,15 @@
     }).join('');
 
     wrap.innerHTML = `
+      <div class="caixa-legenda">
+        <span>Legenda:</span>
+        ${renderBadgeStatus('online', 'Online')}
+        ${renderBadgeStatus('offline', 'Offline')}
+        ${renderBadgeStatus('alarm', 'Alarme')}
+        ${renderBadgeStatus('warning', 'Atenção')}
+        ${renderBadgeStatus('suspended', 'Suspenso')}
+        ${renderBadgeStatus('blocked', 'Bloqueado')}
+      </div>
       <table class="caixa-table">
         <thead>
           <tr>
@@ -614,6 +815,8 @@
             <th class="text-center">Porta</th>
             <th class="text-center">Status</th>
             <th class="text-center">Conexão</th>
+            <th class="text-center">Último status</th>
+            <th class="text-center">Lacre</th>
             <th>Serial</th>
             <th class="text-center">Sinal RX</th>
           </tr>
@@ -664,11 +867,21 @@
     const linha = document.querySelector(`tr[data-cliente-id="${idClienteServico}"]`);
     if (!linha) return;
 
+    const conexao = classificarConexao(cliente);
+    const linhaKey = classificarLinhaCliente(cliente);
+    linha.className = `caixa-row--${linhaKey}`;
+
+    const celulas = linha.querySelectorAll('td');
+    // Coluna Conexão (índice 3) muda com o sinal (Online / Alarme / Atenção).
+    if (celulas[3]) {
+      celulas[3].innerHTML = renderBadgeStatus(conexao.key, conexao.label);
+    }
+
     const temp = document.createElement('tbody');
     temp.innerHTML = `
       <tr>
         ${renderCelulaCliente(cliente)}
-        <td></td><td></td><td></td><td></td>
+        <td></td><td></td><td></td><td></td><td></td><td></td>
         ${renderCelulaSinal(cliente, false)}
       </tr>
     `;
@@ -684,6 +897,8 @@
     if (novaCelulaSinal && celulaSinal) {
       celulaSinal.replaceWith(novaCelulaSinal);
     }
+
+    atualizarResumo(clientesAtuais, caixaAtual);
   }
 
   function aplicarSinalNoCliente(idClienteServico, sinal, nomeCaixa, { persistir = true } = {}) {
@@ -1063,8 +1278,8 @@
   }
 
   btnFecharBeta?.addEventListener('click', fecharModalBeta);
-  modalBeta?.addEventListener('click', (event) => {
-    if (event.target === modalBeta) {
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modalBeta?.classList.contains('open')) {
       fecharModalBeta();
     }
   });

@@ -51,7 +51,8 @@ class OsResumoChatService
     /**
      * Dados de sequência das OS vinculadas à tarefa pai.
      *
-     * - os_sequencia: posição da OS atual (1, 2, 3…), ou "—" na mensagem da tarefa pai
+     * - os_sequencia: na mensagem da OS, a posição (1, 2, 3…);
+     *   na mensagem da tarefa pai, a lista numerada (mesmo conteúdo de os_lista)
      * - os_lista: nomes de todas as OS numerados na ordem definida
      *
      * @return array{os_sequencia: string, os_lista: string}
@@ -68,7 +69,7 @@ class OsResumoChatService
         }
 
         $linhas = [];
-        $sequenciaAtual = '—';
+        $sequenciaAtual = null;
 
         foreach ($lista->values() as $indice => $os) {
             $posicao = $indice + 1;
@@ -84,9 +85,13 @@ class OsResumoChatService
             }
         }
 
+        $listaTexto = implode("\n", $linhas);
+
+        // Tarefa pai: {os_sequencia} lista as OS (comportamento esperado no template da pai).
+        // OS filha: {os_sequencia} é só a posição (1, 2, 3…).
         return [
-            'os_sequencia' => $sequenciaAtual,
-            'os_lista' => implode("\n", $linhas),
+            'os_sequencia' => $sequenciaAtual ?? $listaTexto,
+            'os_lista' => $listaTexto,
         ];
     }
 

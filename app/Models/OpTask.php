@@ -176,6 +176,82 @@ class OpTask extends Model
         return in_array($username, self::parseResponsaveis($responsavel), true);
     }
 
+    /**
+     * Campos que o cliente da API pode enviar.
+     * Bloqueia mass assignment de taskCode, is_parent_task, chat_thread_key, etc.
+     *
+     * @param  array<string, mixed>  $dados
+     * @return array<string, mixed>
+     */
+    public static function filtrarEntradaCliente(array $dados, bool $permitirParent = false, bool $permitirCategoria = false): array
+    {
+        $permitidos = [
+            'titulo',
+            'setor',
+            'cto',
+            'regiao',
+            'responsavel',
+            'clientesAfetados',
+            'coordenadas',
+            'localizacao_texto',
+            'descricao',
+            'prazo',
+            'prioridade',
+            'status',
+            'nome_cliente',
+            'protocolo',
+            'ordem_servico',
+            'numero_os',
+            'sub_processo',
+            'data_entrada',
+            'data_instalacao',
+            'assinada_por',
+            'assinada_em',
+        ];
+
+        if ($permitirParent) {
+            $permitidos[] = 'parent_task_id';
+            $permitidos[] = 'sequencia';
+        }
+
+        if ($permitirCategoria) {
+            $permitidos[] = 'categoria';
+        }
+
+        $filtrados = array_intersect_key($dados, array_flip($permitidos));
+
+        if (array_key_exists('parent_task_id', $filtrados)) {
+            $parentId = (int) $filtrados['parent_task_id'];
+            $filtrados['parent_task_id'] = $parentId > 0 ? $parentId : null;
+        }
+
+        if (array_key_exists('sequencia', $filtrados)) {
+            $filtrados['sequencia'] = max(0, (int) $filtrados['sequencia']);
+        }
+
+        if (array_key_exists('prioridade', $filtrados)) {
+            $prio = trim((string) $filtrados['prioridade']);
+            $filtrados['prioridade'] = in_array($prio, ['Baixa', 'Média', 'Alta'], true) ? $prio : 'Média';
+        }
+
+        if (array_key_exists('status', $filtrados)) {
+            $filtrados['status'] = mb_substr(trim((string) $filtrados['status']), 0, 64);
+        }
+
+        foreach (['titulo', 'setor', 'regiao', 'coordenadas', 'localizacao_texto', 'nome_cliente', 'numero_os', 'protocolo', 'ordem_servico', 'sub_processo'] as $campoTexto) {
+            if (array_key_exists($campoTexto, $filtrados) && is_string($filtrados[$campoTexto])) {
+                $filtrados[$campoTexto] = mb_substr(trim($filtrados[$campoTexto]), 0, 500);
+            }
+        }
+
+        if (array_key_exists('descricao', $filtrados) && is_string($filtrados['descricao'])) {
+            // Limite defensivo contra payloads enormes (ex.: base64 em descrição).
+            $filtrados['descricao'] = mb_substr($filtrados['descricao'], 0, 200_000);
+        }
+
+        return $filtrados;
+    }
+
     public function scopeWhereResponsavel(Builder $query, string $username): Builder
     {
         $username = trim($username);
@@ -201,6 +277,35 @@ class OpTask extends Model
         return $query
             ->whereIn('categoria', (array) $categorias)
             ->whereNull('parent_task_id');
+    }
+
+    /**
+     * Busca all-in-one: código, título, setor/elemento, cliente, nº OS, descrição ou ID.
+     */
+    public function scopeBuscaTexto(Builder $query, ?string $termo): Builder
+    {
+        $termo = trim((string) $termo);
+        if ($termo === '') {
+            return $query;
+        }
+
+        $like = '%'.addcslashes($termo, '%_\\').'%';
+
+        return $query->where(function (Builder $q) use ($like, $termo) {
+            $q->where('taskCode', 'like', $like)
+                ->orWhere('titulo', 'like', $like)
+                ->orWhere('setor', 'like', $like)
+                ->orWhere('nome_cliente', 'like', $like)
+                ->orWhere('numero_os', 'like', $like)
+                ->orWhere('ordem_servico', 'like', $like)
+                ->orWhere('descricao', 'like', $like)
+                ->orWhere('localizacao_texto', 'like', $like)
+                ->orWhere('protocolo', 'like', $like);
+
+            if (ctype_digit($termo)) {
+                $q->orWhere('id', (int) $termo);
+            }
+        });
     }
 
     public function scopeRompimentosPai(Builder $query): Builder

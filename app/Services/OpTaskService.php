@@ -34,14 +34,17 @@ class OpTaskService
 
     public function createOpTask(array $dados): OpTask
     {
+        $categoria = trim((string) ($dados['categoria'] ?? ''));
+        $permitirParent = $categoria === 'ordem-servico';
+
+        $dados = OpTask::filtrarEntradaCliente($dados, permitirParent: $permitirParent, permitirCategoria: true);
+        $dados['categoria'] = $categoria !== '' ? $categoria : ($dados['categoria'] ?? '');
+
         if (($dados['categoria'] ?? '') === 'ordem-servico' && array_key_exists('responsavel', $dados)) {
             $dados['responsavel'] = OpTask::serializarResponsaveis(
                 OpTask::parseResponsaveis($dados['responsavel'] ?? '')
             );
         }
-
-        $dados['taskCode'] = $this->gerarTaskCode($dados);
-        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
 
         if (
             ! empty($dados['parent_task_id'])
@@ -51,7 +54,12 @@ class OpTaskService
             $dados['sequencia'] = $this->proximaSequenciaOs((int) $dados['parent_task_id']);
         }
 
-        $task = OpTask::create($dados);
+        $taskCode = $this->gerarTaskCode($dados);
+        $task = new OpTask;
+        $task->fill($dados);
+        $task->taskCode = $taskCode;
+        $task->criadaEm = now();
+        $task->save();
 
         if (! empty($dados['parent_task_id'])) {
             OpTask::where('id', $dados['parent_task_id'])->update(['is_parent_task' => true]);
@@ -239,6 +247,9 @@ class OpTaskService
     public function updateOpTask(OpTask $opTask, array $dados): OpTask
     {
         $statusAnterior = $opTask->status;
+
+        // Atualização via API nunca pode alterar categoria, parent, taskCode, etc.
+        $dados = OpTask::filtrarEntradaCliente($dados, permitirParent: false, permitirCategoria: false);
 
         if (($opTask->categoria ?? '') === 'ordem-servico' && array_key_exists('responsavel', $dados)) {
             $dados['responsavel'] = OpTask::serializarResponsaveis(

@@ -216,7 +216,7 @@ class MensagemTemplateService
             'os_finalizadas' => '4',
             'os_resumo_tecnicos' => "• joao.silva — 2 OS\n• maria.santos — 2 OS",
             'os_resumo' => $resumoOs,
-            'os_sequencia' => '—',
+            'os_sequencia' => "1. Abertura de vala\n2. Instalação de CTO\n3. Fusão de fibras\n4. Teste de sinal",
             'os_lista' => "1. Abertura de vala\n2. Instalação de CTO\n3. Fusão de fibras\n4. Teste de sinal",
         ];
     }
@@ -382,10 +382,12 @@ class MensagemTemplateService
             'descricao' => trim((string) ($task['descricao'] ?? '')) ?: '—',
             'numero_os' => $numeroOs !== '' ? $numeroOs : '—',
             'ordem_servico' => $ordemServico !== '' ? $ordemServico : '—',
-            'nome_cliente' => trim((string) ($task['nome_cliente'] ?? '')) ?: '—',
+            'nome_cliente' => trim((string) ($task['nome_cliente'] ?? $task['titulo'] ?? '')) ?: '—',
             'protocolo' => trim((string) ($task['protocolo'] ?? '')) ?: '—',
             'sub_processo' => trim((string) ($task['sub_processo'] ?? '')) ?: '—',
-            'data_entrada' => $this->formatarValorData($task['data_entrada'] ?? null),
+            'data_entrada' => $this->formatarValorData(
+                $task['data_entrada'] ?? $task['criadaEm'] ?? $task['created_at'] ?? null
+            ),
             'data_instalacao' => $this->formatarValorData($task['data_instalacao'] ?? null),
             'assinada_por' => trim((string) ($task['assinada_por'] ?? '')) ?: '—',
             'assinada_em' => $this->formatarValorData($task['assinada_em'] ?? null, true),

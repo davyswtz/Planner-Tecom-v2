@@ -935,23 +935,24 @@
       }
     }
 
+    window.plannerDetalheEdicao?.mostrarBotoesEdicao?.();
     document.getElementById('btn-excluir').style.display = 'none';
     document.getElementById('btn-editar').style.display = 'none';
     document.getElementById('btn-salvar').style.display = 'flex';
     document.getElementById('btn-cancelar').style.display = 'flex';
 
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 10px;font-size:13px;font-family:inherit;outline:none;background:var(--white);box-sizing:border-box';
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    const tarefa = id ? tarefasMap[id] : null;
 
     const tituloEl = document.getElementById('campo-titulo');
     if (tituloEl) {
-      const valor = tituloEl.textContent.trim() === '—' ? '' : tituloEl.textContent.trim();
-      tituloEl.innerHTML = `<input type="text" value="${esc(valor)}" style="${inputStyle}"/>`;
+      const valor = (tarefa?.titulo ?? tituloEl.textContent.trim());
+      tituloEl.textContent = valor === '—' ? '' : valor;
+      window.plannerDetalheEdicao.ativarCampos([{ id: 'campo-titulo', tipo: 'text' }]);
     }
 
     const descEl = document.getElementById('campo-descricao');
     if (descEl) {
-      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-      const tarefa = id ? tarefasMap[id] : null;
       const html = tarefa?.descricao || '';
       descEl.className = 'detail-value descricao-field';
       mountDescricaoEditor(descEl, { html, placeholder: 'Detalhes da tarefa (opcional)' });
@@ -959,8 +960,6 @@
 
     const respEl = document.getElementById('campo-responsavel');
     if (respEl) {
-      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-      const tarefa = id ? tarefasMap[id] : null;
       const bruto = tarefa?.responsavel || '';
       respEl.innerHTML = montarCampoResponsaveisEdicao(bruto);
       renderResponsaveisTags(
@@ -972,16 +971,13 @@
 
     const prazoEl = document.getElementById('campo-prazo');
     if (prazoEl) {
-      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-      const tarefa = id ? tarefasMap[id] : null;
-      const valor = prazoParaInput(tarefa?.prazo) || (prazoEl.textContent.trim() !== '—' ? '' : '');
-      prazoEl.innerHTML = `<input type="date" value="${valor}" style="${inputStyle}"/>`;
+      const valor = prazoParaInput(tarefa?.prazo) || '';
+      prazoEl.textContent = valor || '—';
+      window.plannerDetalheEdicao.ativarCampos([{ id: 'campo-prazo', tipo: 'date' }]);
     }
 
     const prioEl = document.getElementById('campo-prioridade');
     if (prioEl) {
-      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-      const tarefa = id ? tarefasMap[id] : null;
       prioridadeEdicao = tarefa?.prioridade || 'Média';
       prioEl.innerHTML = `<div class="prioridade-wrap">${htmlBotoesPrioridade(prioridadeEdicao, 'selecionarPrioridadeEdicao')}</div>`;
     }
@@ -1002,14 +998,16 @@
     }
 
     const btn = document.getElementById('btn-salvar');
-    btn.disabled = true;
+    if (btn) btn.disabled = true;
 
-    const dados = { titulo, descricao, responsavel, prioridade: prioridadeEdicao, categoria: 'tarefas' };
+    const dados = { titulo, descricao, responsavel, prioridade: prioridadeEdicao };
     if (prazo) dados.prazo = prazo;
+    else dados.prazo = null;
 
     try {
       const resultado = await atualizarTarefaApi(id, dados);
       const tarefa = resultado.opTask || resultado.tarefa || resultado;
+      tarefasMap[tarefa.id] = tarefa;
       fecharDetalhe();
       if (!window.plannerEstaExcluida?.(id)) {
         adicionarCardTarefa(tarefa);
@@ -1017,9 +1015,10 @@
       }
       await window.plannerAposMutacaoLocal?.();
     } catch (err) {
+      console.error('Erro ao salvar tarefa:', err);
       alert(err.message || 'Erro ao salvar alterações.');
     } finally {
-      btn.disabled = false;
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -1159,16 +1158,19 @@
   window.carregarMais = function () {};
   window.verMenos = function () {};
 
-  document.getElementById('modal-overlay').addEventListener('click', function (e) {
-    if (e.target === this) fecharModal();
-  });
-
-  document.getElementById('detalhe-overlay').addEventListener('click', function (e) {
-    if (e.target === this) fecharDetalhe();
-  });
-
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function (e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('confirm-excluir-overlay')?.classList.contains('open')) {
+      fecharConfirmacaoExclusao();
+      return;
+    }
+    if (document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      fecharDetalhe();
+      return;
+    }
+    if (document.getElementById('modal-overlay')?.classList.contains('open')) {
+      fecharModal();
+    }
   });
 
   initKanbanDragDrop();

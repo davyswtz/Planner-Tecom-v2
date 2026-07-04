@@ -2282,9 +2282,6 @@
   });
   document.getElementById('btn-logout-cancelar')?.addEventListener('click', fecharModalLogout);
   document.getElementById('btn-logout-confirmar')?.addEventListener('click', confirmarLogoutSistema);
-  document.getElementById('modal-logout-overlay')?.addEventListener('click', (event) => {
-    if (event.target === event.currentTarget) fecharModalLogout();
-  });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && document.getElementById('modal-logout-overlay')?.classList.contains('open')) {
       fecharModalLogout();
@@ -2346,6 +2343,7 @@
 @endif
 
 <script src="{{ $plannerAssetV('js/planner-prioridade.js') }}"></script>
+<script src="{{ $plannerAssetV('js/planner-detalhe-edicao.js') }}"></script>
 <script>
   window.PLANNER_TUTORIAL_VERSION = @json(config('planner.tutorial.version', '20260703'));
   window.PLANNER_TUTORIAL_ENABLED = @json((bool) config('planner.tutorial.enabled', true));

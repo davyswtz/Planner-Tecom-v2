@@ -21,7 +21,7 @@ class TrocaDeEtiquetaService
             ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn ($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-            ->when($taskCode, fn ($q) => $q->where('taskCode', 'like', "%{$taskCode}%"))
+            ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
             ->when($dataInicio, fn ($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
             ->when($dataFim, fn ($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -53,6 +53,7 @@ class TrocaDeEtiquetaService
 
     public function createTrocaDeEtiqueta(array $dados): OpTask
     {
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = self::CATEGORIA;
         $dados['status'] = $dados['status'] ?? 'Pendente';
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
@@ -80,6 +81,7 @@ class TrocaDeEtiquetaService
     public function updateTrocaDeEtiqueta(OpTask $trocaDeEtiqueta, array $dados): OpTask
     {
         $statusAnterior = $trocaDeEtiqueta->status;
+        $dados = OpTask::filtrarEntradaCliente($dados);
 
         if (isset($dados['status']) && $this->isStatusConcluido($dados['status'])) {
             $osPendentes = OpTask::where('parent_task_id', $trocaDeEtiqueta->id)

@@ -46,7 +46,7 @@ class NiconWebService
 
         $sinais = collect($this->buscarSinaisCompletos($ids, $this->montarMapaSeriais($clientes)))->keyBy('id_cliente_servico');
 
-        return array_map(function (array $cliente) use ($sinais) {
+        $clientes = array_map(function (array $cliente) use ($sinais) {
             $id = (int) ($cliente['id_cliente_servico'] ?? 0);
             $sinal = $sinais->get($id);
 
@@ -57,6 +57,105 @@ class NiconWebService
 
             return $cliente;
         }, $clientes);
+
+        return $this->enriquecerComStatusConexao($clientes);
+    }
+
+    /**
+     * Preenche ultimo_uptime / ultimo_downtime a partir da API de conexão ONU.
+     *
+     * @param  array<int, array<string, mixed>>  $clientes
+     * @return array<int, array<string, mixed>>
+     */
+    public function enriquecerComStatusConexao(array $clientes): array
+    {
+        $ids = array_values(array_filter(array_map(
+            fn (array $cliente) => (int) ($cliente['id_cliente_servico'] ?? 0),
+            $clientes
+        )));
+
+        if ($ids === []) {
+            return $clientes;
+        }
+
+        $conexoes = $this->buscarStatusConexaoPorIds($ids);
+
+        return array_map(function (array $cliente) use ($conexoes) {
+            $id = (int) ($cliente['id_cliente_servico'] ?? 0);
+            $conexao = $conexoes[$id] ?? null;
+
+            if (! is_array($conexao)) {
+                return $cliente;
+            }
+
+            if (! empty($conexao['ultimo_uptime'])) {
+                $cliente['ultimo_uptime'] = $conexao['ultimo_uptime'];
+            }
+            if (! empty($conexao['ultimo_downtime'])) {
+                $cliente['ultimo_downtime'] = $conexao['ultimo_downtime'];
+            }
+            if (array_key_exists('conectado', $conexao) && $conexao['conectado'] !== null) {
+                $cliente['conectado'] = (bool) $conexao['conectado'];
+            }
+            if (! empty($conexao['status_conexao'])) {
+                $cliente['status_conexao'] = $conexao['status_conexao'];
+            }
+
+            return $cliente;
+        }, $clientes);
+    }
+
+    /**
+     * Status de conexão (uptime/downtime) via API app-técnico.
+     * A listagem de caixas não traz data_ultima_conexao — só a API de sinal ONU.
+     *
+     * @param  array<int, int|string>  $idsClienteServico
+     * @return array<int, array{ultimo_uptime: ?string, ultimo_downtime: ?string, conectado: ?bool, status_conexao: ?string}>
+     */
+    public function buscarStatusConexaoPorIds(array $idsClienteServico): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $idsClienteServico),
+            fn (int $id) => $id > 0
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        try {
+            $respostas = app(NiconApiService::class)->buscarSinaisOnuParalelo($ids);
+        } catch (RuntimeException) {
+            return [];
+        }
+
+        $resultado = [];
+
+        foreach ($respostas as $id => $payload) {
+            if (! is_array($payload)) {
+                continue;
+            }
+
+            $conexao = is_array($payload['conexao'] ?? null) ? $payload['conexao'] : [];
+            $conectado = $conexao['conectado'] ?? $payload['conectado'] ?? null;
+
+            $resultado[(int) $id] = [
+                'ultimo_uptime' => $this->formatarTimestampNicon(
+                    $conexao['data_ultima_conexao'] ?? null
+                ),
+                'ultimo_downtime' => $this->formatarTimestampNicon(
+                    $conexao['data_ultima_desconexao'] ?? null
+                ),
+                'conectado' => is_bool($conectado) ? $conectado : null,
+                'status_conexao' => isset($conexao['status_txt_resumido'])
+                    ? trim((string) $conexao['status_txt_resumido'])
+                    : (isset($conexao['conexao_texto_resumido'])
+                        ? trim((string) $conexao['conexao_texto_resumido'])
+                        : null),
+            ];
+        }
+
+        return $resultado;
     }
 
     /**
@@ -640,7 +739,14 @@ class NiconWebService
                     'conectado' => (bool) ($servico['conectado'] ?? false),
                     'porta' => $porta,
                     'status_servico' => $servico['status_servico']['descricao'] ?? null,
-                    'lacre' => $servico['lacre'] ?? null,
+                    'lacre' => $this->extrairLacreServico($servico),
+                    // Na listagem da caixa o Nicon só traz desconexão; uptime vem da API de conexão.
+                    'ultimo_uptime' => $this->formatarTimestampNicon(
+                        $servico['data_ultima_conexao'] ?? null
+                    ),
+                    'ultimo_downtime' => $this->formatarTimestampNicon(
+                        $servico['data_ultima_desconexao'] ?? null
+                    ),
                     'caixa' => $dadosCaixa['sigla'] ?? $nomeCaixa,
                     'id_caixa_optica' => (int) ($dadosCaixa['id_caixa_optica'] ?? 0),
                 ];
@@ -650,6 +756,143 @@ class NiconWebService
         usort($clientes, fn (array $a, array $b) => ($a['porta'] ?? 0) <=> ($b['porta'] ?? 0));
 
         return $clientes;
+    }
+
+    /** @param  array<string, mixed>  $servico */
+    private function extrairLacreServico(array $servico): ?string
+    {
+        // Ordem de preferência (caminhos conhecidos do Nicon).
+        $candidatos = [
+            $servico['lacre'] ?? null,
+            $servico['numero_lacre'] ?? null,
+            $servico['cliente_servico_local']['lacre'] ?? null,
+            $servico['cliente_servico_local']['numero_lacre'] ?? null,
+            $servico['cliente_porta_atendimento']['lacre'] ?? null,
+            $servico['cliente_porta_atendimento']['numero_lacre'] ?? null,
+            $servico['cliente_porta_atendimento']['mapeamento_porta_atendimento']['lacre'] ?? null,
+        ];
+
+        foreach ($candidatos as $valor) {
+            $lacre = $this->normalizarLacre($valor);
+            if ($lacre !== null) {
+                return $lacre;
+            }
+        }
+
+        // Fallback: qualquer chave *lacre* no payload do serviço.
+        foreach ($this->coletarValoresPorChave($servico, 'lacre') as $valor) {
+            $lacre = $this->normalizarLacre($valor);
+            if ($lacre !== null) {
+                return $lacre;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizarLacre(mixed $valor): ?string
+    {
+        if ($valor === null || $valor === false) {
+            return null;
+        }
+
+        // Inteiro/float válido (ex.: 8480).
+        if (is_int($valor) || is_float($valor)) {
+            if ((int) $valor <= 0) {
+                return null;
+            }
+
+            return (string) (int) $valor;
+        }
+
+        $texto = trim((string) $valor);
+        if ($texto === '') {
+            return null;
+        }
+
+        // Placeholders do Nicon: " - ", "-", "—", "N/A", etc.
+        $textoNorm = mb_strtolower($texto);
+        if (in_array($textoNorm, ['-', '–', '—', 'n/a', 'na', 'null', 'none', 'sem lacre'], true)) {
+            return null;
+        }
+
+        // Só traços/espaços/pontos (ex.: " - ", "...").
+        if (preg_match('/^[\s.\-_–—]+$/u', $texto)) {
+            return null;
+        }
+
+        return $texto;
+    }
+
+    /**
+     * @param  array<string, mixed>  $dados
+     * @return array<int, mixed>
+     */
+    private function coletarValoresPorChave(array $dados, string $trechoChave): array
+    {
+        $encontrados = [];
+        $trecho = mb_strtolower($trechoChave);
+
+        $walk = function ($no) use (&$walk, &$encontrados, $trecho): void {
+            if (! is_array($no)) {
+                return;
+            }
+
+            foreach ($no as $chave => $valor) {
+                if (is_string($chave) && str_contains(mb_strtolower($chave), $trecho)) {
+                    $encontrados[] = $valor;
+                }
+
+                if (is_array($valor)) {
+                    $walk($valor);
+                }
+            }
+        };
+
+        $walk($dados);
+
+        return $encontrados;
+    }
+
+    private function formatarTimestampNicon(mixed $valor): ?string
+    {
+        if ($valor === null || $valor === '' || $valor === false) {
+            return null;
+        }
+
+        if ($valor instanceof \DateTimeInterface) {
+            return $valor->format('d/m/Y H:i');
+        }
+
+        if (is_numeric($valor)) {
+            $numero = (float) $valor;
+            // Timestamp em segundos ou milissegundos.
+            if ($numero > 1_000_000_000_000) {
+                $numero = (int) round($numero / 1000);
+            } else {
+                $numero = (int) $numero;
+            }
+
+            if ($numero < 946684800) { // antes de 2000-01-01
+                return null;
+            }
+
+            return date('d/m/Y H:i', $numero);
+        }
+
+        $texto = trim((string) $valor);
+        if ($texto === '' || $texto === '0' || $texto === '0000-00-00' || str_starts_with($texto, '0000-00-00')) {
+            return null;
+        }
+
+        // Nicon às vezes manda timezone sem dois-pontos: 2026-06-23 09:39:52-03
+        $texto = preg_replace('/([+-]\d{2})$/', '$1:00', $texto) ?? $texto;
+
+        try {
+            return (new \DateTimeImmutable($texto))->format('d/m/Y H:i');
+        } catch (\Throwable) {
+            return $texto;
+        }
     }
 
     /**

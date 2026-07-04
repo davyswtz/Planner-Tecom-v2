@@ -27,7 +27,7 @@ class AtendimentoService
             ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn ($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-            ->when($taskCode, fn ($q) => $q->where('taskCode', $taskCode))
+            ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
             ->when($dataInicio, fn ($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
             ->when($dataFim, fn ($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -69,13 +69,6 @@ class AtendimentoService
             $descricao = '';
         }
 
-        $subProcesso = trim((string) ($dados['sub_processo'] ?? ''));
-        if ($subProcesso === 'Prazo') {
-            $subProcesso = $atendimento->prazo
-                ? $atendimento->prazo->format('d/m/Y')
-                : '';
-        }
-
         $endereco = trim((string) ($dados['localizacao_texto'] ?? ''));
         if ($endereco === '') {
             $endereco = trim((string) ($dados['setor'] ?? ''));
@@ -87,11 +80,14 @@ class AtendimentoService
         }
 
         $status = trim((string) ($dados['status'] ?? ''));
+        $dataEntrada = substr((string) ($atendimento->criadaEm ?? $dados['data_entrada'] ?? ''), 0, 10);
 
         return array_merge($dados, [
-            'nome' => $nome,
-            'protocolo' => trim((string) ($dados['protocolo'] ?? '')),
-            'sub_processo' => $subProcesso,
+            'nome' => $nome !== '' ? $nome : 'Atendimento',
+            'protocolo' => '',
+            'sub_processo' => '',
+            'data_entrada' => $dataEntrada,
+            'data_instalacao' => '',
             'numero_os' => $numeroOs,
             'regiao' => trim((string) ($dados['regiao'] ?? '')),
             'responsavel' => trim((string) ($dados['responsavel'] ?? '')),
@@ -131,8 +127,18 @@ class AtendimentoService
 
     public function createAtendimento(array $dados): OpTask
     {
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'atendimento-cliente';
         $dados = $this->sincronizarCamposLegado($dados);
+
+        $titulo = trim((string) ($dados['titulo'] ?? ''));
+        if ($titulo === '') {
+            $dados['titulo'] = 'Atendimento';
+        }
+
+        // Data de entrada = momento da criação da tarefa.
+        unset($dados['data_instalacao'], $dados['protocolo'], $dados['sub_processo']);
+        $dados['data_entrada'] = now()->toDateString();
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
 
         return OpTask::create($dados);
@@ -141,6 +147,7 @@ class AtendimentoService
     public function updateAtendimento(OpTask $atendimento, array $dados): OpTask
     {
         $statusAnterior = $atendimento->status;
+        $dados = OpTask::filtrarEntradaCliente($this->sincronizarCamposLegado($dados));
 
         if (isset($dados['status']) && $dados['status'] === 'Finalizada') {
             $osPendentes = OpTask::where('parent_task_id', $atendimento->id)
@@ -152,7 +159,7 @@ class AtendimentoService
             }
         }
 
-        $atendimento->update($this->sincronizarCamposLegado($dados));
+        $atendimento->update($dados);
 
         if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
             $tarefaAtualizada = $atendimento->fresh();
@@ -186,6 +193,14 @@ class AtendimentoService
             $dados['titulo'] = $nome;
         } elseif ($titulo !== '' && $nome === '') {
             $dados['nome_cliente'] = $titulo;
+        }
+
+        // Campos removidos da tela — não sobrescrever com valores vazios no update.
+        unset($dados['protocolo'], $dados['sub_processo'], $dados['data_instalacao']);
+
+        // Data de entrada é sempre a data de criação da tarefa.
+        if (array_key_exists('data_entrada', $dados)) {
+            unset($dados['data_entrada']);
         }
 
         return $dados;
