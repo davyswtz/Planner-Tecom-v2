@@ -34,15 +34,32 @@ class OpTaskService
 
     public function createOpTask(array $dados): OpTask
     {
+        $categoria = trim((string) ($dados['categoria'] ?? ''));
+        $permitirParent = $categoria === 'ordem-servico';
+
+        $dados = OpTask::filtrarEntradaCliente($dados, permitirParent: $permitirParent, permitirCategoria: true);
+        $dados['categoria'] = $categoria !== '' ? $categoria : ($dados['categoria'] ?? '');
+
         if (($dados['categoria'] ?? '') === 'ordem-servico' && array_key_exists('responsavel', $dados)) {
             $dados['responsavel'] = OpTask::serializarResponsaveis(
                 OpTask::parseResponsaveis($dados['responsavel'] ?? '')
             );
         }
 
-        $dados['taskCode'] = $this->gerarTaskCode($dados);
-        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
-        $task = OpTask::create($dados);
+        if (
+            ! empty($dados['parent_task_id'])
+            && ($dados['categoria'] ?? '') === 'ordem-servico'
+            && ! isset($dados['sequencia'])
+        ) {
+            $dados['sequencia'] = $this->proximaSequenciaOs((int) $dados['parent_task_id']);
+        }
+
+        $taskCode = $this->gerarTaskCode($dados);
+        $task = new OpTask;
+        $task->fill($dados);
+        $task->taskCode = $taskCode;
+        $task->criadaEm = now();
+        $task->save();
 
         if (! empty($dados['parent_task_id'])) {
             OpTask::where('id', $dados['parent_task_id'])->update(['is_parent_task' => true]);
@@ -174,13 +191,65 @@ class OpTaskService
                     $query->orWhereIn('id', $taskIdsFromOsTecnicos);
                 }
             })
-            ->orderBy('criadaEm', 'desc')
+            ->orderBy('sequencia')
+            ->orderBy('criadaEm')
+            ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * @param  list<int|string>  $ids
+     */
+    public function reordenarOsVinculadas(int $parentId, array $ids): void
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+
+        if ($ids === []) {
+            throw new \InvalidArgumentException('Informe a nova sequência das ordens de serviço.');
+        }
+
+        if (in_array(0, $ids, true)) {
+            throw new \InvalidArgumentException('Identificadores de OS inválidos.');
+        }
+
+        $vinculadasIds = $this->listarOsVinculadas($parentId)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        sort($vinculadasIds);
+        $idsOrdenados = $ids;
+        sort($idsOrdenados);
+
+        if ($vinculadasIds !== $idsOrdenados) {
+            throw new \InvalidArgumentException('A sequência enviada não corresponde às ordens de serviço vinculadas.');
+        }
+
+        DB::transaction(function () use ($ids, $parentId): void {
+            foreach ($ids as $indice => $id) {
+                OpTask::query()
+                    ->whereKey($id)
+                    ->where('parent_task_id', $parentId)
+                    ->update(['sequencia' => $indice + 1]);
+            }
+        });
+    }
+
+    private function proximaSequenciaOs(int $parentId): int
+    {
+        $max = (int) OpTask::query()
+            ->where('parent_task_id', $parentId)
+            ->max('sequencia');
+
+        return $max + 1;
     }
 
     public function updateOpTask(OpTask $opTask, array $dados): OpTask
     {
         $statusAnterior = $opTask->status;
+
+        // Atualização via API nunca pode alterar categoria, parent, taskCode, etc.
+        $dados = OpTask::filtrarEntradaCliente($dados, permitirParent: false, permitirCategoria: false);
 
         if (($opTask->categoria ?? '') === 'ordem-servico' && array_key_exists('responsavel', $dados)) {
             $dados['responsavel'] = OpTask::serializarResponsaveis(

@@ -27,7 +27,7 @@ public function __construct(private OpTaskService $opTaskService
         ->when($status, fn($q) => $q->where('status', $status))
         ->when($regiao, fn($q) => $q->where('regiao', $regiao))
         ->when($tecnico, fn($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-        ->when($taskCode, fn($q) => $q->where('taskCode', $taskCode))
+        ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
         ->when($dataInicio, fn($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
         ->when($dataFim, fn($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -40,12 +40,12 @@ public function __construct(private OpTaskService $opTaskService
 
     public function createRompimento(array $dados): OpTask
     {
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'rompimentos';
-        $dados['criadaEm'] = $dados['criadaEm'] ?? now()->toIso8601String();
         $dados['responsavel'] = trim((string) ($dados['responsavel'] ?? ''));
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
-        return OpTask::create($dados);
 
+        return OpTask::create($dados);
     }
 
     public function showRompimento(OpTask $opTask): OpTask {
@@ -55,6 +55,7 @@ public function __construct(private OpTaskService $opTaskService
 
     public function updateRompimento(OpTask $rompimento, array $dados): OpTask {
         $statusAnterior = $rompimento->status;
+        $dados = OpTask::filtrarEntradaCliente($dados);
         if (isset($dados['status']) && $dados['status'] === 'Finalizada') {
             $osPendentes = OpTask::where('parent_task_id', $rompimento->id)
                 ->where('status', '!=', 'Finalizada')

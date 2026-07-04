@@ -28,7 +28,7 @@ class ManutencaoCorretivaService
             ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn ($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-            ->when($taskCode, fn ($q) => $q->where('taskCode', $taskCode))
+            ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
             ->when($dataInicio, fn ($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
             ->when($dataFim, fn ($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -61,8 +61,12 @@ class ManutencaoCorretivaService
         }
 
         $setor = trim((string) ($dados['setor'] ?? ''));
+        $elemento = trim((string) ($dados['elemento'] ?? ''));
+        if ($elemento === '') {
+            $elemento = $setor;
+        }
         if ($setor === '') {
-            $setor = trim((string) ($dados['localizacao_texto'] ?? ''));
+            $setor = $elemento;
         }
 
         $codigoExibicao = trim((string) ($dados['taskCode'] ?? ''));
@@ -75,7 +79,9 @@ class ManutencaoCorretivaService
         return array_merge($dados, [
             'nome' => $nome,
             'setor' => $setor,
-            'localizacao_texto' => trim((string) ($dados['localizacao_texto'] ?? '')) ?: $setor,
+            'elemento' => $elemento,
+            'descricao' => trim((string) ($dados['descricao'] ?? '')),
+            'localizacao_texto' => trim((string) ($dados['localizacao_texto'] ?? '')),
             'codigo_exibicao' => $codigoExibicao,
             'status_exibicao' => $this->statusParaExibicao($status),
             'status_kanban' => $this->statusParaKanban($status),
@@ -102,6 +108,8 @@ class ManutencaoCorretivaService
 
     public function createManutencaoCorretiva(array $dados): OpTask
     {
+        $dados = $this->sincronizarElemento($dados);
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'manutencao-corretiva';
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
 
@@ -139,6 +147,7 @@ class ManutencaoCorretivaService
             }
         }
 
+        $dados = OpTask::filtrarEntradaCliente($this->sincronizarElemento($dados));
         $manutencao->update($dados);
 
         if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
@@ -163,5 +172,22 @@ class ManutencaoCorretivaService
             ->where('categoria', 'ordem-servico')
             ->delete();
         $manutencao->delete();
+    }
+
+    /** Elemento é persistido em setor (coluna existente). */
+    private function sincronizarElemento(array $dados): array
+    {
+        $elemento = trim((string) ($dados['elemento'] ?? ''));
+        $setor = trim((string) ($dados['setor'] ?? ''));
+
+        if ($elemento !== '') {
+            $dados['setor'] = $elemento;
+        } elseif ($setor !== '') {
+            $dados['setor'] = $setor;
+        }
+
+        unset($dados['elemento']);
+
+        return $dados;
     }
 }

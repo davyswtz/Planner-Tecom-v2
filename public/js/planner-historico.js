@@ -165,10 +165,6 @@
     foot.prepend(btn);
   }
 
-  document.getElementById('modal-historico-overlay')?.addEventListener('click', (event) => {
-    if (event.target.id === 'modal-historico-overlay') fecharHistorico();
-  });
-
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     if (document.getElementById('modal-historico-overlay')?.classList.contains('open')) {

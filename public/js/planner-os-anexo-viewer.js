@@ -81,10 +81,6 @@
   window.fecharVisualizadorAnexo = fecharVisualizadorAnexo;
   window.baixarAnexoAtual = baixarAnexoAtual;
 
-  document.getElementById('modal-anexo-viewer-overlay')?.addEventListener('click', (event) => {
-    if (event.target.id === 'modal-anexo-viewer-overlay') fecharVisualizadorAnexo();
-  });
-
   document.getElementById('modal-anexo-viewer-download')?.addEventListener('click', baixarAnexoAtual);
 
   document.addEventListener('click', (event) => {

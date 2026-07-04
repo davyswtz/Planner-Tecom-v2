@@ -70,7 +70,9 @@ class NiconController extends Controller
 
                 $clientes = $request->boolean('completar_sinais', true)
                     ? $this->niconWeb->buscarSinaisPorCidadeECaixa($idCidade, $nomeCaixa, $idCaixaOptica)
-                    : $this->niconWeb->listarClientesPorCaixa($idCidade, $nomeCaixa, $idCaixaOptica);
+                    : $this->niconWeb->enriquecerComStatusConexao(
+                        $this->niconWeb->listarClientesPorCaixa($idCidade, $nomeCaixa, $idCaixaOptica)
+                    );
 
                 return response()->json([
                     'message' => 'Consulta por cidade e caixa realizada com sucesso.',

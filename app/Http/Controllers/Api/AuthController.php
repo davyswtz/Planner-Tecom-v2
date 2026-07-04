@@ -6,28 +6,55 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\UsuarioCargo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         $request->validate([
-            'username' => 'required|string',
-            'password'=> 'required|string',
+            'username' => 'required|string|max:120',
+            'password' => 'required|string|max:200',
         ]);
 
-        $user = User::where('username', $request->username)->first();
-    
-        if(!$user){
-            return response()->json(['message' => 'Usuario não encontrado'], 401);
+        $username = trim((string) $request->input('username'));
+        $chave = 'login:'.sha1(strtolower($username).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($chave, 5)) {
+            $segundos = RateLimiter::availableIn($chave);
+
+            return response()->json([
+                'message' => 'Muitas tentativas de login. Tente novamente em '.$segundos.' segundos.',
+            ], 429);
         }
 
-        $salt     = hex2bin($user->pass_salt);
-        $expected = hex2bin($user->pass_hash);
-        $computed = hash_pbkdf2('sha256', $request->password, $salt, $user->pass_iterations, 32, true);
-        
-        if (!hash_equals($expected, $computed)) {
-            return response()->json(['message' => 'Senha incorreta'], 401);
+        $user = User::where('username', $username)->first();
+        $credenciaisValidas = false;
+
+        if ($user && is_string($user->pass_salt) && is_string($user->pass_hash)) {
+            $salt = @hex2bin($user->pass_salt);
+            $expected = @hex2bin($user->pass_hash);
+            if ($salt !== false && $expected !== false) {
+                $computed = hash_pbkdf2(
+                    'sha256',
+                    (string) $request->input('password'),
+                    $salt,
+                    max(1, (int) $user->pass_iterations),
+                    32,
+                    true
+                );
+                $credenciaisValidas = hash_equals($expected, $computed);
+            }
         }
+
+        if (! $credenciaisValidas) {
+            RateLimiter::hit($chave, 60);
+
+            // Mensagem única evita enumeração de usuários.
+            return response()->json(['message' => 'Usuário ou senha incorretos.'], 401);
+        }
+
+        RateLimiter::clear($chave);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -35,7 +62,6 @@ class AuthController extends Controller
             'token' => $token,
             'user' => UsuarioCargo::dadosSessao($user),
         ]);
-
     }
 
     public function logout(Request $request)

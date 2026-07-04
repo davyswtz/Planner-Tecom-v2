@@ -1,5 +1,6 @@
 const GRUPOS_VARIAVEIS = [
-  { titulo: 'Ordem de serviço', keys: ['os_tipo', 'task_code', 'titulo', 'responsavel', 'descricao', 'regiao', 'status_novo'], osOnly: true },
+  { titulo: 'Ordem de serviço', keys: ['os_tipo', 'os_sequencia', 'task_code', 'titulo', 'responsavel', 'descricao', 'regiao', 'status_novo'], osOnly: true },
+  { titulo: 'Sequência de OS', keys: ['os_sequencia', 'os_lista', 'os_total'] },
   { titulo: 'Resumo de OS (finalização)', keys: ['os_total', 'os_finalizadas', 'os_resumo_tecnicos', 'os_resumo'] },
   { titulo: 'Tarefa pai', keys: ['parent_titulo', 'parent_task_code', 'parent_categoria_label', 'parent_categoria', 'parent_task_id'], osOnly: true },
   { titulo: 'Identificação', keys: ['task_code', 'titulo', 'id', 'categoria', 'categoria_label', 'os_tipo', 'numero_os', 'ordem_servico', 'etiquetas'] },
@@ -19,6 +20,7 @@ const ICONES_CATEGORIA = {
   'otimizacao-rede': 'ti-network',
   'atendimento-cliente': 'ti-headset',
   'correcao-atenuacao': 'ti-antenna-bars-5',
+  'manutencao-corretiva': 'ti-tool',
   'certificacao-cemig': 'ti-certificate',
   'ordem-servico': 'ti-clipboard-list',
 };

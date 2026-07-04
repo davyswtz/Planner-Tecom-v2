@@ -28,7 +28,7 @@ class CorrecaoDeSinalService
             ->when($status, fn ($q) => $q->whereIn('status', $this->statusParaConsulta($status)))
             ->when($regiao, fn ($q) => $q->where('regiao', $regiao))
             ->when($tecnico, fn ($q) => $q->where('responsavel', 'like', "%{$tecnico}%"))
-            ->when($taskCode, fn ($q) => $q->where('taskCode', $taskCode))
+            ->when($taskCode, fn ($q) => $q->buscaTexto($taskCode))
             ->when($dataInicio, fn ($q) => $q->whereDate('criadaEm', '>=', $dataInicio))
             ->when($dataFim, fn ($q) => $q->whereDate('criadaEm', '<=', $dataFim));
 
@@ -105,6 +105,7 @@ class CorrecaoDeSinalService
 
     public function createCorrecaoDeSinal(array $dados): OpTask
     {
+        $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'correcao-atenuacao';
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
 
@@ -172,6 +173,7 @@ class CorrecaoDeSinalService
     public function updateCorrecaoDeSinal(OpTask $correcao, array $dados): OpTask
     {
         $statusAnterior = $correcao->status;
+        $dados = OpTask::filtrarEntradaCliente($dados);
 
         if (isset($dados['status']) && $dados['status'] === 'Finalizada') {
             $osPendentes = OpTask::where('parent_task_id', $correcao->id)

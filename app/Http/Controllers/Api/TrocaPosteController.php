@@ -23,7 +23,7 @@ class TrocaPosteController extends Controller
             $request->query('status'),
             $request->query('regiao'),
             $request->query('tecnico'),
-            $request->query('taskCode'),
+            $request->query('busca', $request->query('taskCode')),
             $request->query('dataInicio'),
             $request->query('dataFim')
         );

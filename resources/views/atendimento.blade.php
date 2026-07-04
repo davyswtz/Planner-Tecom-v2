@@ -207,35 +207,13 @@
 @section('content')
 
 <!-- MODAL CRIAR -->
-<x-modal id="modal-overlay" titulo="Novo atendimento" subtitulo="Preencha os dados do atendimento ao cliente">
+<x-modal id="modal-overlay" titulo="Novo atendimento" subtitulo="Todos os campos são opcionais">
 
   <div class="modal-form">
 
     <div class="os-field">
       <label class="os-label">Nome do cliente</label>
       <input type="text" id="input-nome-cliente" placeholder="Ex: João Silva" class="os-input"/>
-    </div>
-
-    <div class="detail-grid-2">
-      <div class="os-field">
-        <label class="os-label">Protocolo</label>
-        <input type="text" id="input-protocolo" placeholder="Ex: #160783" class="os-input"/>
-      </div>
-      <div class="os-field">
-        <label class="os-label">Sub-processo</label>
-        <input type="text" id="input-sub-processo" placeholder="Ex: Instalação, Reparo, Mudança..." class="os-input"/>
-      </div>
-    </div>
-
-    <div class="detail-grid-2">
-      <div class="os-field">
-        <label class="os-label">Data de entrada</label>
-        <input type="date" id="input-data-entrada" class="os-input"/>
-      </div>
-      <div class="os-field">
-        <label class="os-label">Data de instalação</label>
-        <input type="date" id="input-data-instalacao" class="os-input"/>
-      </div>
     </div>
 
     <div class="os-field">
@@ -271,7 +249,7 @@
 
     <div class="detail-grid-2">
       <div class="os-field">
-        <label class="os-label">Coordenadas (opcional)</label>
+        <label class="os-label">Coordenadas</label>
         <input type="text" id="input-coordenadas" placeholder="Ex: -18.8517, -41.9494" class="os-input"/>
       </div>
       <div class="os-field">
@@ -391,7 +369,7 @@
 
     <div class="filtro-search">
       <i class="ti ti-search filtro-search-icon"></i>
-      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
+      <input type="text" id="filtro-busca" placeholder="Buscar por nome, código ou ID..."
         oninput="aplicarFiltrosDebounce()"
         class="filtro-search-input"/>
     </div>
@@ -546,7 +524,7 @@
       tecnico:    document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
       dataFim:    document.getElementById('filtro-data-fim').value,
-      taskCode:   document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+      busca: document.getElementById('filtro-busca').value.trim(),
     };
   }
 
@@ -570,17 +548,13 @@
     document.getElementById('filtro-tecnico').value = '';
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
-    document.getElementById('filtro-taskcode').value = '';
+    document.getElementById('filtro-busca').value = '';
     if (window.carregarAtendimentos) window.carregarAtendimentos({});
   }
 
   // ─── MODAIS ───
   function limparFormularioAtendimento() {
     document.getElementById('input-nome-cliente').value = '';
-    document.getElementById('input-protocolo').value = '';
-    document.getElementById('input-sub-processo').value = '';
-    document.getElementById('input-data-entrada').value = '';
-    document.getElementById('input-data-instalacao').value = '';
     document.getElementById('input-descricao').value = '';
     document.getElementById('input-regiao').value = '';
     document.getElementById('input-numero-os').value = '';
@@ -645,12 +619,7 @@
     window.resetOsAnexosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   };
-
-  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharNovaOS();
-  });
-
-  window.alterarStatusOS = async function(osId, novoStatus) {
+window.alterarStatusOS = async function(osId, novoStatus) {
     const token = localStorage.getItem('planner_token');
     const response = await fetch(`/api/op-tasks/${osId}`, {
       method: 'PUT',
@@ -692,7 +661,7 @@
     try {
       if (osEditandoId) {
         const dados = {
-          titulo: `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel: tecnico,
           status,
@@ -718,7 +687,7 @@
         }
       } else {
         const dados = {
-          titulo: `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel: tecnico,
           status,
@@ -1044,20 +1013,7 @@
       btn.disabled = false;
     }
   }
-
-  document.getElementById('modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
-  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharDetalhe();
-  });
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
-  });
-  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusaoOs();
-  });
-  document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
     if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
@@ -1068,8 +1024,17 @@
       fecharConfirmacaoExclusao();
       return;
     }
-    fecharDetalhe();
-    fecharModal();
+    if (document.getElementById('modal-os-overlay')?.classList.contains('open')) {
+      fecharNovaOS();
+      return;
+    }
+    if (document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      fecharDetalhe();
+      return;
+    }
+    if (document.getElementById('modal-overlay')?.classList.contains('open')) {
+      fecharModal();
+    }
   });
 
   // ─── PRIORIDADE ───
@@ -1108,72 +1073,42 @@
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
-    document.getElementById('btn-excluir').style.display = 'none';
-    document.getElementById('btn-editar').style.display = 'none';
-    document.getElementById('btn-salvar').style.display = 'flex';
-    document.getElementById('btn-cancelar').style.display = 'flex';
-
-    const campos = [
-      { id: 'campo-nome',              tipo: 'text' },
-      { id: 'campo-protocolo',         tipo: 'text' },
-      { id: 'campo-sub-processo',      tipo: 'text' },
-      { id: 'campo-numero-os',         tipo: 'text' },
-      { id: 'campo-regiao',            tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+    window.plannerDetalheEdicao.mostrarBotoesEdicao();
+    window.plannerDetalheEdicao.ativarCampos([
+      { id: 'campo-nome', tipo: 'text' },
+      { id: 'campo-numero-os', tipo: 'text' },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['', 'Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
       { id: 'campo-localizacao-texto', tipo: 'text' },
-      { id: 'campo-coordenadas',       tipo: 'text' },
-      { id: 'campo-descricao',         tipo: 'text' },
-    ];
-
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
-
-    campos.forEach(({ id, tipo, opcoes }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const valorAtual = el.textContent.trim();
-      const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'select') {
-        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
-        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
-        return;
-      }
-      el.innerHTML = `<input type="text" value="${valor}" style="${inputStyle}"/>`;
-    });
+      { id: 'campo-coordenadas', tipo: 'text' },
+      { id: 'campo-descricao', tipo: 'textarea' },
+    ]);
   }
 
   async function salvarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
     if (!id) return;
-    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
 
-    const nome = getVal('#campo-nome input');
-    const dados = {
-      titulo:            nome,
-      nome_cliente:      nome,
-      protocolo:         getVal('#campo-protocolo input'),
-      sub_processo:      getVal('#campo-sub-processo input'),
-      regiao:            getVal('#campo-regiao select'),
-      responsavel:       '',
-      numero_os:         getVal('#campo-numero-os input'),
-      localizacao_texto: document.querySelector('#campo-localizacao-texto input')?.value ?? document.getElementById('campo-localizacao-texto')?.textContent ?? '',
-      coordenadas:       getVal('#campo-coordenadas input'),
-      descricao:         getVal('#campo-descricao input'),
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/atendimento/${id}`, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(dados)
+    const dados = window.plannerDetalheEdicao.montarDados({
+      nome_cliente: { id: 'campo-nome', tipo: 'text' },
+      titulo: { id: 'campo-nome', tipo: 'text' },
+      numero_os: { id: 'campo-numero-os', tipo: 'text' },
+      regiao: { id: 'campo-regiao', tipo: 'select' },
+      localizacao_texto: { id: 'campo-localizacao-texto', tipo: 'text' },
+      coordenadas: { id: 'campo-coordenadas', tipo: 'text' },
+      descricao: { id: 'campo-descricao', tipo: 'textarea' },
     });
 
-    if (response.ok) {
+    const btn = document.getElementById('btn-salvar');
+    if (btn) btn.disabled = true;
+    try {
+      await window.plannerDetalheEdicao.enviarPut(`/api/atendimento/${id}`, dados);
       fecharDetalhe();
       window.carregarAtendimentos();
-    } else {
-      const erro = await response.json();
-      console.error('Erro ao salvar:', erro.message);
-      alert(erro.message || 'Erro ao salvar alterações.');
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert(err.message || 'Erro ao salvar alterações.');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -1188,30 +1123,13 @@
 
   async function criarAtendimento() {
     const nomeCliente = document.getElementById('input-nome-cliente').value.trim();
-    const protocolo = document.getElementById('input-protocolo').value.trim();
-    const subProcesso = document.getElementById('input-sub-processo').value.trim();
-    const dataEntrada = document.getElementById('input-data-entrada').value;
-    const dataInstalacao = document.getElementById('input-data-instalacao').value;
     const descricao = document.getElementById('input-descricao').value.trim();
     const regiao = document.getElementById('input-regiao').value;
     const numeroOs = document.getElementById('input-numero-os').value.trim();
 
-    if (!nomeCliente) {
-      alert('Informe o nome do cliente.');
-      return;
-    }
-    if (!regiao) {
-      alert('Selecione a região.');
-      return;
-    }
-
     const dados = {
       titulo:            nomeCliente,
       nome_cliente:      nomeCliente,
-      protocolo:         protocolo,
-      sub_processo:      subProcesso,
-      data_entrada:      dataEntrada || null,
-      data_instalacao:   dataInstalacao || null,
       descricao:         descricao,
       coordenadas:       document.getElementById('input-coordenadas').value.trim(),
       localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
@@ -1418,12 +1336,10 @@
         <span class="kcard-code" style="font-size:11px">${r.taskCode || 'S/C'}</span>
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
-      <div class="kcard-title">${esc(r.nome || r.nome_cliente || r.titulo)}</div>
+      <div class="kcard-title">${esc(r.nome || r.nome_cliente || r.titulo || 'Atendimento')}</div>
       <div class="kcard-foot" style="margin-top:6px">
-        ${r.protocolo ? `<span class="badge b-cat-gen">${esc(r.protocolo)}</span>` : ''}
-        ${r.sub_processo ? `<span class="badge b-cat-ate">${esc(r.sub_processo)}</span>` : ''}
         ${r.numero_os ? `<span class="badge b-cat-gen">${esc(r.numero_os)}</span>` : ''}
-        <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
+        ${r.regiao ? `<span class="badge ${regiaoClass}">${esc(r.regiao)}</span>` : ''}
         ${r.responsavel ? `<span style="font-size:10px;color:var(--gray-400);margin-left:auto">${esc(r.responsavel)}</span>` : ''}
       </div>
     </div>`;
@@ -1444,10 +1360,6 @@
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Nome', esc(nome), 1, 'campo-nome')}
-          ${campoDetalhe('Protocolo', esc(r.protocolo), 1, 'campo-protocolo')}
-        </div>
-        <div class="detail-grid-2">
-          ${campoDetalhe('Sub-processo', esc(r.sub_processo), 1, 'campo-sub-processo')}
           ${campoDetalhe('Número da OS (Hubsoft)', esc(r.numero_os), 1, 'campo-numero-os')}
         </div>
         <div class="detail-grid-2">
@@ -1473,7 +1385,7 @@
               </button>
             </div>
           </div>
-          ${campoDetalhe('Criado em', formatarData(r.criadaEm))}
+          ${campoDetalhe('Data de entrada', formatarData(r.criadaEm))}
         </div>
       </div>`;
 

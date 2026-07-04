@@ -534,7 +534,7 @@
 
     <div class="filtro-search">
       <i class="ti ti-search filtro-search-icon"></i>
-      <input type="text" id="filtro-taskcode" placeholder="ID da tarefa..."
+      <input type="text" id="filtro-busca" placeholder="Buscar por nome, código ou ID..."
         oninput="aplicarFiltrosDebounce()"
         class="filtro-search-input"/>
     </div>
@@ -691,7 +691,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       tecnico: document.getElementById('filtro-tecnico').value,
       dataInicio: document.getElementById('filtro-data-inicio').value,
       dataFim: document.getElementById('filtro-data-fim').value,
-      taskCode: document.getElementById('filtro-taskcode').value.toUpperCase().trim(),
+      busca: document.getElementById('filtro-busca').value.trim(),
     };
   }
 
@@ -715,7 +715,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     document.getElementById('filtro-tecnico').value = '';
     document.getElementById('filtro-data-inicio').value = '';
     document.getElementById('filtro-data-fim').value = '';
-    document.getElementById('filtro-taskcode').value = '';
+    document.getElementById('filtro-busca').value = '';
     if (window.carregarRompimentos) window.carregarRompimentos({});
   }
 
@@ -792,15 +792,6 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     window.resetOsTecnicosModal?.();
     document.getElementById('modal-os-overlay').classList.remove('open');
   }
-
-  document.getElementById('modal-os-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharNovaOS();
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') fecharNovaOS();
-  }, { capture: false });
-
   function trocarAba(aba) {
     document.getElementById('detalhe-tab-detalhes').style.display = aba === 'detalhes' ? 'block' : 'none';
     document.getElementById('detalhe-tab-os').style.display = aba === 'os' ? 'block' : 'none';
@@ -879,24 +870,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       alert(err.message || 'Erro ao excluir rompimento.');
     }
   }
-
-  document.getElementById('modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
-
-  document.getElementById('detalhe-overlay').addEventListener('click', function(e) {
-    if (e.target === this) fecharDetalhe();
-  });
-
-  document.getElementById('confirm-excluir-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusao();
-  });
-
-  document.getElementById('confirm-excluir-os-overlay')?.addEventListener('click', function(e) {
-    if (e.target === this) fecharConfirmacaoExclusaoOs();
-  });
-
-  document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     // Fecha modais de confirmação na ordem: OS → tarefa pai → detalhe/criar
     if (document.getElementById('confirm-excluir-os-overlay')?.classList.contains('open')) {
@@ -907,8 +881,17 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
       fecharConfirmacaoExclusao();
       return;
     }
-    fecharDetalhe();
-    fecharModal();
+    if (document.getElementById('modal-os-overlay')?.classList.contains('open')) {
+      fecharNovaOS();
+      return;
+    }
+    if (document.getElementById('detalhe-overlay')?.classList.contains('open')) {
+      fecharDetalhe();
+      return;
+    }
+    if (document.getElementById('modal-overlay')?.classList.contains('open')) {
+      fecharModal();
+    }
   });
 
   // ─── PRIORIDADE ───
@@ -940,26 +923,41 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
   function setField(id, texto) {
     const el = document.getElementById(id);
     if (!el) return;
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = texto;
-    else el.textContent = texto;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+      el.value = texto;
+      return;
+    }
+    const controle = el.querySelector('input, textarea, select');
+    if (controle) {
+      controle.value = texto;
+      return;
+    }
+    el.textContent = texto;
+  }
+
+  function campoValorEl(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return el;
+    return el.querySelector('input, textarea, select');
   }
 
   function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box') {
     const termo = valor.trim().toUpperCase();
     if (termo.length < 3) {
-      const elCoords = document.getElementById(campoCoords);
+      const elCoords = campoValorEl(campoCoords);
       if (elCoords) elCoords.value = '';
       setField(campoEndereco, 'Gerado pelas coordenadas...');
       return;
     }
     const encontrada = CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo);
     if (encontrada) {
-      const elCoords = document.getElementById(campoCoords);
+      const elCoords = campoValorEl(campoCoords);
       if (elCoords) elCoords.value = `${encontrada.lat}, ${encontrada.lng}`;
       setField(campoEndereco, 'Buscando endereço...');
       buscarEndereco(encontrada.lat, encontrada.lng, campoEndereco);
     } else {
-      const elCoords = document.getElementById(campoCoords);
+      const elCoords = campoValorEl(campoCoords);
       if (elCoords) elCoords.value = '';
       setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
     }
@@ -1008,92 +1006,66 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
   // ─── EDIÇÃO ───
   function ativarEdicao() {
-    document.getElementById('btn-excluir').style.display = 'none';
-    document.getElementById('btn-editar').style.display = 'none';
-    document.getElementById('btn-salvar').style.display = 'flex';
-    document.getElementById('btn-cancelar').style.display = 'flex';
-
-    const campos = [
-      { id: 'campo-cto', tipo: 'cto' },
+    window.plannerDetalheEdicao.mostrarBotoesEdicao();
+    window.plannerDetalheEdicao.ativarCampos([
+      {
+        id: 'campo-cto',
+        tipo: 'text',
+        onInput: (input) => {
+          input.value = input.value.toUpperCase();
+          if (typeof buscarCTO === 'function') {
+            buscarCTO(input.value, 'campo-coordenadas', 'campo-endereco');
+          }
+        },
+      },
       { id: 'campo-tipo', tipo: 'select', opcoes: ['Rota ramal', 'Backbone', 'Caixa', 'Setor'] },
       { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga'] },
       { id: 'campo-clientes', tipo: 'number' },
-      { id: 'campo-coordenadas', tipo: 'coords' },
+      { id: 'campo-coordenadas', tipo: 'text', inputId: 'campo-coordenadas-input' },
       { id: 'campo-endereco', tipo: 'text' },
       { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
       { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
       { id: 'campo-numero-os', tipo: 'text' },
-    ];
-
-    const inputStyle = 'width:100%;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:4px 8px;font-size:13px;font-family:inherit;outline:none;background:var(--white)';
-
-    campos.forEach(({ id, tipo, opcoes }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const valorAtual = el.textContent.trim();
-      const valor = valorAtual === '—' ? '' : valorAtual;
-
-      if (tipo === 'cto') {
-        el.innerHTML = `<input type="text" value="${valor}"
-          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value, 'campo-coordenadas', 'campo-endereco')"
-          style="${inputStyle}"/>`;
-        return;
-      }
-
-      if (tipo === 'coords') {
-        el.innerHTML = `<input type="text" id="campo-coordenadas-input" value="${valor}" style="${inputStyle}"/>`;
-        return;
-      }
-
-      if (tipo === 'select') {
-        const optionsHtml = opcoes.map(op => `<option value="${op}" ${op === valor ? 'selected' : ''}>${op}</option>`).join('');
-        el.innerHTML = `<select style="${inputStyle}">${optionsHtml}</select>`;
-        return;
-      }
-
-      el.innerHTML = `<input type="${tipo}" value="${valor}" style="${inputStyle}"/>`;
-    });
+    ]);
   }
 
   async function salvarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
     if (!id) return;
 
-    const getVal = (selector) => document.querySelector(selector)?.value ?? '';
-
-    const dados = {
-      cto:               getVal('#campo-cto input'),
-      titulo:            `Rompimento — ${getVal('#campo-cto input')}`,
-      descricao:         getVal('#campo-tipo select'),
-      regiao:            getVal('#campo-regiao select'),
-      responsavel:       '',
-      clientesAfetados:  getVal('#campo-clientes input'),
-      coordenadas:       getVal('#campo-coordenadas input') || getVal('#campo-coordenadas-input'),
-      localizacao_texto: document.querySelector('#campo-endereco input')?.value ?? document.getElementById('campo-endereco')?.textContent ?? '',
-      prioridade:        getVal('#campo-prioridade select'),
-      status:            getVal('#campo-status select'),
-      numero_os:         getVal('#campo-numero-os input'),
-    };
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(`/api/rompimentos/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(dados)
+    const dados = window.plannerDetalheEdicao.montarDados({
+      cto: { id: 'campo-cto', tipo: 'text' },
+      descricao: { id: 'campo-tipo', tipo: 'select' },
+      regiao: { id: 'campo-regiao', tipo: 'select' },
+      clientesAfetados: { id: 'campo-clientes', tipo: 'number' },
+      coordenadas: { id: 'campo-coordenadas', tipo: 'text' },
+      localizacao_texto: { id: 'campo-endereco', tipo: 'text' },
+      prioridade: { id: 'campo-prioridade', tipo: 'select' },
+      status: { id: 'campo-status', tipo: 'select' },
+      numero_os: { id: 'campo-numero-os', tipo: 'text' },
     });
 
-    if (response.ok) {
+    if (dados.cto != null) {
+      dados.titulo = `Rompimento — ${dados.cto}`;
+    }
+
+    const btn = document.getElementById('btn-salvar');
+    if (btn) btn.disabled = true;
+    try {
+      await window.plannerDetalheEdicao.enviarPut(`/api/rompimentos/${id}`, dados);
       fecharDetalhe();
       window.carregarRompimentos();
-    } else {
-      const erro = await response.json();
-      console.error('Erro ao salvar:', erro.message);
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert(err.message || 'Erro ao salvar alterações.');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
+
+  window.ativarEdicao = ativarEdicao;
+  window.salvarEdicao = salvarEdicao;
+  window.cancelarEdicao = cancelarEdicao;
 
   async function salvarOs() {
     const rompimentoId = document.getElementById('detalhe-conteudo').dataset.id;
@@ -1109,7 +1081,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
     try {
       if (osEditandoId) {
         const dados = {
-          titulo:      `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel: tecnico,
           status,
@@ -1130,7 +1102,7 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
         }
       } else {
         const dados = {
-          titulo:         `OS — ${tipo}`,
+          titulo: tipo,
           descricao,
           responsavel:    tecnico,
           status,

@@ -45,10 +45,6 @@ class OpTaskAnexoService
         $mimeType = $this->normalizarMimeType($mimeType);
         $conteudoBase64 = $this->extrairBase64($conteudoBase64);
 
-        if (! $this->mimePermitido($mimeType)) {
-            throw new \InvalidArgumentException('Formato de imagem não suportado.');
-        }
-
         $binario = base64_decode($conteudoBase64, true);
         if ($binario === false || $binario === '') {
             throw new \InvalidArgumentException('Conteúdo da imagem inválido.');
@@ -58,6 +54,13 @@ class OpTaskAnexoService
         if ($tamanho > 5 * 1024 * 1024) {
             throw new \InvalidArgumentException('A imagem deve ter no máximo 5 MB.');
         }
+
+        // Confia no conteúdo real (não no mime informado pelo cliente).
+        $mimeDetectado = $this->detectarMimeBinario($binario);
+        if ($mimeDetectado === null || ! $this->mimePermitido($mimeDetectado)) {
+            throw new \InvalidArgumentException('Formato de imagem não suportado.');
+        }
+        $mimeType = $mimeDetectado;
 
         $jaNotificavel = $this->osJaNotificavelNoChat($opTask);
 
@@ -251,6 +254,8 @@ class OpTaskAnexoService
             'Content-Type' => $anexo->mime_type,
             'Content-Length' => (string) strlen($binario),
             'Cache-Control' => 'private, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Disposition' => 'inline; filename="'.addslashes((string) $anexo->nome_arquivo).'"',
         ]);
     }
 
@@ -351,6 +356,27 @@ class OpTaskAnexoService
         ], true);
     }
 
+    private function detectarMimeBinario(string $binario): ?string
+    {
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $mime = finfo_buffer($finfo, $binario) ?: null;
+                finfo_close($finfo);
+                if (is_string($mime) && $mime !== '') {
+                    return $this->normalizarMimeType($mime);
+                }
+            }
+        }
+
+        $info = @getimagesizefromstring($binario);
+        if (! is_array($info) || empty($info['mime'])) {
+            return null;
+        }
+
+        return $this->normalizarMimeType((string) $info['mime']);
+    }
+
     private function normalizarMimeType(string $mimeType): string
     {
         $mimeType = strtolower(trim($mimeType));
@@ -374,17 +400,19 @@ class OpTaskAnexoService
     private function normalizarNomeArquivo(string $nome, string $mimeType): string
     {
         $nome = trim($nome) !== '' ? trim($nome) : 'anexo';
+        $nome = basename(str_replace(['\\', "\0"], '', $nome));
+        $nome = preg_replace('/[^\w.\- ()\[\]]+/u', '_', $nome) ?: 'anexo';
 
-        if (! str_contains($nome, '.')) {
-            $ext = match ($mimeType) {
-                'image/png' => 'png',
-                'image/gif' => 'gif',
-                'image/webp' => 'webp',
-                default => 'jpg',
-            };
-            $nome .= '.'.$ext;
-        }
+        $ext = match ($mimeType) {
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            default => 'jpg',
+        };
 
-        return mb_substr($nome, 0, 255);
+        // Força extensão compatível com o mime real detectado.
+        $nome = preg_replace('/\.[^.]+$/', '', $nome) ?: 'anexo';
+
+        return mb_substr($nome.'.'.$ext, 0, 255);
     }
 }

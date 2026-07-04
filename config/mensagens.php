@@ -39,7 +39,7 @@ return [
         ['key' => 'nome_cliente', 'label' => 'Nome do cliente'],
         ['key' => 'protocolo', 'label' => 'Protocolo'],
         ['key' => 'sub_processo', 'label' => 'Sub-processo'],
-        ['key' => 'data_entrada', 'label' => 'Data de entrada'],
+        ['key' => 'data_entrada', 'label' => 'Data de entrada (criação da tarefa)'],
         ['key' => 'data_instalacao', 'label' => 'Data de instalação'],
         ['key' => 'assinada_por', 'label' => 'Assinada por'],
         ['key' => 'assinada_em', 'label' => 'Assinada em'],
@@ -52,6 +52,8 @@ return [
         ['key' => 'parent_categoria', 'label' => 'Categoria da tarefa pai (chave)'],
         ['key' => 'parent_categoria_label', 'label' => 'Categoria da tarefa pai (nome)'],
         ['key' => 'os_tipo', 'label' => 'Tipo da OS'],
+        ['key' => 'os_sequencia', 'label' => 'Lista das OS (tarefa pai) ou posição 1, 2, 3… (mensagem da OS)'],
+        ['key' => 'os_lista', 'label' => 'Lista numerada de todas as OS da tarefa pai'],
         ['key' => 'is_parent_task', 'label' => 'É tarefa pai'],
         ['key' => 'historico', 'label' => 'Histórico'],
         ['key' => 'enviado_por', 'label' => 'Enviado por'],
@@ -95,6 +97,11 @@ return [
             'grupo' => 'operacional',
             'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
         ],
+        'manutencao-corretiva' => [
+            'label' => 'Manutenção corretiva',
+            'grupo' => 'operacional',
+            'statuses' => ['Em andamento', 'Impedimento', 'Finalizada'],
+        ],
         'certificacao-cemig' => [
             'label' => 'Certificação CEMIG',
             'grupo' => 'operacional',
@@ -132,14 +139,19 @@ return [
             'Finalizada' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n\n🆔 {task_code}\n\n{os_resumo}",
         ],
         'atendimento-cliente' => [
-            'Em andamento' => "🔧 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}",
-            'Impedimento' => "🚨 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}",
-            'Finalizada' => "✅ *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📋 *Protocolo:* {protocolo}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
+            'Em andamento' => "🔧 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📅 *Data de entrada:* {data_entrada}\n🔑 *Código:* {task_code}",
+            'Impedimento' => "🚨 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📅 *Data de entrada:* {data_entrada}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📅 *Data de entrada:* {data_entrada}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'correcao-atenuacao' => [
             'Em andamento' => "🔧 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Impedimento' => "🚨 *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",
             'Finalizada' => "✅ *Alerta: CORREÇÃO DE SINAL*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
+        ],
+        'manutencao-corretiva' => [
+            'Em andamento' => "🔧 *Alerta: MANUTENÇÃO CORRETIVA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
+            'Impedimento' => "🚨 *Alerta: MANUTENÇÃO CORRETIVA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}",
+            'Finalizada' => "✅ *Alerta: MANUTENÇÃO CORRETIVA*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n⚡ *Prioridade:* {prioridade}\n📍 *Coordenadas:* {coordenadas}\n📍 *Endereço:* {localizacao}\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'certificacao-cemig' => [
             'Pendente' => "📋 *Alerta: CERTIFICAÇÃO CEMIG*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Título:* {titulo}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n🔑 *Código:* {task_code}",

@@ -23,7 +23,7 @@ class AtendimentoController extends Controller
             (int) $request->query('offset', 0),
             $request->query('regiao'),
             $request->query('tecnico'),
-            $request->query('taskCode'),
+            $request->query('busca', $request->query('taskCode')),
             $request->query('dataInicio'),
             $request->query('dataFim')
         );

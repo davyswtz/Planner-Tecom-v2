@@ -22,7 +22,7 @@ class RompimentoController extends Controller
         $offset = (int) $request->query('offset', 0);
         $regiao = $request->query('regiao');
         $tecnico = $request->query('tecnico');
-        $taskCode = $request->query('taskCode');
+        $taskCode = $request->query('busca', $request->query('taskCode'));
         $dataInicio = $request->query('dataInicio');
         $dataFim = $request->query('dataFim');
 
