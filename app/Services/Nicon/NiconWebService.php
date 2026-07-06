@@ -12,19 +12,21 @@ use RuntimeException;
 
 class NiconWebService
 {
-    private const SESSION_CACHE_KEY = 'nicon_web_session';
+    private const SESSION_CACHE_KEY = "nicon_web_session";
 
     private function baseUrl(): string
     {
-        return config('services.nicon.base_url');
+        return config("services.nicon.base_url");
     }
 
     /** @return array<int, int> */
     private function statusServicoPadrao(): array
     {
-        $status = config('services.nicon.status_servico', [10, 12, 11, 13]);
+        $status = config("services.nicon.status_servico", [10, 12, 11, 13]);
 
-        return array_values(array_map('intval', is_array($status) ? $status : [10, 12, 11, 13]));
+        return array_values(
+            array_map("intval", is_array($status) ? $status : [10, 12, 11, 13]),
+        );
     }
 
     /**
@@ -32,27 +34,45 @@ class NiconWebService
      *
      * @return array<int, array<string, mixed>>
      */
-    public function buscarSinaisPorCidadeECaixa(int $idCidade, string $nomeCaixa, ?int $idCaixaOptica = null): array
-    {
-        $clientes = $this->listarClientesPorCaixa($idCidade, $nomeCaixa, $idCaixaOptica);
-        $ids = array_values(array_filter(array_map(
-            fn (array $cliente) => $cliente['id_cliente_servico'] ?? null,
-            $clientes
-        )));
+    public function buscarSinaisPorCidadeECaixa(
+        int $idCidade,
+        string $nomeCaixa,
+        ?int $idCaixaOptica = null,
+    ): array {
+        $clientes = $this->listarClientesPorCaixa(
+            $idCidade,
+            $nomeCaixa,
+            $idCaixaOptica,
+        );
+        $ids = array_values(
+            array_filter(
+                array_map(
+                    fn(array $cliente) => $cliente["id_cliente_servico"] ??
+                        null,
+                    $clientes,
+                ),
+            ),
+        );
 
         if ($ids === []) {
             return $clientes;
         }
 
-        $sinais = collect($this->buscarSinaisCompletos($ids, $this->montarMapaSeriais($clientes)))->keyBy('id_cliente_servico');
+        $sinais = collect(
+            $this->buscarSinaisCompletos(
+                $ids,
+                $this->montarMapaSeriais($clientes),
+            ),
+        )->keyBy("id_cliente_servico");
 
         $clientes = array_map(function (array $cliente) use ($sinais) {
-            $id = (int) ($cliente['id_cliente_servico'] ?? 0);
+            $id = (int) ($cliente["id_cliente_servico"] ?? 0);
             $sinal = $sinais->get($id);
 
             if (is_array($sinal)) {
-                $cliente['sinal'] = $sinal['sinal'] ?? null;
-                $cliente['serial_sinal'] = $sinal['serial'] ?? ($cliente['serial'] ?? null);
+                $cliente["sinal"] = $sinal["sinal"] ?? null;
+                $cliente["serial_sinal"] =
+                    $sinal["serial"] ?? ($cliente["serial"] ?? null);
             }
 
             return $cliente;
@@ -69,10 +89,16 @@ class NiconWebService
      */
     public function enriquecerComStatusConexao(array $clientes): array
     {
-        $ids = array_values(array_filter(array_map(
-            fn (array $cliente) => (int) ($cliente['id_cliente_servico'] ?? 0),
-            $clientes
-        )));
+        $ids = array_values(
+            array_filter(
+                array_map(
+                    fn(array $cliente) => (int) ($cliente[
+                        "id_cliente_servico"
+                    ] ?? 0),
+                    $clientes,
+                ),
+            ),
+        );
 
         if ($ids === []) {
             return $clientes;
@@ -81,24 +107,27 @@ class NiconWebService
         $conexoes = $this->buscarStatusConexaoPorIds($ids);
 
         return array_map(function (array $cliente) use ($conexoes) {
-            $id = (int) ($cliente['id_cliente_servico'] ?? 0);
+            $id = (int) ($cliente["id_cliente_servico"] ?? 0);
             $conexao = $conexoes[$id] ?? null;
 
-            if (! is_array($conexao)) {
+            if (!is_array($conexao)) {
                 return $cliente;
             }
 
-            if (! empty($conexao['ultimo_uptime'])) {
-                $cliente['ultimo_uptime'] = $conexao['ultimo_uptime'];
+            if (!empty($conexao["ultimo_uptime"])) {
+                $cliente["ultimo_uptime"] = $conexao["ultimo_uptime"];
             }
-            if (! empty($conexao['ultimo_downtime'])) {
-                $cliente['ultimo_downtime'] = $conexao['ultimo_downtime'];
+            if (!empty($conexao["ultimo_downtime"])) {
+                $cliente["ultimo_downtime"] = $conexao["ultimo_downtime"];
             }
-            if (array_key_exists('conectado', $conexao) && $conexao['conectado'] !== null) {
-                $cliente['conectado'] = (bool) $conexao['conectado'];
+            if (
+                array_key_exists("conectado", $conexao) &&
+                $conexao["conectado"] !== null
+            ) {
+                $cliente["conectado"] = (bool) $conexao["conectado"];
             }
-            if (! empty($conexao['status_conexao'])) {
-                $cliente['status_conexao'] = $conexao['status_conexao'];
+            if (!empty($conexao["status_conexao"])) {
+                $cliente["status_conexao"] = $conexao["status_conexao"];
             }
 
             return $cliente;
@@ -114,17 +143,23 @@ class NiconWebService
      */
     public function buscarStatusConexaoPorIds(array $idsClienteServico): array
     {
-        $ids = array_values(array_unique(array_filter(
-            array_map('intval', $idsClienteServico),
-            fn (int $id) => $id > 0
-        )));
+        $ids = array_values(
+            array_unique(
+                array_filter(
+                    array_map("intval", $idsClienteServico),
+                    fn(int $id) => $id > 0,
+                ),
+            ),
+        );
 
         if ($ids === []) {
             return [];
         }
 
         try {
-            $respostas = app(NiconApiService::class)->buscarSinaisOnuParalelo($ids);
+            $respostas = app(NiconApiService::class)->buscarSinaisOnuParalelo(
+                $ids,
+            );
         } catch (RuntimeException) {
             return [];
         }
@@ -132,25 +167,28 @@ class NiconWebService
         $resultado = [];
 
         foreach ($respostas as $id => $payload) {
-            if (! is_array($payload)) {
+            if (!is_array($payload)) {
                 continue;
             }
 
-            $conexao = is_array($payload['conexao'] ?? null) ? $payload['conexao'] : [];
-            $conectado = $conexao['conectado'] ?? $payload['conectado'] ?? null;
+            $conexao = is_array($payload["conexao"] ?? null)
+                ? $payload["conexao"]
+                : [];
+            $conectado =
+                $conexao["conectado"] ?? ($payload["conectado"] ?? null);
 
             $resultado[(int) $id] = [
-                'ultimo_uptime' => $this->formatarTimestampNicon(
-                    $conexao['data_ultima_conexao'] ?? null
+                "ultimo_uptime" => $this->formatarTimestampNicon(
+                    $conexao["data_ultima_conexao"] ?? null,
                 ),
-                'ultimo_downtime' => $this->formatarTimestampNicon(
-                    $conexao['data_ultima_desconexao'] ?? null
+                "ultimo_downtime" => $this->formatarTimestampNicon(
+                    $conexao["data_ultima_desconexao"] ?? null,
                 ),
-                'conectado' => is_bool($conectado) ? $conectado : null,
-                'status_conexao' => isset($conexao['status_txt_resumido'])
-                    ? trim((string) $conexao['status_txt_resumido'])
-                    : (isset($conexao['conexao_texto_resumido'])
-                        ? trim((string) $conexao['conexao_texto_resumido'])
+                "conectado" => is_bool($conectado) ? $conectado : null,
+                "status_conexao" => isset($conexao["status_txt_resumido"])
+                    ? trim((string) $conexao["status_txt_resumido"])
+                    : (isset($conexao["conexao_texto_resumido"])
+                        ? trim((string) $conexao["conexao_texto_resumido"])
                         : null),
             ];
         }
@@ -166,7 +204,7 @@ class NiconWebService
     public function buscarCaixasComCliente(int $idCidade): array
     {
         return [
-            'itens' => $this->listarCaixasDaCidade($idCidade),
+            "itens" => $this->listarCaixasDaCidade($idCidade),
         ];
     }
 
@@ -177,18 +215,21 @@ class NiconWebService
      */
     public function listarCaixasDaCidade(int $idCidade): array
     {
-        $ttl = config('services.nicon.caixas_cache_minutes', 360);
+        $ttl = config("services.nicon.caixas_cache_minutes", 360);
 
         return Cache::remember(
             "nicon_caixas_lista_{$idCidade}",
             now()->addMinutes($ttl),
             function () use ($idCidade) {
-                $response = $this->getInfra('/infra/buscar-caixas-com-cliente', [
-                    'id_cidade' => $idCidade,
-                ]);
+                $response = $this->getInfra(
+                    "/infra/buscar-caixas-com-cliente",
+                    [
+                        "id_cidade" => $idCidade,
+                    ],
+                );
 
                 return $this->extrairListaCaixas($response);
-            }
+            },
         );
     }
 
@@ -197,20 +238,32 @@ class NiconWebService
      *
      * @return array<int, array<string, mixed>>
      */
-    public function listarClientesPorCaixa(int $idCidade, string $nomeCaixa, ?int $idCaixaOptica = null): array
-    {
-        $caixa = $this->resolverCaixaOptica($idCidade, $nomeCaixa, $idCaixaOptica);
+    public function listarClientesPorCaixa(
+        int $idCidade,
+        string $nomeCaixa,
+        ?int $idCaixaOptica = null,
+    ): array {
+        $caixa = $this->resolverCaixaOptica(
+            $idCidade,
+            $nomeCaixa,
+            $idCaixaOptica,
+        );
 
         if ($caixa === null) {
-            throw new RuntimeException("Caixa \"{$nomeCaixa}\" não encontrada na cidade informada.");
+            throw new RuntimeException(
+                "Caixa \"{$nomeCaixa}\" não encontrada na cidade informada.",
+            );
         }
 
         $response = $this->renderizarCaixasProximas(
-            (string) $caixa['nome'],
-            (int) $caixa['id_caixa_optica']
+            (string) $caixa["nome"],
+            (int) $caixa["id_caixa_optica"],
         );
 
-        return $this->extrairClientesDaRespostaCaixas($response, (string) $caixa['nome']);
+        return $this->extrairClientesDaRespostaCaixas(
+            $response,
+            (string) $caixa["nome"],
+        );
     }
 
     /**
@@ -218,50 +271,63 @@ class NiconWebService
      *
      * @return array<string, mixed>
      */
-    public function renderizarCaixasProximas(string $nomeCaixa, int $idCaixaOptica): array
-    {
+    public function renderizarCaixasProximas(
+        string $nomeCaixa,
+        int $idCaixaOptica,
+    ): array {
         $query = [
-            'nome_caixa_selecionada' => $nomeCaixa,
-            'id_caixa_optica' => $idCaixaOptica,
-            'id_status_servico' => $this->statusServicoPadrao(),
+            "nome_caixa_selecionada" => $nomeCaixa,
+            "id_caixa_optica" => $idCaixaOptica,
+            "id_status_servico" => $this->statusServicoPadrao(),
         ];
 
-        return $this->getCliente('/cliente/conexao/renderizar-caixas-proximas', $query);
+        return $this->getCliente(
+            "/cliente/conexao/renderizar-caixas-proximas",
+            $query,
+        );
     }
 
     /**
      * @return array{id_caixa_optica: int, nome: string}|null
      */
-    public function resolverCaixaOptica(int $idCidade, string $nomeCaixa, ?int $idCaixaOptica = null): ?array
-    {
+    public function resolverCaixaOptica(
+        int $idCidade,
+        string $nomeCaixa,
+        ?int $idCaixaOptica = null,
+    ): ?array {
         if ($idCaixaOptica !== null && $idCaixaOptica > 0) {
             foreach ($this->listarCaixasDaCidade($idCidade) as $caixa) {
-                if ((int) ($caixa['id_caixa_optica'] ?? 0) === $idCaixaOptica) {
+                if ((int) ($caixa["id_caixa_optica"] ?? 0) === $idCaixaOptica) {
                     return [
-                        'id_caixa_optica' => $idCaixaOptica,
-                        'nome' => (string) ($caixa['nome'] ?? $this->formatarNomeCaixa($nomeCaixa)),
+                        "id_caixa_optica" => $idCaixaOptica,
+                        "nome" =>
+                            (string) ($caixa["nome"] ??
+                                $this->formatarNomeCaixa($nomeCaixa)),
                     ];
                 }
             }
 
             return [
-                'id_caixa_optica' => $idCaixaOptica,
-                'nome' => $this->formatarNomeCaixa($nomeCaixa),
+                "id_caixa_optica" => $idCaixaOptica,
+                "nome" => $this->formatarNomeCaixa($nomeCaixa),
             ];
         }
 
         $buscaNorm = $this->normalizarNomeCaixa($nomeCaixa);
-        $cacheKey = 'nicon_caixa_resolve_' . $idCidade . '_' . md5($buscaNorm);
-        $ttl = config('services.nicon.caixa_resolve_cache_minutes', 1440);
+        $cacheKey = "nicon_caixa_resolve_" . $idCidade . "_" . md5($buscaNorm);
+        $ttl = config("services.nicon.caixa_resolve_cache_minutes", 1440);
         $cached = Cache::get($cacheKey);
 
-        if (is_array($cached) && ! empty($cached['id_caixa_optica'])) {
+        if (is_array($cached) && !empty($cached["id_caixa_optica"])) {
             return $cached;
         }
 
         $caixa = $this->encontrarMelhorCaixa(
             $nomeCaixa,
-            $this->filtrarCaixasParaBusca($nomeCaixa, $this->listarCaixasDaCidade($idCidade))
+            $this->filtrarCaixasParaBusca(
+                $nomeCaixa,
+                $this->listarCaixasDaCidade($idCidade),
+            ),
         );
 
         if ($caixa !== null) {
@@ -280,17 +346,17 @@ class NiconWebService
         $buscaNorm = $this->normalizarNomeCaixa($busca);
         $buscaCompacta = $this->compactarNomeCaixa($busca);
 
-        if ($buscaNorm === '') {
+        if ($buscaNorm === "") {
             return null;
         }
 
         $candidatos = [];
 
         foreach ($caixas as $caixa) {
-            $nome = (string) ($caixa['nome'] ?? $caixa['sigla'] ?? '');
-            $id = (int) ($caixa['id_caixa_optica'] ?? $caixa['id'] ?? 0);
+            $nome = (string) ($caixa["nome"] ?? ($caixa["sigla"] ?? ""));
+            $id = (int) ($caixa["id_caixa_optica"] ?? ($caixa["id"] ?? 0));
 
-            if ($id <= 0 || $nome === '') {
+            if ($id <= 0 || $nome === "") {
                 continue;
             }
 
@@ -298,14 +364,14 @@ class NiconWebService
                 $buscaNorm,
                 $buscaCompacta,
                 $this->normalizarNomeCaixa($nome),
-                $this->compactarNomeCaixa($nome)
+                $this->compactarNomeCaixa($nome),
             );
 
             if ($score > 0) {
                 $candidatos[] = [
-                    'score' => $score,
-                    'id_caixa_optica' => $id,
-                    'nome' => $nome,
+                    "score" => $score,
+                    "id_caixa_optica" => $id,
+                    "nome" => $nome,
                 ];
             }
         }
@@ -315,32 +381,37 @@ class NiconWebService
         }
 
         usort($candidatos, function (array $a, array $b) {
-            if ($a['score'] !== $b['score']) {
-                return $b['score'] <=> $a['score'];
+            if ($a["score"] !== $b["score"]) {
+                return $b["score"] <=> $a["score"];
             }
 
-            return strlen($a['nome']) <=> strlen($b['nome']);
+            return strlen($a["nome"]) <=> strlen($b["nome"]);
         });
 
-        $melhorScore = $candidatos[0]['score'];
-        $melhores = array_values(array_filter(
-            $candidatos,
-            fn (array $c) => $c['score'] === $melhorScore
-        ));
+        $melhorScore = $candidatos[0]["score"];
+        $melhores = array_values(
+            array_filter(
+                $candidatos,
+                fn(array $c) => $c["score"] === $melhorScore,
+            ),
+        );
 
         if (count($melhores) > 1 && $melhorScore < 100) {
-            $nomes = array_map(fn (array $c) => $c['nome'], array_slice($melhores, 0, 6));
-            $lista = implode(', ', $nomes);
-            $sufixo = count($melhores) > 6 ? '...' : '';
+            $nomes = array_map(
+                fn(array $c) => $c["nome"],
+                array_slice($melhores, 0, 6),
+            );
+            $lista = implode(", ", $nomes);
+            $sufixo = count($melhores) > 6 ? "..." : "";
 
             throw new RuntimeException(
-                "Várias caixas correspondem a \"{$busca}\". Seja mais específico. Ex.: {$lista}{$sufixo}"
+                "Várias caixas correspondem a \"{$busca}\". Seja mais específico. Ex.: {$lista}{$sufixo}",
             );
         }
 
         return [
-            'id_caixa_optica' => $candidatos[0]['id_caixa_optica'],
-            'nome' => $candidatos[0]['nome'],
+            "id_caixa_optica" => $candidatos[0]["id_caixa_optica"],
+            "nome" => $candidatos[0]["nome"],
         ];
     }
 
@@ -353,17 +424,22 @@ class NiconWebService
      */
     public function buscarSinalClientes(array $idsClienteServico): array
     {
-        $ids = array_values(array_map(
-            fn ($id) => (string) $id,
-            array_filter($idsClienteServico, fn ($id) => $id !== null && $id !== '')
-        ));
+        $ids = array_values(
+            array_map(
+                fn($id) => (string) $id,
+                array_filter(
+                    $idsClienteServico,
+                    fn($id) => $id !== null && $id !== "",
+                ),
+            ),
+        );
 
         if ($ids === []) {
             return [];
         }
 
         return $this->buscarSinalCliente([
-            'clientesServicos' => $ids,
+            "clientesServicos" => $ids,
         ]);
     }
 
@@ -373,28 +449,42 @@ class NiconWebService
      */
     public function buscarSinalCliente(array $filtros): array
     {
-        $response = $this->postCliente('/cliente/atendimento/buscar-sinal-cliente', $filtros);
+        $response = $this->postCliente(
+            "/cliente/atendimento/buscar-sinal-cliente",
+            $filtros,
+        );
 
         return is_array($response) ? array_values($response) : [];
     }
 
     /**
-     * Sinal RX atual de um cliente/ONU individual.
+     * Sinal atual de um cliente/ONU individual.
      * POST /cliente/atendimento/buscar-sinal-atual-cliente
      *
-     * @return array{rx?: string, data_atualizacao?: string}
+     * @return array<string, mixed>
      */
     public function buscarSinalAtualCliente(
         int $idClienteServico,
         ?string $serial = null,
-        bool $forcarRefreshTr069 = false
+        bool $forcarRefreshTr069 = false,
+        bool $normalizar = true,
     ): array {
         $response = $this->postCliente(
-            '/cliente/atendimento/buscar-sinal-atual-cliente',
-            $this->montarPayloadSinalAtualCliente($idClienteServico, $serial, $forcarRefreshTr069)
+            "/cliente/atendimento/buscar-sinal-atual-cliente",
+            $this->montarPayloadSinalAtualCliente(
+                $idClienteServico,
+                $serial,
+                $forcarRefreshTr069,
+            ),
         );
 
-        return is_array($response) ? $response : [];
+        if (!is_array($response)) {
+            return [];
+        }
+
+        return $normalizar
+            ? $this->normalizarRespostaSinalAtual($response)
+            : $response;
     }
 
     /**
@@ -403,20 +493,20 @@ class NiconWebService
     private function montarPayloadSinalAtualCliente(
         int $idClienteServico,
         ?string $serial = null,
-        bool $forcarRefreshTr069 = false
+        bool $forcarRefreshTr069 = false,
     ): array {
         $payload = [
-            'id_cliente_servico' => $idClienteServico,
+            "id_cliente_servico" => $idClienteServico,
         ];
 
         $serial = trim((string) $serial);
 
-        if ($serial !== '') {
-            $payload['serial'] = $serial;
+        if ($serial !== "") {
+            $payload["serial"] = $serial;
         }
 
         if ($forcarRefreshTr069) {
-            $payload['forcar_refresh_tr069'] = 1;
+            $payload["forcar_refresh_tr069"] = 1;
         }
 
         return $payload;
@@ -428,12 +518,19 @@ class NiconWebService
      * @param  array<int, string|int>  $idsClienteServico
      * @return array<int, array<string, mixed>>
      */
-    public function buscarSinaisCompletos(array $idsClienteServico, array $seriaisPorId = []): array
-    {
-        $ids = array_values(array_map(
-            fn ($id) => (int) $id,
-            array_filter($idsClienteServico, fn ($id) => $id !== null && $id !== '')
-        ));
+    public function buscarSinaisCompletos(
+        array $idsClienteServico,
+        array $seriaisPorId = [],
+    ): array {
+        $ids = array_values(
+            array_map(
+                fn($id) => (int) $id,
+                array_filter(
+                    $idsClienteServico,
+                    fn($id) => $id !== null && $id !== "",
+                ),
+            ),
+        );
 
         if ($ids === []) {
             return [];
@@ -443,9 +540,9 @@ class NiconWebService
 
         return array_map(function (int $id) use ($sinaisWeb, $seriaisPorId) {
             return [
-                'id_cliente_servico' => $id,
-                'serial' => $seriaisPorId[$id] ?? '',
-                'sinal' => $sinaisWeb[$id] ?? null,
+                "id_cliente_servico" => $id,
+                "serial" => $seriaisPorId[$id] ?? "",
+                "sinal" => $sinaisWeb[$id] ?? null,
             ];
         }, $ids);
     }
@@ -459,14 +556,14 @@ class NiconWebService
         $mapa = [];
 
         foreach ($clientes as $cliente) {
-            if (! is_array($cliente)) {
+            if (!is_array($cliente)) {
                 continue;
             }
 
-            $id = (int) ($cliente['id_cliente_servico'] ?? 0);
-            $serial = trim((string) ($cliente['serial'] ?? ''));
+            $id = (int) ($cliente["id_cliente_servico"] ?? 0);
+            $serial = trim((string) ($cliente["serial"] ?? ""));
 
-            if ($id > 0 && $serial !== '') {
+            if ($id > 0 && $serial !== "") {
                 $mapa[$id] = $serial;
             }
         }
@@ -477,14 +574,20 @@ class NiconWebService
     /**
      * @param  array<int, int>  $idsClienteServico
      * @param  array<int, string>  $seriaisPorId
-     * @return array<int, array{rx?: string, data_atualizacao?: string}>
+     * @return array<int, array<string, mixed>>
      */
-    private function buscarSinaisAtuaisParalelo(array $idsClienteServico, array $seriaisPorId = []): array
-    {
-        $ids = array_values(array_unique(array_filter(
-            array_map('intval', $idsClienteServico),
-            fn (int $id) => $id > 0
-        )));
+    private function buscarSinaisAtuaisParalelo(
+        array $idsClienteServico,
+        array $seriaisPorId = [],
+    ): array {
+        $ids = array_values(
+            array_unique(
+                array_filter(
+                    array_map("intval", $idsClienteServico),
+                    fn(int $id) => $id > 0,
+                ),
+            ),
+        );
 
         if ($ids === []) {
             return [];
@@ -492,17 +595,30 @@ class NiconWebService
 
         $resultado = [];
         $pendentes = $ids;
-        $maxTentativas = config('services.nicon.sinal_tentativas', 3);
+        $maxTentativas = config("services.nicon.sinal_tentativas", 3);
 
-        for ($tentativa = 1; $tentativa <= $maxTentativas && $pendentes !== []; $tentativa++) {
+        for (
+            $tentativa = 1;
+            $tentativa <= $maxTentativas && $pendentes !== [];
+            $tentativa++
+        ) {
             if ($tentativa > 1) {
                 usleep(500_000);
             }
 
             $sessaoInvalida = false;
 
-            foreach (array_chunk($pendentes, config('services.nicon.sinal_concorrencia', 4)) as $lote) {
-                [$loteOk, $loteSessaoInvalida] = $this->consultarLoteSinaisAtuais($lote, $seriaisPorId);
+            foreach (
+                array_chunk(
+                    $pendentes,
+                    config("services.nicon.sinal_concorrencia", 4),
+                )
+                as $lote
+            ) {
+                [
+                    $loteOk,
+                    $loteSessaoInvalida,
+                ] = $this->consultarLoteSinaisAtuais($lote, $seriaisPorId);
                 $resultado += $loteOk;
                 $sessaoInvalida = $sessaoInvalida || $loteSessaoInvalida;
             }
@@ -511,10 +627,14 @@ class NiconWebService
                 Cache::forget(self::SESSION_CACHE_KEY);
             }
 
-            $pendentes = array_values(array_filter(
-                $pendentes,
-                fn (int $id) => ! $this->possuiSinalConfiavel($resultado[$id] ?? null)
-            ));
+            $pendentes = array_values(
+                array_filter(
+                    $pendentes,
+                    fn(int $id) => !$this->possuiSinalConfiavel(
+                        $resultado[$id] ?? null,
+                    ),
+                ),
+            );
         }
 
         foreach ($pendentes as $id) {
@@ -526,30 +646,38 @@ class NiconWebService
                 $json = $this->buscarSinalAtualCliente(
                     $id,
                     $seriaisPorId[$id] ?? null,
-                    false
+                    false,
                 );
                 if ($this->respostaSinalAtualValida($json)) {
-                    $resultado[$id] = $json;
+                    $resultado[$id] = $this->normalizarRespostaSinalAtual(
+                        $json,
+                    );
                 }
             } catch (RuntimeException) {
                 // Nicon indisponível para este cliente — segue sem sinal.
             }
         }
 
-        $precisamRefresh = array_values(array_filter(
-            $ids,
-            fn (int $id) => ! $this->possuiSinalConfiavel($resultado[$id] ?? null)
-        ));
+        $precisamRefresh = array_values(
+            array_filter(
+                $ids,
+                fn(int $id) => !$this->possuiSinalConfiavel(
+                    $resultado[$id] ?? null,
+                ),
+            ),
+        );
 
         foreach ($precisamRefresh as $id) {
             try {
                 $json = $this->buscarSinalAtualCliente(
                     $id,
                     $seriaisPorId[$id] ?? null,
-                    true
+                    true,
                 );
                 if ($this->respostaSinalAtualValida($json)) {
-                    $resultado[$id] = $json;
+                    $resultado[$id] = $this->normalizarRespostaSinalAtual(
+                        $json,
+                    );
                 }
             } catch (RuntimeException) {
                 // Mantém sem sinal após refresh individual.
@@ -564,42 +692,57 @@ class NiconWebService
      * @param  array<int, string>  $seriaisPorId
      * @return array{0: array<int, array<string, mixed>>, 1: bool}
      */
-    private function consultarLoteSinaisAtuais(array $lote, array $seriaisPorId = []): array
-    {
+    private function consultarLoteSinaisAtuais(
+        array $lote,
+        array $seriaisPorId = [],
+    ): array {
         $resultado = [];
         $sessaoInvalida = false;
         $sessao = $this->obterSessaoWeb();
         $base = $this->baseUrl();
         $jar = $this->montarCookieJar($sessao);
 
-        $respostas = Http::pool(function ($pool) use ($lote, $sessao, $base, $jar, $seriaisPorId) {
+        $respostas = Http::pool(function ($pool) use (
+            $lote,
+            $sessao,
+            $base,
+            $jar,
+            $seriaisPorId,
+        ) {
             foreach ($lote as $id) {
-                $pool->as((string) $id)
-                    ->timeout(config('services.nicon.timeout', 120))
+                $pool
+                    ->as((string) $id)
+                    ->timeout(config("services.nicon.timeout", 120))
                     ->acceptJson()
                     ->asJson()
-                    ->withOptions(['cookies' => $jar])
+                    ->withOptions(["cookies" => $jar])
                     ->withHeaders([
-                        'X-XSRF-TOKEN' => $sessao['xsrf'],
-                        'X-Requested-With' => 'XMLHttpRequest',
-                        'Referer' => $base . '/cliente/atendimento',
+                        "X-XSRF-TOKEN" => $sessao["xsrf"],
+                        "X-Requested-With" => "XMLHttpRequest",
+                        "Referer" => $base . "/cliente/atendimento",
                     ])
-                    ->post("{$base}/cliente/atendimento/buscar-sinal-atual-cliente", $this->montarPayloadSinalAtualCliente(
-                        $id,
-                        $seriaisPorId[$id] ?? null,
-                        false
-                    ));
+                    ->post(
+                        "{$base}/cliente/atendimento/buscar-sinal-atual-cliente",
+                        $this->montarPayloadSinalAtualCliente(
+                            $id,
+                            $seriaisPorId[$id] ?? null,
+                            false,
+                        ),
+                    );
             }
         });
 
         foreach ($lote as $id) {
             $response = $respostas[(string) $id] ?? null;
 
-            if ($response instanceof ConnectionException || $response instanceof RequestException) {
+            if (
+                $response instanceof ConnectionException ||
+                $response instanceof RequestException
+            ) {
                 continue;
             }
 
-            if (! $response instanceof Response) {
+            if (!$response instanceof Response) {
                 continue;
             }
 
@@ -608,14 +751,14 @@ class NiconWebService
                 continue;
             }
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 continue;
             }
 
             $json = $response->json();
 
             if ($this->respostaSinalAtualValida($json)) {
-                $resultado[$id] = $json;
+                $resultado[$id] = $this->normalizarRespostaSinalAtual($json);
             }
         }
 
@@ -625,24 +768,26 @@ class NiconWebService
     /** @param  mixed  $json */
     private function respostaSinalAtualValida($json): bool
     {
-        return is_array($json)
-            && $json !== []
-            && $this->possuiSinalConfiavel($json);
+        return is_array($json) &&
+            $json !== [] &&
+            $this->possuiSinalConfiavel(
+                $this->normalizarRespostaSinalAtual($json),
+            );
     }
 
     /** @param  mixed  $sinal */
     private function possuiSinalConfiavel($sinal): bool
     {
-        if (! is_array($sinal) || ! array_key_exists('rx', $sinal)) {
+        if (!is_array($sinal) || !array_key_exists("rx", $sinal)) {
             return false;
         }
 
-        return $this->rxUtil($sinal['rx']);
+        return $this->rxUtil($sinal["rx"]);
     }
 
     private function rxUtil(mixed $rx): bool
     {
-        if ($rx === null || $rx === '') {
+        if ($rx === null || $rx === "") {
             return false;
         }
 
@@ -651,6 +796,186 @@ class NiconWebService
         }
 
         return true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function normalizarRespostaSinalAtual(array $payload): array
+    {
+        $normalizado = $payload;
+
+        $rx = $this->extrairPrimeiroValorSinal($payload, [
+            "rx",
+            "rx_ont",
+            "rx_onu",
+            "ont_rx",
+            "onu_rx",
+            "potencia_rx",
+        ]);
+        $rxOlt = $this->extrairPrimeiroValorSinal($payload, [
+            "rx_olt",
+            "potencia_olt",
+            "olt_rx",
+            "olt_potencia",
+            "power_olt",
+            "sinal_olt",
+            "olt_rx_power",
+            "rx_power_olt",
+            "potencia_retorno",
+            "sinal_retorno",
+            "tx_olt",
+            "tx_power",
+            "optical_tx",
+            "onu_tx",
+            "ont_tx",
+            "tx",
+        ]);
+        $dataAtualizacao = $this->extrairPrimeiroValorTexto($payload, [
+            "data_atualizacao",
+            "updated_at",
+            "data_consulta",
+            "data_hora",
+            "timestamp",
+        ]);
+
+        if ($rx !== null) {
+            $normalizado["rx"] = $rx;
+        }
+
+        if ($rxOlt !== null) {
+            $normalizado["rx_olt"] = $rxOlt;
+        }
+
+        if ($dataAtualizacao !== null) {
+            $normalizado["data_atualizacao"] = $dataAtualizacao;
+        }
+
+        return $normalizado;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, string>  $candidatos
+     */
+    private function extrairPrimeiroValorSinal(
+        array $payload,
+        array $candidatos,
+    ): ?string {
+        $valor = $this->buscarPrimeiroValorPorChaves(
+            $payload,
+            $candidatos,
+            fn(mixed $item) => $this->rxUtil($item),
+        );
+
+        return $valor === null ? null : trim((string) $valor);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, string>  $candidatos
+     */
+    private function extrairPrimeiroValorTexto(
+        array $payload,
+        array $candidatos,
+    ): ?string {
+        $valor = $this->buscarPrimeiroValorPorChaves(
+            $payload,
+            $candidatos,
+            fn(mixed $item) => !is_array($item) &&
+                $item !== null &&
+                trim((string) $item) !== "",
+        );
+
+        return $valor === null ? null : trim((string) $valor);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, string>  $candidatos
+     */
+    private function buscarPrimeiroValorPorChaves(
+        array $payload,
+        array $candidatos,
+        callable $validador,
+    ): mixed {
+        foreach ($candidatos as $candidato) {
+            $valor = $this->buscarValorRecursivoPorChave(
+                $payload,
+                $candidato,
+                $validador,
+            );
+            if ($valor !== null) {
+                return $valor;
+            }
+        }
+
+        return null;
+    }
+
+    private function buscarValorRecursivoPorChave(
+        mixed $dados,
+        string $candidato,
+        callable $validador,
+    ): mixed {
+        if (!is_array($dados)) {
+            return null;
+        }
+
+        foreach ($dados as $chave => $valor) {
+            if (
+                is_string($chave) &&
+                $this->chaveCandidataCombina($chave, $candidato) &&
+                $validador($valor)
+            ) {
+                return $valor;
+            }
+        }
+
+        foreach ($dados as $valor) {
+            if (!is_array($valor)) {
+                continue;
+            }
+
+            $encontrado = $this->buscarValorRecursivoPorChave(
+                $valor,
+                $candidato,
+                $validador,
+            );
+            if ($encontrado !== null) {
+                return $encontrado;
+            }
+        }
+
+        return null;
+    }
+
+    private function chaveCandidataCombina(
+        string $chave,
+        string $candidato,
+    ): bool {
+        $chaveNormalizada = $this->normalizarNomeCampoSinal($chave);
+        $candidatoNormalizado = $this->normalizarNomeCampoSinal($candidato);
+
+        if ($chaveNormalizada === "" || $candidatoNormalizado === "") {
+            return false;
+        }
+
+        if ($chaveNormalizada === $candidatoNormalizado) {
+            return true;
+        }
+
+        if (strlen($candidatoNormalizado) <= 2) {
+            return false;
+        }
+
+        return str_contains($chaveNormalizada, $candidatoNormalizado);
+    }
+
+    private function normalizarNomeCampoSinal(string $valor): string
+    {
+        return preg_replace("/[^a-z0-9]/", "", strtolower($valor)) ?? "";
     }
 
     /**
@@ -664,18 +989,23 @@ class NiconWebService
         $buscaNorm = $this->normalizarNomeCaixa($busca);
         $buscaCompacta = $this->compactarNomeCaixa($busca);
 
-        if ($buscaNorm === '' || strlen($buscaCompacta) < 2) {
+        if ($buscaNorm === "" || strlen($buscaCompacta) < 2) {
             return $caixas;
         }
 
-        $filtradas = array_values(array_filter($caixas, function (array $caixa) use ($buscaNorm, $buscaCompacta) {
-            $nome = (string) ($caixa['nome'] ?? $caixa['sigla'] ?? '');
-            $nomeNorm = $this->normalizarNomeCaixa($nome);
-            $nomeCompacto = $this->compactarNomeCaixa($nome);
+        $filtradas = array_values(
+            array_filter($caixas, function (array $caixa) use (
+                $buscaNorm,
+                $buscaCompacta,
+            ) {
+                $nome = (string) ($caixa["nome"] ?? ($caixa["sigla"] ?? ""));
+                $nomeNorm = $this->normalizarNomeCaixa($nome);
+                $nomeCompacto = $this->compactarNomeCaixa($nome);
 
-            return str_contains($nomeNorm, $buscaNorm)
-                || str_contains($nomeCompacto, $buscaCompacta);
-        }));
+                return str_contains($nomeNorm, $buscaNorm) ||
+                    str_contains($nomeCompacto, $buscaCompacta);
+            }),
+        );
 
         return $filtradas !== [] ? $filtradas : $caixas;
     }
@@ -684,76 +1014,94 @@ class NiconWebService
      * @param  array<string, mixed>  $response
      * @return array<int, array<string, mixed>>
      */
-    private function extrairClientesDaRespostaCaixas(array $response, string $nomeCaixa): array
-    {
-        $caixas = $response['caixas'] ?? [];
+    private function extrairClientesDaRespostaCaixas(
+        array $response,
+        string $nomeCaixa,
+    ): array {
+        $caixas = $response["caixas"] ?? [];
 
-        if (! is_array($caixas) || $caixas === []) {
+        if (!is_array($caixas) || $caixas === []) {
             return [];
         }
 
         $dadosCaixa = $caixas[$nomeCaixa] ?? null;
 
-        if (! is_array($dadosCaixa)) {
+        if (!is_array($dadosCaixa)) {
             foreach ($caixas as $nome => $dados) {
-                if (! is_array($dados)) {
+                if (!is_array($dados)) {
                     continue;
                 }
 
-                if ($this->nomesCaixaCoincidem($this->normalizarNomeCaixa($nomeCaixa), (string) $nome)) {
+                if (
+                    $this->nomesCaixaCoincidem(
+                        $this->normalizarNomeCaixa($nomeCaixa),
+                        (string) $nome,
+                    )
+                ) {
                     $dadosCaixa = $dados;
                     break;
                 }
             }
         }
 
-        if (! is_array($dadosCaixa)) {
+        if (!is_array($dadosCaixa)) {
             $dadosCaixa = reset($caixas);
         }
 
-        if (! is_array($dadosCaixa)) {
+        if (!is_array($dadosCaixa)) {
             return [];
         }
 
         $clientes = [];
 
-        foreach (($dadosCaixa['clientes'] ?? []) as $cliente) {
-            if (! is_array($cliente)) {
+        foreach ($dadosCaixa["clientes"] ?? [] as $cliente) {
+            if (!is_array($cliente)) {
                 continue;
             }
 
-            foreach (($cliente['servicos'] ?? []) as $servico) {
-                if (! is_array($servico)) {
+            foreach ($cliente["servicos"] ?? [] as $servico) {
+                if (!is_array($servico)) {
                     continue;
                 }
 
-                $porta = $servico['cliente_porta_atendimento']['mapeamento_porta_atendimento']['sequencia'] ?? null;
+                $porta =
+                    $servico["cliente_porta_atendimento"][
+                        "mapeamento_porta_atendimento"
+                    ]["sequencia"] ?? null;
                 $porta = is_numeric($porta) ? ((int) $porta) + 1 : null;
 
                 $clientes[] = [
-                    'id_cliente_servico' => (int) ($servico['id_cliente_servico'] ?? 0),
-                    'id_cliente' => (int) ($cliente['id_cliente'] ?? $servico['id_cliente'] ?? 0),
-                    'codigo_cliente' => (int) ($cliente['codigo_cliente'] ?? 0),
-                    'nome' => (string) ($cliente['nome_razaosocial'] ?? ''),
-                    'serial' => (string) ($servico['serial'] ?? ''),
-                    'conectado' => (bool) ($servico['conectado'] ?? false),
-                    'porta' => $porta,
-                    'status_servico' => $servico['status_servico']['descricao'] ?? null,
-                    'lacre' => $this->extrairLacreServico($servico),
+                    "id_cliente_servico" =>
+                        (int) ($servico["id_cliente_servico"] ?? 0),
+                    "id_cliente" =>
+                        (int) ($cliente["id_cliente"] ??
+                            ($servico["id_cliente"] ?? 0)),
+                    "codigo_cliente" => (int) ($cliente["codigo_cliente"] ?? 0),
+                    "nome" => (string) ($cliente["nome_razaosocial"] ?? ""),
+                    "serial" => (string) ($servico["serial"] ?? ""),
+                    "conectado" => (bool) ($servico["conectado"] ?? false),
+                    "porta" => $porta,
+                    "status_servico" =>
+                        $servico["status_servico"]["descricao"] ?? null,
+                    "lacre" => $this->extrairLacreServico($servico),
                     // Na listagem da caixa o Nicon só traz desconexão; uptime vem da API de conexão.
-                    'ultimo_uptime' => $this->formatarTimestampNicon(
-                        $servico['data_ultima_conexao'] ?? null
+                    "ultimo_uptime" => $this->formatarTimestampNicon(
+                        $servico["data_ultima_conexao"] ?? null,
                     ),
-                    'ultimo_downtime' => $this->formatarTimestampNicon(
-                        $servico['data_ultima_desconexao'] ?? null
+                    "ultimo_downtime" => $this->formatarTimestampNicon(
+                        $servico["data_ultima_desconexao"] ?? null,
                     ),
-                    'caixa' => $dadosCaixa['sigla'] ?? $nomeCaixa,
-                    'id_caixa_optica' => (int) ($dadosCaixa['id_caixa_optica'] ?? 0),
+                    "caixa" => $dadosCaixa["sigla"] ?? $nomeCaixa,
+                    "id_caixa_optica" =>
+                        (int) ($dadosCaixa["id_caixa_optica"] ?? 0),
                 ];
             }
         }
 
-        usort($clientes, fn (array $a, array $b) => ($a['porta'] ?? 0) <=> ($b['porta'] ?? 0));
+        usort(
+            $clientes,
+            fn(array $a, array $b) => ($a["porta"] ?? 0) <=> ($b["porta"] ?? 0),
+        );
 
         return $clientes;
     }
@@ -763,13 +1111,15 @@ class NiconWebService
     {
         // Ordem de preferência (caminhos conhecidos do Nicon).
         $candidatos = [
-            $servico['lacre'] ?? null,
-            $servico['numero_lacre'] ?? null,
-            $servico['cliente_servico_local']['lacre'] ?? null,
-            $servico['cliente_servico_local']['numero_lacre'] ?? null,
-            $servico['cliente_porta_atendimento']['lacre'] ?? null,
-            $servico['cliente_porta_atendimento']['numero_lacre'] ?? null,
-            $servico['cliente_porta_atendimento']['mapeamento_porta_atendimento']['lacre'] ?? null,
+            $servico["lacre"] ?? null,
+            $servico["numero_lacre"] ?? null,
+            $servico["cliente_servico_local"]["lacre"] ?? null,
+            $servico["cliente_servico_local"]["numero_lacre"] ?? null,
+            $servico["cliente_porta_atendimento"]["lacre"] ?? null,
+            $servico["cliente_porta_atendimento"]["numero_lacre"] ?? null,
+            $servico["cliente_porta_atendimento"][
+                "mapeamento_porta_atendimento"
+            ]["lacre"] ?? null,
         ];
 
         foreach ($candidatos as $valor) {
@@ -780,7 +1130,7 @@ class NiconWebService
         }
 
         // Fallback: qualquer chave *lacre* no payload do serviço.
-        foreach ($this->coletarValoresPorChave($servico, 'lacre') as $valor) {
+        foreach ($this->coletarValoresPorChave($servico, "lacre") as $valor) {
             $lacre = $this->normalizarLacre($valor);
             if ($lacre !== null) {
                 return $lacre;
@@ -806,13 +1156,19 @@ class NiconWebService
         }
 
         $texto = trim((string) $valor);
-        if ($texto === '') {
+        if ($texto === "") {
             return null;
         }
 
         // Placeholders do Nicon: " - ", "-", "—", "N/A", etc.
         $textoNorm = mb_strtolower($texto);
-        if (in_array($textoNorm, ['-', '–', '—', 'n/a', 'na', 'null', 'none', 'sem lacre'], true)) {
+        if (
+            in_array(
+                $textoNorm,
+                ["-", "–", "—", "n/a", "na", "null", "none", "sem lacre"],
+                true,
+            )
+        ) {
             return null;
         }
 
@@ -828,18 +1184,23 @@ class NiconWebService
      * @param  array<string, mixed>  $dados
      * @return array<int, mixed>
      */
-    private function coletarValoresPorChave(array $dados, string $trechoChave): array
-    {
+    private function coletarValoresPorChave(
+        array $dados,
+        string $trechoChave,
+    ): array {
         $encontrados = [];
         $trecho = mb_strtolower($trechoChave);
 
         $walk = function ($no) use (&$walk, &$encontrados, $trecho): void {
-            if (! is_array($no)) {
+            if (!is_array($no)) {
                 return;
             }
 
             foreach ($no as $chave => $valor) {
-                if (is_string($chave) && str_contains(mb_strtolower($chave), $trecho)) {
+                if (
+                    is_string($chave) &&
+                    str_contains(mb_strtolower($chave), $trecho)
+                ) {
                     $encontrados[] = $valor;
                 }
 
@@ -856,12 +1217,12 @@ class NiconWebService
 
     private function formatarTimestampNicon(mixed $valor): ?string
     {
-        if ($valor === null || $valor === '' || $valor === false) {
+        if ($valor === null || $valor === "" || $valor === false) {
             return null;
         }
 
         if ($valor instanceof \DateTimeInterface) {
-            return $valor->format('d/m/Y H:i');
+            return $valor->format("d/m/Y H:i");
         }
 
         if (is_numeric($valor)) {
@@ -873,15 +1234,21 @@ class NiconWebService
                 $numero = (int) $numero;
             }
 
-            if ($numero < 946684800) { // antes de 2000-01-01
+            if ($numero < 946684800) {
+                // antes de 2000-01-01
                 return null;
             }
 
-            return date('d/m/Y H:i', $numero);
+            return date("d/m/Y H:i", $numero);
         }
 
         $texto = trim((string) $valor);
-        if ($texto === '' || $texto === '0' || $texto === '0000-00-00' || str_starts_with($texto, '0000-00-00')) {
+        if (
+            $texto === "" ||
+            $texto === "0" ||
+            $texto === "0000-00-00" ||
+            str_starts_with($texto, "0000-00-00")
+        ) {
             return null;
         }
 
@@ -889,7 +1256,7 @@ class NiconWebService
         $texto = preg_replace('/([+-]\d{2})$/', '$1:00', $texto) ?? $texto;
 
         try {
-            return (new \DateTimeImmutable($texto))->format('d/m/Y H:i');
+            return new \DateTimeImmutable($texto)->format("d/m/Y H:i");
         } catch (\Throwable) {
             return $texto;
         }
@@ -901,53 +1268,58 @@ class NiconWebService
      */
     private function extrairListaCaixas(array $response): array
     {
-        if (isset($response['itens']) && is_array($response['itens'])) {
-            return $this->mapearItensCaixa($response['itens']);
+        if (isset($response["itens"]) && is_array($response["itens"])) {
+            return $this->mapearItensCaixa($response["itens"]);
         }
 
-        if (isset($response['caixas']) && is_array($response['caixas'])) {
+        if (isset($response["caixas"]) && is_array($response["caixas"])) {
             $lista = [];
 
-            foreach ($response['caixas'] as $chave => $item) {
-                if (! is_array($item)) {
+            foreach ($response["caixas"] as $chave => $item) {
+                if (!is_array($item)) {
                     continue;
                 }
 
                 $lista[] = [
-                    'nome' => (string) ($item['nome'] ?? $item['sigla'] ?? $chave),
-                    'sigla' => (string) ($item['sigla'] ?? $item['nome'] ?? $chave),
-                    'id_caixa_optica' => (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0),
+                    "nome" =>
+                        (string) ($item["nome"] ?? ($item["sigla"] ?? $chave)),
+                    "sigla" =>
+                        (string) ($item["sigla"] ?? ($item["nome"] ?? $chave)),
+                    "id_caixa_optica" =>
+                        (int) ($item["id_caixa_optica"] ?? ($item["id"] ?? 0)),
                 ];
             }
 
             return $lista;
         }
 
-        $candidatos = $response['data'] ?? $response;
+        $candidatos = $response["data"] ?? $response;
 
-        if (! is_array($candidatos)) {
+        if (!is_array($candidatos)) {
             return [];
         }
 
-        if (! array_is_list($candidatos)) {
+        if (!array_is_list($candidatos)) {
             $candidatos = array_values($candidatos);
         }
 
         $lista = [];
 
         foreach ($candidatos as $item) {
-            if (! is_array($item)) {
+            if (!is_array($item)) {
                 continue;
             }
 
-            $id = (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0);
-            $nome = (string) ($item['nome'] ?? $item['sigla'] ?? $item['descricao'] ?? '');
+            $id = (int) ($item["id_caixa_optica"] ?? ($item["id"] ?? 0));
+            $nome =
+                (string) ($item["nome"] ??
+                    ($item["sigla"] ?? ($item["descricao"] ?? "")));
 
-            if ($id > 0 && $nome !== '') {
+            if ($id > 0 && $nome !== "") {
                 $lista[] = [
-                    'nome' => $nome,
-                    'sigla' => (string) ($item['sigla'] ?? $nome),
-                    'id_caixa_optica' => $id,
+                    "nome" => $nome,
+                    "sigla" => (string) ($item["sigla"] ?? $nome),
+                    "id_caixa_optica" => $id,
                 ];
             }
         }
@@ -964,18 +1336,18 @@ class NiconWebService
         $lista = [];
 
         foreach ($itens as $item) {
-            if (! is_array($item)) {
+            if (!is_array($item)) {
                 continue;
             }
 
-            $id = (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0);
-            $nome = (string) ($item['nome'] ?? $item['sigla'] ?? '');
+            $id = (int) ($item["id_caixa_optica"] ?? ($item["id"] ?? 0));
+            $nome = (string) ($item["nome"] ?? ($item["sigla"] ?? ""));
 
-            if ($id > 0 && $nome !== '') {
+            if ($id > 0 && $nome !== "") {
                 $lista[] = [
-                    'nome' => $nome,
-                    'sigla' => (string) ($item['sigla'] ?? $nome),
-                    'id_caixa_optica' => $id,
+                    "nome" => $nome,
+                    "sigla" => (string) ($item["sigla"] ?? $nome),
+                    "id_caixa_optica" => $id,
                 ];
             }
         }
@@ -986,20 +1358,20 @@ class NiconWebService
     private function normalizarNomeCaixa(string $nome): string
     {
         $nome = trim($nome);
-        $nome = preg_replace('/^caixa[-_]?/i', '', $nome) ?? $nome;
+        $nome = preg_replace("/^caixa[-_]?/i", "", $nome) ?? $nome;
 
-        return strtoupper(str_replace([' ', '-'], '_', $nome));
+        return strtoupper(str_replace([" ", "-"], "_", $nome));
     }
 
     private function formatarNomeCaixa(string $nome): string
     {
         $nome = trim($nome);
 
-        if (preg_match('/^caixa[-_]/i', $nome)) {
+        if (preg_match("/^caixa[-_]/i", $nome)) {
             return $nome;
         }
 
-        return 'Caixa-' . ltrim($nome, '-');
+        return "Caixa-" . ltrim($nome, "-");
     }
 
     private function nomesCaixaCoincidem(string $busca, string $nome): bool
@@ -1008,30 +1380,34 @@ class NiconWebService
             $this->normalizarNomeCaixa($busca),
             $this->compactarNomeCaixa($busca),
             $this->normalizarNomeCaixa($nome),
-            $this->compactarNomeCaixa($nome)
+            $this->compactarNomeCaixa($nome),
         ) >= 70;
     }
 
     private function compactarNomeCaixa(string $nome): string
     {
-        return preg_replace('/[^A-Z0-9]/', '', $this->normalizarNomeCaixa($nome)) ?? '';
+        return preg_replace(
+            "/[^A-Z0-9]/",
+            "",
+            $this->normalizarNomeCaixa($nome),
+        ) ?? "";
     }
 
     private function pontuarCorrespondenciaCaixa(
         string $buscaNorm,
         string $buscaCompacta,
         string $nomeNorm,
-        string $nomeCompacto
+        string $nomeCompacto,
     ): int {
         if ($buscaNorm === $nomeNorm) {
             return 100;
         }
 
-        if ($buscaCompacta !== '' && $buscaCompacta === $nomeCompacto) {
+        if ($buscaCompacta !== "" && $buscaCompacta === $nomeCompacto) {
             return 95;
         }
 
-        if (str_starts_with($nomeNorm, $buscaNorm . '_')) {
+        if (str_starts_with($nomeNorm, $buscaNorm . "_")) {
             return 85;
         }
 
@@ -1043,7 +1419,10 @@ class NiconWebService
             return 70;
         }
 
-        if ($buscaCompacta !== '' && str_contains($nomeCompacto, $buscaCompacta)) {
+        if (
+            $buscaCompacta !== "" &&
+            str_contains($nomeCompacto, $buscaCompacta)
+        ) {
             return 60;
         }
 
@@ -1053,28 +1432,38 @@ class NiconWebService
     /** @return array<string, mixed> */
     private function getInfra(string $path, array $query): array
     {
-        return $this->getComSessao($path, $query, '/infra');
+        return $this->getComSessao($path, $query, "/infra");
     }
 
     /** @return array<string, mixed> */
     private function getCliente(string $path, array $query): array
     {
-        return $this->getComSessao($path, $query, '/cliente/conexao');
+        return $this->getComSessao($path, $query, "/cliente/conexao");
     }
 
     /** @return array<string, mixed> */
-    private function getComSessao(string $path, array $query, string $refererPath): array
-    {
-        $response = $this->httpComSessao($refererPath)->get($this->baseUrl() . $path, $query);
+    private function getComSessao(
+        string $path,
+        array $query,
+        string $refererPath,
+    ): array {
+        $response = $this->httpComSessao($refererPath)->get(
+            $this->baseUrl() . $path,
+            $query,
+        );
 
         if (in_array($response->status(), [401, 419], true)) {
             Cache::forget(self::SESSION_CACHE_KEY);
-            $response = $this->httpComSessao($refererPath)->get($this->baseUrl() . $path, $query);
+            $response = $this->httpComSessao($refererPath)->get(
+                $this->baseUrl() . $path,
+                $query,
+            );
         }
 
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new RuntimeException(
-                "Nicon {$path} falhou (HTTP {$response->status()}): " . $response->body()
+                "Nicon {$path} falhou (HTTP {$response->status()}): " .
+                    $response->body(),
             );
         }
 
@@ -1086,16 +1475,23 @@ class NiconWebService
     /** @return array<string, mixed> */
     private function postCliente(string $path, array $body): array
     {
-        $response = $this->httpComSessao('/cliente/atendimento')->post($this->baseUrl() . $path, $body);
+        $response = $this->httpComSessao("/cliente/atendimento")->post(
+            $this->baseUrl() . $path,
+            $body,
+        );
 
         if (in_array($response->status(), [401, 419], true)) {
             Cache::forget(self::SESSION_CACHE_KEY);
-            $response = $this->httpComSessao('/cliente/atendimento')->post($this->baseUrl() . $path, $body);
+            $response = $this->httpComSessao("/cliente/atendimento")->post(
+                $this->baseUrl() . $path,
+                $body,
+            );
         }
 
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new RuntimeException(
-                "Nicon {$path} falhou (HTTP {$response->status()}): " . $response->body()
+                "Nicon {$path} falhou (HTTP {$response->status()}): " .
+                    $response->body(),
             );
         }
 
@@ -1104,17 +1500,17 @@ class NiconWebService
         return is_array($json) ? $json : [];
     }
 
-    private function httpComSessao(string $refererPath = '/cliente/atendimento')
+    private function httpComSessao(string $refererPath = "/cliente/atendimento")
     {
         $sessao = $this->obterSessaoWeb();
 
-        return Http::timeout(config('services.nicon.timeout', 120))
+        return Http::timeout(config("services.nicon.timeout", 120))
             ->acceptJson()
-            ->withOptions(['cookies' => $this->montarCookieJar($sessao)])
+            ->withOptions(["cookies" => $this->montarCookieJar($sessao)])
             ->withHeaders([
-                'X-XSRF-TOKEN' => $sessao['xsrf'],
-                'X-Requested-With' => 'XMLHttpRequest',
-                'Referer' => $this->baseUrl() . $refererPath,
+                "X-XSRF-TOKEN" => $sessao["xsrf"],
+                "X-Requested-With" => "XMLHttpRequest",
+                "Referer" => $this->baseUrl() . $refererPath,
             ]);
     }
 
@@ -1123,7 +1519,11 @@ class NiconWebService
     {
         $cached = Cache::get(self::SESSION_CACHE_KEY);
 
-        if (is_array($cached) && ! empty($cached['cookies']) && ! empty($cached['xsrf'])) {
+        if (
+            is_array($cached) &&
+            !empty($cached["cookies"]) &&
+            !empty($cached["xsrf"])
+        ) {
             return $cached;
         }
 
@@ -1136,96 +1536,115 @@ class NiconWebService
     /** @return array{cookies: array<int, array<string, mixed>>, xsrf: string} */
     private function autenticarSessaoWeb(): array
     {
-        $jar = new CookieJar;
+        $jar = new CookieJar();
         $base = $this->baseUrl();
 
-        $loginPage = Http::timeout(config('services.nicon.timeout', 120))
-            ->withOptions(['cookies' => $jar, 'allow_redirects' => true])
+        $loginPage = Http::timeout(config("services.nicon.timeout", 120))
+            ->withOptions(["cookies" => $jar, "allow_redirects" => true])
             ->get("{$base}/login");
 
-        if (! $loginPage->successful()) {
-            throw new RuntimeException('Nicon: não foi possível abrir a página de login.');
+        if (!$loginPage->successful()) {
+            throw new RuntimeException(
+                "Nicon: não foi possível abrir a página de login.",
+            );
         }
 
         $xsrf = $this->extrairXsrf($jar);
 
-        if ($xsrf === '') {
-            throw new RuntimeException('Nicon: XSRF-TOKEN não encontrado após abrir /login.');
+        if ($xsrf === "") {
+            throw new RuntimeException(
+                "Nicon: XSRF-TOKEN não encontrado após abrir /login.",
+            );
         }
 
         $credenciais = [
-            'email' => config('services.nicon.email'),
-            'password' => config('services.nicon.password'),
+            "email" => config("services.nicon.email"),
+            "password" => config("services.nicon.password"),
         ];
 
-        if (config('services.nicon.two_factor')) {
-            $credenciais['one_time_password'] = config('services.nicon.two_factor');
+        if (config("services.nicon.two_factor")) {
+            $credenciais["one_time_password"] = config(
+                "services.nicon.two_factor",
+            );
         }
 
-        $login = Http::timeout(config('services.nicon.timeout', 120))
+        $login = Http::timeout(config("services.nicon.timeout", 120))
             ->acceptJson()
             ->asJson()
-            ->withOptions(['cookies' => $jar, 'allow_redirects' => true])
+            ->withOptions(["cookies" => $jar, "allow_redirects" => true])
             ->withHeaders([
-                'X-XSRF-TOKEN' => $xsrf,
-                'X-Requested-With' => 'XMLHttpRequest',
-                'Referer' => "{$base}/login",
+                "X-XSRF-TOKEN" => $xsrf,
+                "X-Requested-With" => "XMLHttpRequest",
+                "Referer" => "{$base}/login",
             ])
             ->post("{$base}/login", $credenciais);
 
-        if (! $login->successful() && $login->status() !== 204) {
-            $loginUsuario = Http::timeout(config('services.nicon.timeout', 120))
+        if (!$login->successful() && $login->status() !== 204) {
+            $loginUsuario = Http::timeout(config("services.nicon.timeout", 120))
                 ->acceptJson()
                 ->asJson()
-                ->withOptions(['cookies' => $jar, 'allow_redirects' => true])
+                ->withOptions(["cookies" => $jar, "allow_redirects" => true])
                 ->withHeaders([
-                    'X-XSRF-TOKEN' => $this->extrairXsrf($jar) ?: $xsrf,
-                    'X-Requested-With' => 'XMLHttpRequest',
-                    'Referer' => "{$base}/login",
+                    "X-XSRF-TOKEN" => $this->extrairXsrf($jar) ?: $xsrf,
+                    "X-Requested-With" => "XMLHttpRequest",
+                    "Referer" => "{$base}/login",
                 ])
                 ->post("{$base}/login", [
-                    'usuario' => config('services.nicon.email'),
-                    'password' => config('services.nicon.password'),
+                    "usuario" => config("services.nicon.email"),
+                    "password" => config("services.nicon.password"),
                 ]);
 
-            if (! $loginUsuario->successful() && $loginUsuario->status() !== 204) {
+            if (
+                !$loginUsuario->successful() &&
+                $loginUsuario->status() !== 204
+            ) {
                 throw new RuntimeException(
-                    'Nicon: login web falhou (HTTP ' . $login->status() . '): ' . $login->body()
+                    "Nicon: login web falhou (HTTP " .
+                        $login->status() .
+                        "): " .
+                        $login->body(),
                 );
             }
         }
 
         $xsrfFinal = $this->extrairXsrf($jar);
 
-        if ($xsrfFinal === '') {
-            throw new RuntimeException('Nicon: sessão web sem XSRF-TOKEN após login.');
+        if ($xsrfFinal === "") {
+            throw new RuntimeException(
+                "Nicon: sessão web sem XSRF-TOKEN após login.",
+            );
         }
 
         return [
-            'cookies' => $jar->toArray(),
-            'xsrf' => $xsrfFinal,
+            "cookies" => $jar->toArray(),
+            "xsrf" => $xsrfFinal,
         ];
     }
 
     private function extrairXsrf(CookieJar $jar): string
     {
         foreach ($jar->toArray() as $cookie) {
-            if (($cookie['Name'] ?? '') === 'XSRF-TOKEN') {
-                return urldecode((string) ($cookie['Value'] ?? ''));
+            if (($cookie["Name"] ?? "") === "XSRF-TOKEN") {
+                return urldecode((string) ($cookie["Value"] ?? ""));
             }
         }
 
-        return '';
+        return "";
     }
 
     /** @param  array{cookies: array<int, array<string, mixed>>, xsrf: string}  $sessao */
     private function montarCookieJar(array $sessao): CookieJar
     {
         return CookieJar::fromArray(
-            collect($sessao['cookies'])->mapWithKeys(
-                fn (array $cookie) => [($cookie['Name'] ?? '') => $cookie['Value'] ?? '']
-            )->filter(fn ($value, $name) => $name !== '')->all(),
-            parse_url($this->baseUrl(), PHP_URL_HOST) ?: ''
+            collect($sessao["cookies"])
+                ->mapWithKeys(
+                    fn(array $cookie) => [
+                        $cookie["Name"] ?? "" => $cookie["Value"] ?? "",
+                    ],
+                )
+                ->filter(fn($value, $name) => $name !== "")
+                ->all(),
+            parse_url($this->baseUrl(), PHP_URL_HOST) ?: "",
         );
     }
 }

@@ -74,6 +74,23 @@
   .detail-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px 0; color: var(--gray-500); font-size: 13px; }
   .detail-loading i { animation: spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
   .detail-error { padding: 16px; border-radius: var(--radius-sm); background: var(--red-bg); color: var(--red-text); font-size: 13px; }
+  .kcard-signals { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .sinal-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 8px; border-radius: 999px; border: 1px solid transparent;
+    font-size: 11px; font-weight: 600; line-height: 1;
+  }
+  .sinal-chip-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.8; }
+  .sinal-chip--ideal { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .sinal-chip--preventiva { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .sinal-chip--alerta { background: #fefce8; color: #a16207; border-color: #fef08a; }
+  .sinal-chip--critico { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .sinal-chip--sem-dados { background: var(--gray-100); color: var(--gray-500); border-color: var(--gray-200); }
+  .detail-value--sinal { font-weight: 600; }
+  .detail-value--sinal.sinal-texto--ideal { color: #15803d; }
+  .detail-value--sinal.sinal-texto--preventiva { color: #16a34a; }
+  .detail-value--sinal.sinal-texto--alerta { color: #a16207; }
+  .detail-value--sinal.sinal-texto--critico { color: #dc2626; }
   .detail-enter { animation: conteudoEntrada 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .btn-modal { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; height: 36px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1; white-space: nowrap; cursor: pointer; font-family: inherit; box-sizing: border-box; transition: background 0.15s, transform 0.15s, border-color 0.15s; }
   .btn-modal:active { transform: scale(0.97); }
@@ -1249,6 +1266,93 @@ document.addEventListener('keydown', function(e) {
     </div>`;
   }
 
+  function escapeRegex(texto) {
+    return String(texto).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function normalizarSinalNumero(valor) {
+    if (valor == null || valor === '') return null;
+    if (typeof valor === 'number') return Number.isNaN(valor) ? null : valor;
+    const texto = String(valor).replace(',', '.');
+    const match = texto.match(/-?\d+(?:\.\d+)?/);
+    if (!match) return null;
+    const numero = Number(match[0]);
+    return Number.isNaN(numero) ? null : numero;
+  }
+
+  function extrairSinalDescricao(descricao, rotulos) {
+    const texto = String(descricao || '');
+    if (!texto.trim()) return null;
+
+    for (const rotulo of rotulos) {
+      const regex = new RegExp(`^${escapeRegex(rotulo)}\\s*:\\s*(-?\\d+(?:[\\.,]\\d+)?)`, 'mi');
+      const match = texto.match(regex);
+      if (match) {
+        return normalizarSinalNumero(match[1]);
+      }
+    }
+
+    return null;
+  }
+
+  function obterSinaisCorrecao(registro) {
+    return {
+      chegada: normalizarSinalNumero(registro?.sinal_rx)
+        ?? extrairSinalDescricao(registro?.descricao, ['Sinal Chegada', 'Sinal RX']),
+      retorno: normalizarSinalNumero(registro?.sinal_rx_olt)
+        ?? extrairSinalDescricao(registro?.descricao, ['Sinal Retorno', 'Sinal RX OLT', 'Sinal de Retorno']),
+    };
+  }
+
+  function nivelSinalChegada(valor) {
+    if (valor == null) return null;
+    if (valor >= -23) return 'ideal';
+    if (valor >= -25) return 'preventiva';
+    if (valor >= -27) return 'alerta';
+    return 'critico';
+  }
+
+  function nivelSinalRetorno(valor) {
+    if (valor == null) return null;
+    if (valor >= -25) return 'ideal';
+    if (valor >= -26) return 'preventiva';
+    if (valor >= -28) return 'alerta';
+    return 'critico';
+  }
+
+  function formatarSinalDbm(valor) {
+    if (valor == null) return '—';
+    return `${Number(valor).toFixed(2)} dBm`;
+  }
+
+  function classeChipSinal(tipo, valor) {
+    const nivel = tipo === 'retorno' ? nivelSinalRetorno(valor) : nivelSinalChegada(valor);
+    return nivel ? `sinal-chip sinal-chip--${nivel}` : 'sinal-chip sinal-chip--sem-dados';
+  }
+
+  function classeTextoSinal(tipo, valor) {
+    const nivel = tipo === 'retorno' ? nivelSinalRetorno(valor) : nivelSinalChegada(valor);
+    return nivel ? `detail-value detail-value--sinal sinal-texto--${nivel}` : 'detail-value';
+  }
+
+  function renderChipSinal(label, tipo, valor) {
+    return `
+      <span class="${classeChipSinal(tipo, valor)}">
+        <span class="sinal-chip-label">${esc(label)}</span>
+        <span>${esc(formatarSinalDbm(valor))}</span>
+      </span>
+    `;
+  }
+
+  function renderCampoSinalDetalhe(label, tipo, valor) {
+    return `
+      <div class="detail-field">
+        <span class="detail-label">${label}</span>
+        <div class="${classeTextoSinal(tipo, valor)}">${esc(formatarSinalDbm(valor))}</div>
+      </div>
+    `;
+  }
+
   // ─── CARREGAR CORREÇÕES ───
   async function buscarColuna(status, limit, offset = 0, filtros = {}) {
     const token = localStorage.getItem('planner_token');
@@ -1311,6 +1415,12 @@ document.addEventListener('keydown', function(e) {
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
     const titulo = r.nome || r.nome_cliente || r.titulo || 'Correção de sinal';
     const codigo = r.taskCode || r.codigo_exibicao || 'S/C';
+    const sinais = obterSinaisCorrecao(r);
+    const sinaisHtml = [
+      sinais.chegada != null ? renderChipSinal('Chegada', 'chegada', sinais.chegada) : '',
+      sinais.retorno != null ? renderChipSinal('Retorno', 'retorno', sinais.retorno) : '',
+    ].filter(Boolean).join('');
+
     return `
     <div class="kcard"
       data-id="${r.id}"
@@ -1322,6 +1432,7 @@ document.addEventListener('keydown', function(e) {
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
       <div class="kcard-title">${esc(titulo)}</div>
+      ${sinaisHtml ? `<div class="kcard-signals">${sinaisHtml}</div>` : ''}
       <div class="kcard-foot" style="margin-top:6px">
         ${r.setor ? `<span class="badge b-cat-gen">${esc(r.setor)}</span>` : ''}
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
@@ -1334,6 +1445,7 @@ document.addEventListener('keydown', function(e) {
   function renderDetalhe(r) {
     const titulo = r.nome || r.nome_cliente || r.titulo || 'Correção de sinal';
     const codigo = r.taskCode || r.codigo_exibicao || '';
+    const sinais = obterSinaisCorrecao(r);
     document.getElementById('detalhe-titulo').textContent = titulo;
     document.getElementById('detalhe-subtitulo').textContent = codigo ? `Código: ${codigo}` : '';
 
@@ -1343,6 +1455,8 @@ document.addEventListener('keydown', function(e) {
           ${badgeStatus(r.status_exibicao || r.status)}
           ${badgePrioridade(r.prioridade)}
           ${badgeRegiao(r.regiao)}
+          ${sinais.chegada != null ? renderChipSinal('Chegada', 'chegada', sinais.chegada) : ''}
+          ${sinais.retorno != null ? renderChipSinal('Retorno', 'retorno', sinais.retorno) : ''}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Título', esc(titulo), 1, 'campo-titulo')}
@@ -1358,6 +1472,10 @@ document.addEventListener('keydown', function(e) {
         <div class="detail-grid-2">
           ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
           ${campoDetalhe('Coordenadas', esc(r.coordenadas), 1, 'campo-coordenadas')}
+        </div>
+        <div class="detail-grid-2">
+          ${renderCampoSinalDetalhe('Sinal de Chegada', 'chegada', sinais.chegada)}
+          ${renderCampoSinalDetalhe('Sinal de Retorno', 'retorno', sinais.retorno)}
         </div>
         <div class="detail-field span-2">
           <span class="detail-label">Descrição</span>
