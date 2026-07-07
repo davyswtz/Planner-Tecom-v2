@@ -45,8 +45,8 @@
 
       if (tipo === 'textarea') {
         const ta = document.createElement('textarea');
-        ta.rows = campo.rows || 3;
-        aplicarEstilo(ta, 'resize:vertical;min-height:72px');
+        ta.rows = campo.rows || 5;
+        aplicarEstilo(ta, 'resize:vertical;min-height:' + (campo.minHeight || '120px'));
         ta.value = valor;
         el.replaceChildren(ta);
         return;
