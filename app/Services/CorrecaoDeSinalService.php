@@ -64,9 +64,6 @@ class CorrecaoDeSinalService
         }
 
         $setor = trim((string) ($dados['setor'] ?? ''));
-        if ($setor === '') {
-            $setor = trim((string) ($dados['localizacao_texto'] ?? ''));
-        }
 
         $codigoExibicao = trim((string) ($dados['taskCode'] ?? ''));
         if ($codigoExibicao === '' && str_contains($titulo, '·')) {
@@ -105,6 +102,13 @@ class CorrecaoDeSinalService
 
     public function createCorrecaoDeSinal(array $dados): OpTask
     {
+        if (isset($dados['elemento'])) {
+            $elemento = trim((string) $dados['elemento']);
+            if ($elemento !== '') {
+                $dados['setor'] = $elemento;
+            }
+            unset($dados['elemento']);
+        }
         $dados = OpTask::filtrarEntradaCliente($dados);
         $dados['categoria'] = 'correcao-atenuacao';
         $dados['taskCode'] = $this->opTaskService->gerarTaskCode($dados);
@@ -173,6 +177,13 @@ class CorrecaoDeSinalService
     public function updateCorrecaoDeSinal(OpTask $correcao, array $dados): OpTask
     {
         $statusAnterior = $correcao->status;
+        if (isset($dados['elemento'])) {
+            $elemento = trim((string) $dados['elemento']);
+            if ($elemento !== '') {
+                $dados['setor'] = $elemento;
+            }
+            unset($dados['elemento']);
+        }
         $dados = OpTask::filtrarEntradaCliente($dados);
 
         if (isset($dados['status']) && $dados['status'] === 'Finalizada') {

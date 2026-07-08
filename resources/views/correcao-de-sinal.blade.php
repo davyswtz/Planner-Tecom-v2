@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Correção de sinal — Planner Telecom')
 @section('page-title', 'Correção de sinal')
@@ -235,6 +235,16 @@
     <div class="os-field">
       <label class="os-label">Número da OS (Hubsoft)</label>
       <input type="text" id="input-numero-os" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
+    </div>
+
+    <div class="os-field">
+      <label class="os-label">Elemento</label>
+      <input type="text" id="input-elemento" placeholder="Ex: CTO-042, Poste, Caixa..." class="os-input"/>
+    </div>
+
+    <div class="os-field">
+      <label class="os-label">Descrição</label>
+      <textarea id="input-descricao" rows="5" placeholder="Descreva a correção de sinal..." class="os-input" style="resize:vertical;min-height:120px"></textarea>
     </div>
 
     <div class="os-field">
@@ -544,6 +554,8 @@
   function limparFormularioCorrecao() {
     document.getElementById('input-regiao').value = '';
     document.getElementById('input-numero-os').value = '';
+    document.getElementById('input-elemento').value = '';
+    document.getElementById('input-descricao').value = '';
     document.getElementById('input-localizacao-texto').value = '';
     document.getElementById('input-coordenadas').value = '';
     prioridadeSelecionada = 'Média';
@@ -1106,6 +1118,8 @@ document.addEventListener('keydown', function(e) {
   async function criarCorrecaoPoste() {
     const regiao = document.getElementById('input-regiao').value;
     const numeroOs = document.getElementById('input-numero-os').value.trim();
+    const elemento = document.getElementById('input-elemento').value.trim();
+    const descricao = document.getElementById('input-descricao').value.trim();
 
     if (!regiao) {
       alert('Selecione a região.');
@@ -1121,6 +1135,8 @@ document.addEventListener('keydown', function(e) {
       prioridade:        prioridadeSelecionada,
       numero_os:         numeroOs,
       status:            'Criada',
+      setor:             elemento,
+      descricao:         descricao,
     };
 
     const token = localStorage.getItem('planner_token');
@@ -1353,7 +1369,7 @@ document.addEventListener('keydown', function(e) {
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Cliente', esc(r.nome_cliente), 1, 'campo-nome-cliente')}
-          ${campoDetalhe('Caixa / Setor', esc(r.setor || r.localizacao_texto), 1, 'campo-setor')}
+          ${campoDetalhe('Elemento', esc(r.setor || ''), 1, 'campo-setor')}
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Endereço / Localização', esc(r.localizacao_texto), 1, 'campo-localizacao-texto')}
@@ -1361,7 +1377,7 @@ document.addEventListener('keydown', function(e) {
         </div>
         <div class="detail-field span-2">
           <span class="detail-label">Descrição</span>
-          <div class="detail-value" id="campo-descricao" style="white-space:pre-wrap;min-height:72px">${esc(r.descricao || '—')}</div>
+          <div class="detail-value" id="campo-descricao" style="white-space:pre-wrap;min-height:120px">${esc(r.descricao || '—')}</div>
         </div>
         <div class="detail-grid-2">
           ${campoDetalhe('Prioridade', esc(r.prioridade), 1, 'campo-prioridade')}
