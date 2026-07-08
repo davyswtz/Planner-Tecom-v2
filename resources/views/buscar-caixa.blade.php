@@ -100,9 +100,10 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px; font-weight: 600;
   }
-  .caixa-sinal--bom { color: #15803d; }
-  .caixa-sinal--medio { color: #ca8a04; }
-  .caixa-sinal--ruim { color: #dc2626; }
+  .caixa-sinal--ideal { color: #15803d; }
+  .caixa-sinal--preventiva { color: #4ade80; }
+  .caixa-sinal--alerta { color: #ca8a04; }
+  .caixa-sinal--critico { color: #dc2626; }
   .caixa-sinal-data { display: block; font-size: 10px; color: var(--gray-500); font-weight: 400; margin-top: 2px; }
   .caixa-status-ts {
     display: flex; flex-direction: column; gap: 2px; align-items: center;
@@ -415,7 +416,7 @@
         renderErro(estado.erro);
         statusLabel.textContent = estado.statusText || 'Erro na busca';
       } else if (clientesAtuais.length > 0) {
-        const comSinal = clientesAtuais.filter((c) => extrairRx(c.sinal) != null).length;
+        const comSinal = clientesAtuais.filter((c) => temQualquerSinal(c.sinal)).length;
         const interrompidos = clientesAtuais.filter((c) => c.sinal_interrompido).length;
         renderClientes(clientesAtuais, caixaAtual, false);
         if (estado.statusText) {
@@ -452,6 +453,13 @@
       .replace(/"/g, '&quot;');
   }
 
+  function normalizarValorSinal(bruto) {
+    if (bruto == null || bruto === '') return null;
+    const valor = Number(bruto);
+    if (!Number.isNaN(valor) && valor === 0) return null;
+    return bruto;
+  }
+
   function extrairRx(sinal) {
     if (sinal == null) return null;
 
@@ -463,10 +471,25 @@
       else if (sinal.sinal?.rx != null) bruto = sinal.sinal.rx;
     }
 
-    if (bruto == null || bruto === '') return null;
-    const valor = Number(bruto);
-    if (!Number.isNaN(valor) && valor === 0) return null;
-    return bruto;
+    return normalizarValorSinal(bruto);
+  }
+
+  function extrairRxOlt(sinal) {
+    if (sinal == null || typeof sinal !== 'object') return null;
+
+    let bruto = null;
+    if (sinal.rx_olt != null) bruto = sinal.rx_olt;
+    else if (sinal.tx != null) bruto = sinal.tx;
+    else if (sinal.potencia_olt != null) bruto = sinal.potencia_olt;
+    else if (sinal.sinal?.rx_olt != null) bruto = sinal.sinal.rx_olt;
+    else if (sinal.sinal?.tx != null) bruto = sinal.sinal.tx;
+    else if (sinal.sinal?.potencia_olt != null) bruto = sinal.sinal.potencia_olt;
+
+    return normalizarValorSinal(bruto);
+  }
+
+  function temQualquerSinal(sinal) {
+    return extrairRx(sinal) != null || extrairRxOlt(sinal) != null;
   }
 
   function extrairDataSinal(sinal) {
@@ -474,13 +497,57 @@
     return sinal.data_atualizacao || sinal.sinal?.data_atualizacao || '';
   }
 
-  function classeSinal(rx) {
-    if (rx == null || rx === '') return 'caixa-sinal';
+  function nivelSinalChegada(rx) {
+    if (rx == null || rx === '') return null;
     const valor = Number(rx);
-    if (Number.isNaN(valor)) return 'caixa-sinal';
-    if (valor >= -24) return 'caixa-sinal caixa-sinal--bom';
-    if (valor >= -27) return 'caixa-sinal caixa-sinal--medio';
-    return 'caixa-sinal caixa-sinal--ruim';
+    if (Number.isNaN(valor)) return null;
+    if (valor >= -23) return 'ideal';
+    if (valor >= -25) return 'preventiva';
+    if (valor >= -27) return 'alerta';
+    return 'critico';
+  }
+
+  function nivelSinalRetorno(rx) {
+    if (rx == null || rx === '') return null;
+    const valor = Number(rx);
+    if (Number.isNaN(valor)) return null;
+    if (valor >= -25) return 'ideal';
+    if (valor >= -26) return 'preventiva';
+    if (valor >= -28) return 'alerta';
+    return 'critico';
+  }
+
+  function pesoNivelSinal(nivel) {
+    return {
+      ideal: 0,
+      preventiva: 1,
+      alerta: 2,
+      critico: 3,
+    }[nivel] ?? -1;
+  }
+
+  function obterPiorNivelSinal(sinal) {
+    const niveis = [
+      nivelSinalChegada(extrairRx(sinal)),
+      nivelSinalRetorno(extrairRxOlt(sinal)),
+    ].filter(Boolean);
+
+    if (!niveis.length) return null;
+
+    return niveis.sort((a, b) => pesoNivelSinal(b) - pesoNivelSinal(a))[0];
+  }
+
+  function classeSinalPorNivel(nivel) {
+    if (!nivel) return 'caixa-sinal';
+    return `caixa-sinal caixa-sinal--${nivel}`;
+  }
+
+  function classeSinalChegada(rx) {
+    return classeSinalPorNivel(nivelSinalChegada(rx));
+  }
+
+  function classeSinalRetorno(rx) {
+    return classeSinalPorNivel(nivelSinalRetorno(rx));
   }
 
   function formatarRx(rx) {
@@ -503,15 +570,13 @@
     persistirEstadoBusca({ erro: mensagem });
   }
 
-  function sinalPrecisaCorrecao(rx) {
-    const valor = Number(rx);
-    if (Number.isNaN(valor)) return false;
-    return valor < -24;
+  function sinalPrecisaCorrecao(sinal) {
+    const piorNivel = obterPiorNivelSinal(sinal);
+    return piorNivel === 'alerta' || piorNivel === 'critico';
   }
 
   function renderMenuCorrecao(cliente) {
-    const rx = extrairRx(cliente.sinal);
-    if (!sinalPrecisaCorrecao(rx)) {
+    if (!sinalPrecisaCorrecao(cliente.sinal)) {
       return '';
     }
 
@@ -555,29 +620,33 @@
     `;
   }
 
-  function renderCelulaSinal(cliente, carregandoSinais = false) {
+  function renderCelulaSinal(cliente, tipo = 'chegada', carregandoSinais = false) {
+    const idCliente = esc(cliente.id_cliente_servico);
+    const dataAttr = `data-sinal-id="${idCliente}" data-sinal-tipo="${esc(tipo)}"`;
+
     if (carregandoSinais) {
       return `
-        <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
+        <td class="text-center" ${dataAttr}>
           <i class="ti ti-loader-2" style="animation:caixa-spin 0.9s linear infinite;font-size:16px;color:var(--gray-400);"></i>
         </td>
       `;
     }
 
-    const rx = extrairRx(cliente.sinal);
+    const valor = tipo === 'retorno' ? extrairRxOlt(cliente.sinal) : extrairRx(cliente.sinal);
     const dataSinal = extrairDataSinal(cliente.sinal);
     const consultado = cliente.sinal_consultado === true;
+    const semSinal = !temQualquerSinal(cliente.sinal);
 
-    if (cliente.sinal_interrompido && rx == null) {
+    if (tipo === 'chegada' && cliente.sinal_interrompido && semSinal) {
       return `
-        <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
+        <td class="text-center" ${dataAttr}>
           <div class="caixa-sinal-celula">
             <i class="ti ti-alert-circle caixa-sinal-erro" title="Busca interrompida"></i>
             <span class="caixa-sinal-off">—</span>
             <button
               type="button"
               class="caixa-sinal-retry"
-              data-retry-sinal="${esc(cliente.id_cliente_servico)}"
+              data-retry-sinal="${idCliente}"
               data-retry-serial="${esc(cliente.serial || '')}"
               title="Buscar sinal novamente"
               aria-label="Buscar sinal novamente"
@@ -589,15 +658,15 @@
       `;
     }
 
-    if (rx == null && consultado) {
+    if (tipo === 'chegada' && semSinal && consultado) {
       return `
-        <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
+        <td class="text-center" ${dataAttr}>
           <div class="caixa-sinal-celula">
             <span class="caixa-sinal-off">—</span>
             <button
               type="button"
               class="caixa-sinal-retry"
-              data-retry-sinal="${esc(cliente.id_cliente_servico)}"
+              data-retry-sinal="${idCliente}"
               data-retry-serial="${esc(cliente.serial || '')}"
               title="Atualizar sinal"
               aria-label="Atualizar sinal"
@@ -609,17 +678,19 @@
       `;
     }
 
-    if (rx == null) {
+    if (valor == null) {
       return `
-        <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
+        <td class="text-center" ${dataAttr}>
           <span class="caixa-sinal-off">—</span>
         </td>
       `;
     }
 
+    const classe = tipo === 'retorno' ? classeSinalRetorno(valor) : classeSinalChegada(valor);
+
     return `
-      <td class="text-center" data-sinal-id="${esc(cliente.id_cliente_servico)}">
-        <span class="${classeSinal(rx)}">${formatarRx(rx)}</span>
+      <td class="text-center" ${dataAttr}>
+        <span class="${classe}">${formatarRx(valor)}</span>
         ${dataSinal ? `<span class="caixa-sinal-data">${esc(dataSinal)}</span>` : ''}
       </td>
     `;
@@ -676,18 +747,18 @@
   /** Classifica conexão do equipamento (Online / Offline / Alarme). */
   function classificarConexao(cliente) {
     const conectado = cliente.conectado === true;
-    const rx = extrairRx(cliente.sinal);
+    const piorNivel = obterPiorNivelSinal(cliente.sinal);
     const resumo = normalizarTextoStatus(cliente.status_conexao);
 
     if (!conectado) {
       return { key: 'offline', label: 'Offline' };
     }
 
-    if (rx != null && Number(rx) < -27) {
+    if (piorNivel === 'critico') {
       return { key: 'alarm', label: 'Alarme' };
     }
 
-    if (rx != null && Number(rx) < -24) {
+    if (piorNivel === 'alerta') {
       return { key: 'warning', label: 'Atenção' };
     }
 
@@ -745,7 +816,7 @@
       if (contagem[key] != null) contagem[key] += 1;
     });
 
-    const comSinal = clientes.filter((c) => extrairRx(c.sinal) != null).length;
+    const comSinal = clientes.filter((c) => temQualquerSinal(c.sinal)).length;
     const chips = [
       contagem.online ? renderBadgeStatus('online', `Online ${contagem.online}`) : '',
       contagem.offline ? renderBadgeStatus('offline', `Offline ${contagem.offline}`) : '',
@@ -765,6 +836,26 @@
     statusLabel.textContent = `${clientes.length} cliente(s)`;
   }
 
+  function renderLinhaCliente(cliente, carregandoSinais = false) {
+    const statusServico = classificarStatusServico(cliente.status_servico);
+    const conexao = classificarConexao(cliente);
+    const linhaKey = classificarLinhaCliente(cliente);
+
+    return `
+      <tr data-cliente-id="${esc(cliente.id_cliente_servico)}" class="caixa-row--${esc(linhaKey)}">
+        ${renderCelulaCliente(cliente)}
+        <td class="text-center">${esc(cliente.porta ?? '—')}</td>
+        <td class="text-center">${renderBadgeStatus(statusServico.key, statusServico.label)}</td>
+        <td class="text-center">${renderBadgeStatus(conexao.key, conexao.label)}</td>
+        <td class="text-center">${renderCelulaStatusEquipamento(cliente)}</td>
+        <td class="text-center"><span class="caixa-lacre">${esc(formatarLacre(cliente.lacre))}</span></td>
+        <td><code style="font-size:11px;">${esc(cliente.serial || '—')}</code></td>
+        ${renderCelulaSinal(cliente, 'chegada', carregandoSinais)}
+        ${renderCelulaSinal(cliente, 'retorno', carregandoSinais)}
+      </tr>
+    `;
+  }
+
   function renderClientes(clientes, nomeCaixa, carregandoSinais = false) {
     if (!Array.isArray(clientes) || clientes.length === 0) {
       resumo.hidden = true;
@@ -779,24 +870,7 @@
 
     atualizarResumo(clientes, nomeCaixa);
 
-    const linhas = clientes.map((cliente) => {
-      const statusServico = classificarStatusServico(cliente.status_servico);
-      const conexao = classificarConexao(cliente);
-      const linhaKey = classificarLinhaCliente(cliente);
-
-      return `
-        <tr data-cliente-id="${esc(cliente.id_cliente_servico)}" class="caixa-row--${esc(linhaKey)}">
-          ${renderCelulaCliente(cliente)}
-          <td class="text-center">${esc(cliente.porta ?? '—')}</td>
-          <td class="text-center">${renderBadgeStatus(statusServico.key, statusServico.label)}</td>
-          <td class="text-center">${renderBadgeStatus(conexao.key, conexao.label)}</td>
-          <td class="text-center">${renderCelulaStatusEquipamento(cliente)}</td>
-          <td class="text-center"><span class="caixa-lacre">${esc(formatarLacre(cliente.lacre))}</span></td>
-          <td><code style="font-size:11px;">${esc(cliente.serial || '—')}</code></td>
-          ${renderCelulaSinal(cliente, carregandoSinais)}
-        </tr>
-      `;
-    }).join('');
+    const linhas = clientes.map((cliente) => renderLinhaCliente(cliente, carregandoSinais)).join('');
 
     wrap.innerHTML = `
       <div class="caixa-legenda">
@@ -818,7 +892,8 @@
             <th class="text-center">Último status</th>
             <th class="text-center">Lacre</th>
             <th>Serial</th>
-            <th class="text-center">Sinal RX</th>
+            <th class="text-center">Chegada</th>
+            <th class="text-center">Retorno</th>
           </tr>
         </thead>
         <tbody>${linhas}</tbody>
@@ -835,7 +910,7 @@
     const total = clientesAtuais.length;
     if (!total) return;
 
-    const comSinal = clientesAtuais.filter((c) => extrairRx(c.sinal) != null).length;
+    const comSinal = clientesAtuais.filter((c) => temQualquerSinal(c.sinal)).length;
     const consultados = clientesAtuais.filter((c) => c.sinal_consultado).length;
 
     if (consultados < total) {
@@ -847,14 +922,14 @@
   }
 
   function mostrarLoadingSinal(idClienteServico) {
-    const celula = document.querySelector(`[data-sinal-id="${idClienteServico}"]`);
-    if (!celula) return;
-    celula.innerHTML = '<i class="ti ti-loader-2" style="animation:caixa-spin 0.9s linear infinite;font-size:16px;color:var(--gray-400);"></i>';
+    document.querySelectorAll(`[data-sinal-id="${idClienteServico}"]`).forEach((celula) => {
+      celula.innerHTML = '<i class="ti ti-loader-2" style="animation:caixa-spin 0.9s linear infinite;font-size:16px;color:var(--gray-400);"></i>';
+    });
   }
 
   function normalizarSinalApi(sinal) {
     if (sinal == null) return null;
-    if (extrairRx(sinal) == null) return null;
+    if (!temQualquerSinal(sinal)) return null;
     return sinal;
   }
 
@@ -867,35 +942,12 @@
     const linha = document.querySelector(`tr[data-cliente-id="${idClienteServico}"]`);
     if (!linha) return;
 
-    const conexao = classificarConexao(cliente);
-    const linhaKey = classificarLinhaCliente(cliente);
-    linha.className = `caixa-row--${linhaKey}`;
-
-    const celulas = linha.querySelectorAll('td');
-    // Coluna Conexão (índice 3) muda com o sinal (Online / Alarme / Atenção).
-    if (celulas[3]) {
-      celulas[3].innerHTML = renderBadgeStatus(conexao.key, conexao.label);
-    }
-
     const temp = document.createElement('tbody');
-    temp.innerHTML = `
-      <tr>
-        ${renderCelulaCliente(cliente)}
-        <td></td><td></td><td></td><td></td><td></td><td></td>
-        ${renderCelulaSinal(cliente, false)}
-      </tr>
-    `;
+    temp.innerHTML = renderLinhaCliente(cliente, false);
+    const novaLinha = temp.querySelector('tr');
 
-    const novaCelulaCliente = temp.querySelector('td:first-child');
-    const novaCelulaSinal = temp.querySelector('[data-sinal-id]');
-    const celulaCliente = linha.querySelector('td:first-child');
-    const celulaSinal = linha.querySelector('[data-sinal-id]');
-
-    if (novaCelulaCliente && celulaCliente) {
-      celulaCliente.replaceWith(novaCelulaCliente);
-    }
-    if (novaCelulaSinal && celulaSinal) {
-      celulaSinal.replaceWith(novaCelulaSinal);
+    if (novaLinha) {
+      linha.replaceWith(novaLinha);
     }
 
     atualizarResumo(clientesAtuais, caixaAtual);
@@ -990,7 +1042,7 @@
 
     const total = clientesAtuais.length;
     if (total) {
-      const comSinal = clientesAtuais.filter((c) => extrairRx(c.sinal) != null).length;
+      const comSinal = clientesAtuais.filter((c) => temQualquerSinal(c.sinal)).length;
       const interrompidos = clientesAtuais.filter((c) => c.sinal_interrompido).length;
       statusLabel.textContent = `${total} cliente(s) · ${comSinal} com sinal · ${interrompidos} interrompido(s)`;
     }
@@ -1072,7 +1124,7 @@
     );
     if (!cliente) return;
 
-    const celula = document.querySelector(`[data-sinal-id="${idClienteServico}"]`);
+    const celula = document.querySelector(`[data-sinal-id="${idClienteServico}"][data-sinal-tipo="chegada"]`);
     const botao = celula?.querySelector('[data-retry-sinal]');
 
     if (botao) {
@@ -1130,6 +1182,7 @@
           porta: cliente.porta,
           serial: cliente.serial,
           sinal_rx: extrairRx(cliente.sinal),
+          sinal_rx_olt: extrairRxOlt(cliente.sinal),
           codigo_cliente: cliente.codigo_cliente,
           id_cliente_servico: cliente.id_cliente_servico,
           regiao,
