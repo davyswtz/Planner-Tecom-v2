@@ -205,7 +205,7 @@ class GoogleChatService
         $nome = trim($os['titulo'] ?? '') ?: '—';
         $status = $this->formatarStatusOs($os['status'] ?? '');
         $tipo = trim($os['os_tipo'] ?? '') ?: $nome;
-        $tecnicos = trim($os['responsavel'] ?? '') ?: '—';
+        $tecnicos = app(TecnicoChatMencaoService::class)->formatarResponsavel($os['responsavel'] ?? '');
         $taskCode = trim($os['taskCode'] ?? '') ?: (string) ($os['id'] ?? '—');
         $parentTitulo = trim($os['parent_titulo'] ?? '');
         $parentCode = trim($os['parent_task_code'] ?? '');
@@ -311,7 +311,7 @@ class GoogleChatService
                 "🔄 *Status:* {$statusAnterior} → {$statusNovo}",
                 '⚡ *Prioridade:* ' . ($rompimento['prioridade'] ?? '—'),
                 '👥 *Clientes afetados:* ' . ($rompimento['clientesAfetados'] ?? '0'),
-                '📍 *Coordenadas:* ' . ($rompimento['coordenadas'] ?? '—'),
+                '📍 *Coordenadas:* ' . CoordenadasChatFormatter::formatar($rompimento['coordenadas'] ?? ''),
                 '📍 *Endereço:* ' . ($rompimento['localizacao_texto'] ?? '—'),
                 '🔑 *Código:* ' . ($rompimento['taskCode'] ?? '—'),
             ]),
@@ -405,7 +405,7 @@ class GoogleChatService
 
         $numeroOs = trim($task['numero_os'] ?? $task['ordem_servico'] ?? '') ?: '—';
         $regiao = trim($task['regiao'] ?? '') ?: '—';
-        $responsavel = trim($task['responsavel'] ?? '') ?: '—';
+        $responsavel = app(TecnicoChatMencaoService::class)->formatarResponsavel($task['responsavel'] ?? '');
         $taskCode = trim($task['taskCode'] ?? '') ?: (string) ($task['id'] ?? '—');
         $etiquetas = TrocaEtiquetaParser::formatarLocalizacaoLista($itens);
 
@@ -430,7 +430,7 @@ class GoogleChatService
     {
         $caixa = trim($task['cto'] ?? $task['setor'] ?? '') ?: '—';
         $endereco = trim($task['localizacao_texto'] ?? '') ?: '—';
-        $coordenadas = trim($task['coordenadas'] ?? '') ?: '—';
+        $coordenadas = CoordenadasChatFormatter::formatar($task['coordenadas'] ?? '');
         $osHubspot = trim($task['numero_os'] ?? $task['ordem_servico'] ?? '') ?: '—';
         $clientes = trim((string) ($task['clientesAfetados'] ?? '')) !== ''
             ? (string) $task['clientesAfetados']
@@ -453,10 +453,16 @@ class GoogleChatService
 
     private function montarMensagemOtimizacaoRede(array $task, ?string $enviadoPor): array
     {
+        $historicoService = app(OpTaskHistoricoService::class);
+        $mencaoService = app(TecnicoChatMencaoService::class);
         $titulo = trim($task['titulo'] ?? '') ?: '—';
         $localizacao = $this->formatarLocalizacao($task);
         $descricao = trim($task['descricao'] ?? '') ?: '—';
-        $enviado = trim($enviadoPor ?? '') ?: '—';
+        $operador = $historicoService->operadorInicioAtividade($task) ?? trim((string) ($enviadoPor ?? ''));
+        $enviado = $operador !== '' ? $mencaoService->mencionar($operador) : '—';
+        $duracao = $historicoService->formatarDuracaoAtiva(
+            $historicoService->calcularDuracaoAtivaMinutos($task)
+        );
         $id = trim($task['taskCode'] ?? '') ?: (string) ($task['id'] ?? '—');
 
         return [
@@ -467,6 +473,7 @@ class GoogleChatService
                 "📝 Descrição: {$descricao}",
                 '',
                 "👤 Enviado por: {$enviado}",
+                "⏱️ Duração ativa: {$duracao}",
                 '',
                 "🆔 {$id}",
             ]),
@@ -482,7 +489,7 @@ class GoogleChatService
 
         $coordenadas = trim($task['coordenadas'] ?? '');
         if ($coordenadas !== '') {
-            return $coordenadas;
+            return CoordenadasChatFormatter::formatar($coordenadas);
         }
 
         return '—';

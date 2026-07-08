@@ -23,8 +23,21 @@ class OpTaskObserver
 
     public function updated(OpTask $task): void
     {
+        $historicoAlterado = false;
+
         if ($task->wasChanged() && ! $task->wasChanged('historico')) {
             $this->historico->registrarAlteracoes($task, auth()->user()?->username);
+            $historicoAlterado = true;
+        }
+
+        if ($task->wasChanged('status') || $historicoAlterado) {
+            $minutos = $this->historico->calcularDuracaoAtivaMinutos($task);
+            if ((int) ($task->active_duration_minutes ?? 0) !== $minutos) {
+                OpTask::withoutEvents(function () use ($task, $minutos): void {
+                    $task->active_duration_minutes = $minutos;
+                    $task->saveQuietly();
+                });
+            }
         }
 
         $this->broadcastSafely($task, 'updated');

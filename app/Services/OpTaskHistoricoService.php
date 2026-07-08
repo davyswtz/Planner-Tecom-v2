@@ -147,6 +147,181 @@ class OpTaskHistoricoService
     return trim((string) ($eventos[0]['descricao'] ?? '')) ?: '—';
   }
 
+  /** @param array<string, mixed>|OpTask $task */
+  public function calcularDuracaoAtivaMinutos(array|OpTask $task): int
+  {
+    $dados = $task instanceof OpTask ? $task->toArray() : $task;
+    $eventos = $this->eventosCronologicos($dados);
+
+    if ($eventos === []) {
+      return max(0, (int) ($dados['active_duration_minutes'] ?? 0));
+    }
+
+    $totalSegundos = 0;
+    $emAndamentoDesde = null;
+
+    foreach ($eventos as $evento) {
+      $data = $this->parseDataEvento($evento['data'] ?? null);
+      if ($data === null) {
+        continue;
+      }
+
+      $tipo = (string) ($evento['tipo'] ?? '');
+
+      if ($tipo === 'criacao') {
+        if ($this->isEmAndamento($evento['para'] ?? '')) {
+          $emAndamentoDesde = $data;
+        }
+
+        continue;
+      }
+
+      if ($tipo !== 'status' && (($evento['campo'] ?? '') !== 'status')) {
+        continue;
+      }
+
+      $de = (string) ($evento['de'] ?? '');
+      $para = (string) ($evento['para'] ?? '');
+
+      if ($this->isEmAndamento($de) && ! $this->isEmAndamento($para) && $emAndamentoDesde !== null) {
+        $totalSegundos += max(0, $emAndamentoDesde->diffInSeconds($data));
+        $emAndamentoDesde = null;
+      }
+
+      if (! $this->isEmAndamento($de) && $this->isEmAndamento($para)) {
+        $emAndamentoDesde = $data;
+      }
+    }
+
+    if ($emAndamentoDesde !== null) {
+      $totalSegundos += max(0, $emAndamentoDesde->diffInSeconds(now()));
+    }
+
+    return max(0, (int) round($totalSegundos / 60));
+  }
+
+  /** @param array<string, mixed>|OpTask $task */
+  public function operadorInicioAtividade(array|OpTask $task): ?string
+  {
+    $dados = $task instanceof OpTask ? $task->toArray() : $task;
+
+    foreach ($this->eventosCronologicos($dados) as $evento) {
+      if (($evento['tipo'] ?? '') === 'criacao' && $this->isEmAndamento($evento['para'] ?? '')) {
+        $usuario = $this->normalizarUsuarioOperador($evento['usuario'] ?? null);
+        if ($usuario !== null) {
+          return $usuario;
+        }
+      }
+
+      $isStatusEvent = ($evento['tipo'] ?? '') === 'status'
+        || (($evento['campo'] ?? '') === 'status');
+
+      if (! $isStatusEvent || ! $this->isEmAndamento($evento['para'] ?? '')) {
+        continue;
+      }
+
+      $usuario = $this->normalizarUsuarioOperador($evento['usuario'] ?? null);
+      if ($usuario !== null) {
+        return $usuario;
+      }
+    }
+
+    return null;
+  }
+
+  /** @param array<string, mixed>|OpTask $task */
+  public function operadorInicioExibicao(array|OpTask $task, ?string $fallback = null): string
+  {
+    $usuario = $this->operadorInicioAtividade($task);
+    if ($usuario === null) {
+      $usuario = trim((string) $fallback);
+    }
+
+    if ($usuario === '') {
+      return '—';
+    }
+
+    try {
+      return app(TecnicoNomeResolver::class)->resolverOuOriginal($usuario)['tecnico'];
+    } catch (\Throwable) {
+      return $usuario;
+    }
+  }
+
+  public function formatarDuracaoAtiva(int $minutos): string
+  {
+    if ($minutos <= 0) {
+      return '—';
+    }
+
+    $horas = intdiv($minutos, 60);
+    $mins = $minutos % 60;
+
+    if ($horas > 0 && $mins > 0) {
+      return "{$horas}h {$mins}min";
+    }
+
+    if ($horas > 0) {
+      return "{$horas}h";
+    }
+
+    return "{$mins}min";
+  }
+
+  /** @param array<string, mixed> $task */
+  private function eventosCronologicos(array $task): array
+  {
+    $eventos = $this->parseEventos($task['historico'] ?? null);
+
+    if ($eventos === [] && filled($task['criadaEm'] ?? null)) {
+      $eventos[] = [
+        'data' => $this->normalizarDataLegado($task['criadaEm']),
+        'usuario' => 'Sistema',
+        'tipo' => 'criacao',
+        'descricao' => 'Criação da tarefa',
+        'campo' => null,
+        'de' => null,
+        'para' => trim((string) ($task['status'] ?? 'Criada')) ?: 'Criada',
+      ];
+    }
+
+    usort($eventos, function (array $a, array $b): int {
+      $dataA = $this->parseDataEvento($a['data'] ?? null)?->getTimestamp() ?? PHP_INT_MAX;
+      $dataB = $this->parseDataEvento($b['data'] ?? null)?->getTimestamp() ?? PHP_INT_MAX;
+
+      if ($dataA !== $dataB) {
+        return $dataA <=> $dataB;
+      }
+
+      $pesoA = ($a['tipo'] ?? '') === 'criacao' ? 0 : 1;
+      $pesoB = ($b['tipo'] ?? '') === 'criacao' ? 0 : 1;
+
+      return $pesoA <=> $pesoB;
+    });
+
+    return $eventos;
+  }
+
+  private function isEmAndamento(mixed $status): bool
+  {
+    return $this->normalizarStatusChave($status) === 'em andamento';
+  }
+
+  private function normalizarStatusChave(mixed $status): string
+  {
+    return strtolower(str_replace('_', ' ', trim((string) $status)));
+  }
+
+  private function normalizarUsuarioOperador(?string $usuario): ?string
+  {
+    $usuario = trim((string) $usuario);
+    if ($usuario === '' || $usuario === '—' || strcasecmp($usuario, 'Sistema') === 0) {
+      return null;
+    }
+
+    return $usuario;
+  }
+
   /** @param array<string, mixed> $dados */
   private function adicionarEvento(OpTask $task, array $dados, ?string $usuario = null): void
   {

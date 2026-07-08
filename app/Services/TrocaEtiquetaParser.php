@@ -298,7 +298,7 @@ class TrocaEtiquetaParser
                 $detalhes[] = $endereco;
             }
             if ($coordenadas !== '') {
-                $detalhes[] = "({$coordenadas})";
+                $detalhes[] = CoordenadasChatFormatter::formatarEntreParenteses($coordenadas);
             }
 
             $localizacao = $detalhes !== [] ? implode(' ', $detalhes) : '—';
@@ -323,7 +323,7 @@ class TrocaEtiquetaParser
             $coordenadas = trim($item['coordenadas']);
             $ordem = $indice + 1;
             $linhas[] = $coordenadas !== ''
-                ? "{$ordem}. 📍 *{$item['nome']}:* {$coordenadas}"
+                ? "{$ordem}. 📍 *{$item['nome']}:* " . CoordenadasChatFormatter::formatar($coordenadas)
                 : "{$ordem}. 📍 *{$item['nome']}:* —";
         }
 

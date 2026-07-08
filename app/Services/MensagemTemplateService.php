@@ -142,6 +142,10 @@ class MensagemTemplateService
             return $this->dadosExemploOrdemServico();
         }
 
+        if ($categoria === 'manutencao-corretiva') {
+            return $this->dadosExemploManutencaoCorretiva();
+        }
+
         return $this->dadosExemploPadrao();
     }
 
@@ -170,14 +174,38 @@ class MensagemTemplateService
         ];
     }
 
+    private function dadosExemploManutencaoCorretiva(): array
+    {
+        return array_merge($this->dadosExemploPadrao(), [
+            'categoria' => 'manutencao-corretiva',
+            'titulo' => 'Manutenção em poste — Centro',
+            'setor' => 'Poste P-042',
+            'elemento' => 'Poste P-042',
+            'nome_cliente' => 'Maria Souza',
+            'prioridade' => 'Média',
+        ]);
+    }
+
     private function dadosExemploPadrao(): array
     {
         $resumoOs = app(OsResumoChatService::class)->formatarBloco([
             'os_total' => 4,
-            'os_finalizadas' => 4,
+            'os_finalizadas' => 3,
             'por_tecnico' => [
-                'joao.silva' => 2,
-                'maria.santos' => 2,
+                'guilherme.silva' => [
+                    'quantidade' => 2,
+                    'atividades' => [
+                        ['sequencia' => 1, 'titulo' => 'Encaixe Y1212', 'colaborativa' => false],
+                        ['sequencia' => 2, 'titulo' => 'Lançamento 12FO Y1212 a Y1214', 'colaborativa' => true],
+                    ],
+                ],
+                'leyzon.santos' => [
+                    'quantidade' => 2,
+                    'atividades' => [
+                        ['sequencia' => 2, 'titulo' => 'Lançamento 12FO Y1212 a Y1214', 'colaborativa' => true],
+                        ['sequencia' => 3, 'titulo' => 'Encaixe Y1214', 'colaborativa' => false],
+                    ],
+                ],
             ],
         ]);
 
@@ -211,10 +239,55 @@ class MensagemTemplateService
             'active_duration_minutes' => 180,
             'parent_task_id' => null,
             'is_parent_task' => true,
-            'historico' => 'Criada → Em andamento',
+            'historico' => json_encode([
+                'eventos' => [
+                    [
+                        'data' => '2026-06-01T09:00:00-03:00',
+                        'usuario' => 'guilherme.silva',
+                        'tipo' => 'criacao',
+                        'descricao' => 'Criou a tarefa com status Criada',
+                        'campo' => null,
+                        'de' => null,
+                        'para' => 'Criada',
+                    ],
+                    [
+                        'data' => '2026-06-01T09:15:00-03:00',
+                        'usuario' => 'guilherme.silva',
+                        'tipo' => 'status',
+                        'descricao' => 'Moveu de Criada para Em andamento',
+                        'campo' => 'status',
+                        'de' => 'Criada',
+                        'para' => 'Em andamento',
+                    ],
+                    [
+                        'data' => '2026-06-29T11:45:00-03:00',
+                        'usuario' => 'maria.santos',
+                        'tipo' => 'status',
+                        'descricao' => 'Moveu de Em andamento para Finalizada',
+                        'campo' => 'status',
+                        'de' => 'Em andamento',
+                        'para' => 'Finalizada',
+                    ],
+                ],
+            ], JSON_UNESCAPED_UNICODE),
             'os_total' => '4',
-            'os_finalizadas' => '4',
-            'os_resumo_tecnicos' => "• joao.silva — 2 OS\n• maria.santos — 2 OS",
+            'os_finalizadas' => '3',
+            'os_resumo_tecnicos' => app(OsResumoChatService::class)->formatarTecnicos([
+                'guilherme.silva' => [
+                    'quantidade' => 2,
+                    'atividades' => [
+                        ['sequencia' => 1, 'titulo' => 'Encaixe Y1212', 'colaborativa' => false],
+                        ['sequencia' => 2, 'titulo' => 'Lançamento 12FO Y1212 a Y1214', 'colaborativa' => true],
+                    ],
+                ],
+                'leyzon.santos' => [
+                    'quantidade' => 2,
+                    'atividades' => [
+                        ['sequencia' => 2, 'titulo' => 'Lançamento 12FO Y1212 a Y1214', 'colaborativa' => true],
+                        ['sequencia' => 3, 'titulo' => 'Encaixe Y1214', 'colaborativa' => false],
+                    ],
+                ],
+            ]),
             'os_resumo' => $resumoOs,
             'os_sequencia' => "1. Abertura de vala\n2. Instalação de CTO\n3. Fusão de fibras\n4. Teste de sinal",
             'os_lista' => "1. Abertura de vala\n2. Instalação de CTO\n3. Fusão de fibras\n4. Teste de sinal",
@@ -316,6 +389,10 @@ class MensagemTemplateService
         }
 
         $setor = trim((string) ($task['setor'] ?? $task['cto'] ?? ''));
+        $elemento = trim((string) ($task['elemento'] ?? ''));
+        if ($elemento === '') {
+            $elemento = $setor;
+        }
         $localizacaoTexto = trim((string) ($task['localizacao_texto'] ?? ''));
         $coordenadas = trim((string) ($task['coordenadas'] ?? ''));
         $localizacao = $localizacaoTexto !== '' ? $localizacaoTexto : $coordenadas;
@@ -359,6 +436,9 @@ class MensagemTemplateService
         );
 
         $sequenciaOs = $this->resolverSequenciaOs($task);
+        $historicoService = app(OpTaskHistoricoService::class);
+        $duracaoMinutos = $historicoService->calcularDuracaoAtivaMinutos($task);
+        $mencaoService = app(TecnicoChatMencaoService::class);
 
         return [
             'id' => trim((string) ($task['id'] ?? '')) ?: '—',
@@ -370,14 +450,17 @@ class MensagemTemplateService
             'status_anterior' => trim((string) ($statusAnterior ?? '')) ?: '—',
             'status_novo' => $statusAtual,
             'setor' => $setor !== '' ? $setor : '—',
+            'elemento' => $elemento !== '' ? $elemento : '—',
             'cto' => $setor !== '' ? $setor : '—',
             'regiao' => trim((string) ($task['regiao'] ?? '')) ?: '—',
-            'responsavel' => trim((string) ($task['responsavel'] ?? '')) ?: '—',
+            'responsavel' => $mencaoService->formatarResponsavel($task['responsavel'] ?? ''),
             'prioridade' => trim((string) ($task['prioridade'] ?? '')) ?: '—',
             'prazo' => $this->formatarValorData($task['prazo'] ?? null),
             'clientes_afetados' => $clientes,
-            'coordenadas' => $coordenadas !== '' ? $coordenadas : '—',
-            'localizacao' => $localizacao !== '' ? $localizacao : '—',
+            'coordenadas' => $coordenadas !== '' ? CoordenadasChatFormatter::formatar($coordenadas) : '—',
+            'localizacao' => $localizacao !== ''
+                ? ($localizacaoTexto !== '' ? $localizacao : CoordenadasChatFormatter::formatar($coordenadas))
+                : '—',
             'localizacao_texto' => $localizacaoTexto !== '' ? $localizacaoTexto : '—',
             'descricao' => trim((string) ($task['descricao'] ?? '')) ?: '—',
             'numero_os' => $numeroOs !== '' ? $numeroOs : '—',
@@ -393,9 +476,7 @@ class MensagemTemplateService
             'assinada_em' => $this->formatarValorData($task['assinada_em'] ?? null, true),
             'criada_em' => $this->formatarValorData($task['criadaEm'] ?? $task['created_at'] ?? null, true),
             'atualizada_em' => $this->formatarValorData($task['updated_at'] ?? null, true),
-            'duracao_ativa' => isset($task['active_duration_minutes']) && $task['active_duration_minutes'] !== ''
-                ? (string) $task['active_duration_minutes']
-                : '—',
+            'duracao_ativa' => $historicoService->formatarDuracaoAtiva($duracaoMinutos),
             'parent_task_id' => isset($task['parent_task_id']) && $task['parent_task_id'] !== null && $task['parent_task_id'] !== ''
                 ? (string) $task['parent_task_id']
                 : '—',
@@ -406,7 +487,9 @@ class MensagemTemplateService
             'os_tipo' => $osTipo,
             'is_parent_task' => $this->formatarBooleano($task['is_parent_task'] ?? null),
             'historico' => app(OpTaskHistoricoService::class)->resumoParaTemplate($task['historico'] ?? null),
-            'enviado_por' => trim((string) ($enviadoPor ?? '')) ?: '—',
+            'enviado_por' => ($operador = $historicoService->operadorInicioAtividade($task) ?? trim((string) ($enviadoPor ?? ''))) !== ''
+                ? $mencaoService->mencionar($operador)
+                : '—',
             'etiquetas' => TrocaEtiquetaParser::formatarNomes($etiquetasItens),
             'etiquetas_localizacao' => TrocaEtiquetaParser::formatarLocalizacaoLista($etiquetasItens),
             'etiquetas_coordenadas' => TrocaEtiquetaParser::formatarCoordenadasLista($etiquetasItens),

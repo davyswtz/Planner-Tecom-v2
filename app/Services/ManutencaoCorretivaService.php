@@ -152,8 +152,9 @@ class ManutencaoCorretivaService
 
         if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
             $tarefaAtualizada = $manutencao->fresh();
+            $payload = $this->normalizarParaExibicao($tarefaAtualizada);
             $mensagem = $this->googleChatService->montarMensagemStatus(
-                $tarefaAtualizada->toArray(),
+                $payload,
                 $statusAnterior,
                 $dados['status']
             );

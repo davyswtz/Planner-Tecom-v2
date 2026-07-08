@@ -7,31 +7,90 @@ use Illuminate\Support\Collection;
 
 class OsResumoChatService
 {
-    /** @return array{os_total: int, os_finalizadas: int, por_tecnico: array<string, int>} */
+    /**
+     * @return array{
+     *     os_total: int,
+     *     os_finalizadas: int,
+     *     por_tecnico: array<string, array{quantidade: int, atividades: array<int, array{sequencia: int, titulo: string, colaborativa: bool}>}>
+     * }
+     */
     public function calcular(int $parentTaskId): array
     {
         $osList = $this->listarOsVinculadas($parentTaskId);
         $finalizadas = $osList->filter(fn (OpTask $os) => $this->osEstaFinalizada($os->status));
 
         $porTecnico = [];
-        foreach ($finalizadas as $os) {
+
+        foreach ($osList->values() as $indice => $os) {
+            if (! $this->osEstaFinalizada($os->status)) {
+                continue;
+            }
+
+            $sequencia = (int) ($os->sequencia ?? 0);
+            if ($sequencia <= 0) {
+                $sequencia = $indice + 1;
+            }
+
+            $titulo = $this->tituloOsLimpo($os->titulo);
+            if ($titulo === '') {
+                $titulo = trim((string) ($os->taskCode ?? '')) ?: "OS #{$os->id}";
+            }
+
             $tecnicos = OpTask::parseResponsaveis($os->responsavel);
             if ($tecnicos === []) {
                 $tecnicos = ['Sem técnico'];
             }
 
+            $atividade = [
+                'sequencia' => $sequencia,
+                'titulo' => $titulo,
+                'colaborativa' => count($tecnicos) > 1,
+            ];
+
             foreach ($tecnicos as $tecnico) {
-                $nome = trim((string) $tecnico) !== '' ? trim((string) $tecnico) : 'Sem técnico';
-                $porTecnico[$nome] = ($porTecnico[$nome] ?? 0) + 1;
+                $chave = trim((string) $tecnico) !== '' ? trim((string) $tecnico) : 'Sem técnico';
+
+                if (! isset($porTecnico[$chave])) {
+                    $porTecnico[$chave] = [
+                        'quantidade' => 0,
+                        'atividades' => [],
+                    ];
+                }
+
+                $porTecnico[$chave]['atividades'][] = $atividade;
+                $porTecnico[$chave]['quantidade']++;
             }
         }
 
-        arsort($porTecnico);
+        foreach ($porTecnico as &$dadosTecnico) {
+            usort(
+                $dadosTecnico['atividades'],
+                fn (array $a, array $b) => $a['sequencia'] <=> $b['sequencia']
+            );
+        }
+        unset($dadosTecnico);
+
+        $chaves = array_keys($porTecnico);
+        usort($chaves, function (string $a, string $b) use ($porTecnico): int {
+            $quantidadeA = $porTecnico[$a]['quantidade'];
+            $quantidadeB = $porTecnico[$b]['quantidade'];
+
+            if ($quantidadeA !== $quantidadeB) {
+                return $quantidadeB <=> $quantidadeA;
+            }
+
+            return strcasecmp($this->nomeExibicao($a), $this->nomeExibicao($b));
+        });
+
+        $porTecnicoOrdenado = [];
+        foreach ($chaves as $chave) {
+            $porTecnicoOrdenado[$chave] = $porTecnico[$chave];
+        }
 
         return [
             'os_total' => $osList->count(),
             'os_finalizadas' => $finalizadas->count(),
-            'por_tecnico' => $porTecnico,
+            'por_tecnico' => $porTecnicoOrdenado,
         ];
     }
 
@@ -87,8 +146,6 @@ class OsResumoChatService
 
         $listaTexto = implode("\n", $linhas);
 
-        // Tarefa pai: {os_sequencia} lista as OS (comportamento esperado no template da pai).
-        // OS filha: {os_sequencia} é só a posição (1, 2, 3…).
         return [
             'os_sequencia' => $sequenciaAtual ?? $listaTexto,
             'os_lista' => $listaTexto,
@@ -104,30 +161,27 @@ class OsResumoChatService
     {
         $total = (int) ($dados['os_total'] ?? 0);
         $finalizadas = (int) ($dados['os_finalizadas'] ?? 0);
-        $porTecnico = $dados['por_tecnico'] ?? [];
+        $porTecnico = $this->normalizarPorTecnico($dados['por_tecnico'] ?? []);
 
         if ($total === 0) {
             return implode("\n", [
-                '📊 *Resumo de OS*',
+                '📊 *RESUMO DE OS*',
                 '━━━━━━━━━━━━━━━━━━━━',
                 '📋 Nenhuma OS vinculada a esta tarefa.',
             ]);
         }
 
         $linhas = [
-            '📊 *Resumo de OS*',
+            '📊 *RESUMO DE OS*',
             '━━━━━━━━━━━━━━━━━━━━',
-            "📋 *Total de OS:* {$total}",
-            "✅ *Finalizadas:* {$finalizadas}",
+            "📋 *Total da Tarefa:* {$total}",
+            "✅ *Finalizadas (NicOn):* {$finalizadas}",
         ];
 
         if ($porTecnico !== []) {
             $linhas[] = '';
-            $linhas[] = '👷 *Por técnico:*';
-            foreach ($porTecnico as $nome => $quantidade) {
-                $rotulo = $quantidade === 1 ? '1 OS' : "{$quantidade} OS";
-                $linhas[] = "• *{$nome}* — {$rotulo}";
-            }
+            $linhas[] = '👷 *PRODUTIVIDADE INDIVIDUAL*';
+            $linhas = array_merge($linhas, $this->formatarLinhasTecnicos($porTecnico));
         } elseif ($finalizadas === 0) {
             $linhas[] = '';
             $linhas[] = '👷 Nenhuma OS finalizada registrada.';
@@ -136,20 +190,18 @@ class OsResumoChatService
         return implode("\n", $linhas);
     }
 
-    /** @param array<string, int> $porTecnico */
+    /**
+     * @param array<string, array{quantidade: int, atividades: array<int, array{sequencia: int, titulo: string, colaborativa: bool}>}> $porTecnico
+     */
     public function formatarTecnicos(array $porTecnico): string
     {
+        $porTecnico = $this->normalizarPorTecnico($porTecnico);
+
         if ($porTecnico === []) {
             return '—';
         }
 
-        $linhas = [];
-        foreach ($porTecnico as $nome => $quantidade) {
-            $rotulo = $quantidade === 1 ? '1 OS' : "{$quantidade} OS";
-            $linhas[] = "• {$nome} — {$rotulo}";
-        }
-
-        return implode("\n", $linhas);
+        return implode("\n", $this->formatarLinhasTecnicos($porTecnico));
     }
 
     public function statusDisparaResumo(string $status): bool
@@ -176,6 +228,80 @@ class OsResumoChatService
             ->orderBy('criadaEm')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * @param array<string, array{quantidade: int, atividades: array<int, array{sequencia: int, titulo: string, colaborativa: bool}>}> $porTecnico
+     * @return list<string>
+     */
+    private function formatarLinhasTecnicos(array $porTecnico): array
+    {
+        $linhas = [];
+        $indiceTecnico = 0;
+        $totalTecnicos = count($porTecnico);
+
+        foreach ($porTecnico as $chave => $info) {
+            $nome = app(TecnicoChatMencaoService::class)->mencionar($chave);
+            $quantidade = (int) ($info['quantidade'] ?? 0);
+            $rotulo = $quantidade === 1 ? '1 OS' : "{$quantidade} OS";
+
+            $linhas[] = "• {$nome} — {$rotulo}";
+
+            foreach ($info['atividades'] ?? [] as $atividade) {
+                $sequencia = (int) ($atividade['sequencia'] ?? 0);
+                $titulo = trim((string) ($atividade['titulo'] ?? '')) ?: '—';
+                $sufixo = ! empty($atividade['colaborativa']) ? ' 🤝' : '';
+
+                $linhas[] = "↳ {$sequencia}° Atividade - {$titulo}{$sufixo}";
+            }
+
+            $indiceTecnico++;
+            if ($indiceTecnico < $totalTecnicos) {
+                $linhas[] = '';
+            }
+        }
+
+        return $linhas;
+    }
+
+    /**
+     * Aceita o formato legado (contagem inteira) e o formato detalhado.
+     *
+     * @param array<string, mixed> $porTecnico
+     * @return array<string, array{quantidade: int, atividades: array<int, array{sequencia: int, titulo: string, colaborativa: bool}>}>
+     */
+    private function normalizarPorTecnico(array $porTecnico): array
+    {
+        $normalizado = [];
+
+        foreach ($porTecnico as $chave => $valor) {
+            if (is_array($valor)) {
+                $normalizado[$chave] = [
+                    'quantidade' => (int) ($valor['quantidade'] ?? 0),
+                    'atividades' => is_array($valor['atividades'] ?? null) ? $valor['atividades'] : [],
+                ];
+
+                continue;
+            }
+
+            $normalizado[$chave] = [
+                'quantidade' => (int) $valor,
+                'atividades' => [],
+            ];
+        }
+
+        return $normalizado;
+    }
+
+    private function nomeExibicao(string $username): string
+    {
+        try {
+            return app(TecnicoNomeResolver::class)->resolverOuOriginal($username)['tecnico'];
+        } catch (\Throwable) {
+            $nome = trim($username);
+
+            return $nome !== '' ? $nome : 'Sem técnico';
+        }
     }
 
     private function osEstaFinalizada(?string $status): bool

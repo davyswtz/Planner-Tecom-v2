@@ -66,14 +66,15 @@ public function __construct(private OpTaskService $opTaskService
         }
         $rompimento->update($dados);
         if (isset($dados['status']) && $dados['status'] !== $statusAnterior) {
+            $tarefaAtualizada = $rompimento->fresh();
             $mensagem = $this->googleChatService->montarMensagemStatus(
-                $rompimento->toArray(),
+                $tarefaAtualizada->toArray(),
                 $statusAnterior,
                 $dados['status']
             );
             $googleChatService = $this->googleChatService;
-            app()->terminating(function () use ($rompimento, $mensagem, $googleChatService, $dados) {
-                $googleChatService->enviarNotificacao($rompimento, $mensagem, $dados['status']);
+            app()->terminating(function () use ($tarefaAtualizada, $mensagem, $googleChatService, $dados) {
+                $googleChatService->enviarNotificacao($tarefaAtualizada, $mensagem, $dados['status']);
             });
         }
         return $rompimento->fresh();

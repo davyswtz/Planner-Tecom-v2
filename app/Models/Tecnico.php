@@ -12,5 +12,6 @@ class Tecnico extends Model
         'nome',
         'username',
         'regiao',
+        'google_chat_id',
     ];
 }

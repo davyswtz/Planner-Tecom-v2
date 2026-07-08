@@ -252,6 +252,11 @@
     font-family: ui-monospace, monospace; font-size: 12px;
     background: var(--gray-200); padding: 1px 4px; border-radius: 3px;
   }
+  .mensagens-preview a { color: #1a73e8; text-decoration: underline; }
+  .mensagens-preview .msg-chat-mention {
+    color: #1a73e8; font-weight: 600; background: #e8f0fe;
+    padding: 0 4px; border-radius: 4px;
+  }
   .mensagens-preview-loading { color: var(--gray-500); font-style: italic; }
 
   .mensagens-feedback {
@@ -386,6 +391,8 @@
   [data-theme="dark"] .mensagens-btn,
   [data-theme="dark"] .variaveis-popover-search { background: #12151a; border-color: #1e2228; color: #c9d1d9; }
   [data-theme="dark"] .mensagens-preview { background: #0a0c10; border-color: #1e2228; color: #c9d1d9; }
+  [data-theme="dark"] .mensagens-preview a { color: #58a6ff; }
+  [data-theme="dark"] .mensagens-preview .msg-chat-mention { color: #58a6ff; background: #0d2340; }
   [data-theme="dark"] .emoji-popover,
   [data-theme="dark"] .variaveis-popover { background: #0a0c10; border-color: #1e2228; }
   [data-theme="dark"] .msg-save-mobile { background: #050608; border-color: #1e2228; }

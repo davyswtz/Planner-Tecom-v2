@@ -6,7 +6,7 @@ const GRUPOS_VARIAVEIS = [
   { titulo: 'Identificação', keys: ['task_code', 'titulo', 'id', 'categoria', 'categoria_label', 'os_tipo', 'numero_os', 'ordem_servico', 'etiquetas'] },
   { titulo: 'Etiquetas', keys: ['etiquetas_localizacao', 'etiquetas_coordenadas'] },
   { titulo: 'Status', keys: ['status', 'status_anterior', 'status_novo', 'historico'] },
-  { titulo: 'Localização', keys: ['regiao', 'setor', 'cto', 'coordenadas', 'localizacao', 'localizacao_texto'] },
+  { titulo: 'Localização', keys: ['regiao', 'setor', 'elemento', 'cto', 'coordenadas', 'localizacao', 'localizacao_texto'] },
   { titulo: 'Operação', keys: ['responsavel', 'prioridade', 'prazo', 'clientes_afetados', 'descricao', 'sub_processo'] },
   { titulo: 'Cliente', keys: ['nome_cliente', 'protocolo'] },
   { titulo: 'Datas', keys: ['criada_em', 'atualizada_em', 'data_entrada', 'data_instalacao', 'assinada_em', 'assinada_por'] },
@@ -293,6 +293,8 @@ function atualizarContador(el) {
 function renderizarFormatoGoogleChat(texto) {
   const safe = esc(texto);
   return safe
+    .replace(/&lt;users\/([0-9]+)&gt;/g, '<span class="msg-chat-mention">@usuário</span>')
+    .replace(/&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>')
     .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
     .replace(/_([^_\n]+)_/g, '<em>$1</em>')
     .replace(/~([^~\n]+)~/g, '<s>$1</s>')
