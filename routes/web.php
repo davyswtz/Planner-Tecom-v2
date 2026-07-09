@@ -24,7 +24,10 @@ Route::get('/tarefas', function () {
 });
 
 Route::get('/rompimento', function () {
-    return view('rompimento');
+    return view('rompimento', [
+        'cidadesNicon' => config('services.nicon.cidades', []),
+        'regiaoCidadeNicon' => config('services.nicon.regiao_cidade', []),
+    ]);
 });
 
 Route::get('/troca-de-poste', function () {

@@ -146,6 +146,8 @@ Route::middleware(["auth:sanctum", "throttle:180,1"])->group(function () {
     ])->whereNumber("id");
     Route::get("ordem-servico", [OrdemServicoController::class, "index"]);
     Route::get("usuarios/opcoes", [UsuarioController::class, "opcoes"]);
+    Route::get("nicon/caixas", [NiconController::class, "listarCaixas"]);
+    Route::get("nicon/caixa/resolver", [NiconController::class, "resolverCaixa"]);
     Route::post("nicon/sinal-caixa", [
         NiconController::class,
         "buscarSinalCaixa",

@@ -93,6 +93,54 @@ class NiconController extends Controller
         }
     }
 
+    public function listarCaixas(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id_cidade' => ['required', 'integer', 'min:1'],
+        ]);
+
+        try {
+            $caixas = $this->niconWeb->listarCaixasDaCidade((int) $request->input('id_cidade'));
+
+            return response()->json([
+                'message' => 'Caixas da cidade carregadas com sucesso.',
+                'caixas' => $caixas,
+                'total' => count($caixas),
+            ]);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 502);
+        }
+    }
+
+    public function resolverCaixa(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id_cidade' => ['required', 'integer', 'min:1'],
+            'termo' => ['required', 'string', 'max:120'],
+        ]);
+
+        try {
+            $caixa = $this->niconWeb->resolverCaixaComClientes(
+                (int) $request->input('id_cidade'),
+                $request->string('termo')->toString()
+            );
+
+            if ($caixa === null) {
+                return response()->json([
+                    'message' => 'Caixa não encontrada na cidade informada.',
+                    'caixa' => null,
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Caixa localizada com sucesso.',
+                'caixa' => $caixa,
+            ]);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
     public function buscarSinalAtualCliente(Request $request): JsonResponse
     {
         $request->validate([

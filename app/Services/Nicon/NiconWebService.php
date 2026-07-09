@@ -180,7 +180,8 @@ class NiconWebService
         $ttl = config('services.nicon.caixas_cache_minutes', 360);
 
         return Cache::remember(
-            "nicon_caixas_lista_{$idCidade}",
+            // v2: inclui num_clientes no payload
+            "nicon_caixas_lista_v2_{$idCidade}",
             now()->addMinutes($ttl),
             function () use ($idCidade) {
                 $response = $this->getInfra('/infra/buscar-caixas-com-cliente', [
@@ -190,6 +191,38 @@ class NiconWebService
                 return $this->extrairListaCaixas($response);
             }
         );
+    }
+
+    /**
+     * Resolve caixa na cidade e retorna também a quantidade de clientes.
+     *
+     * @return array{id_caixa_optica: int, nome: string, num_clientes: int}|null
+     */
+    public function resolverCaixaComClientes(int $idCidade, string $nomeCaixa): ?array
+    {
+        $caixa = $this->resolverCaixaOptica($idCidade, $nomeCaixa);
+
+        if ($caixa === null) {
+            return null;
+        }
+
+        $id = (int) $caixa['id_caixa_optica'];
+
+        foreach ($this->listarCaixasDaCidade($idCidade) as $item) {
+            if ((int) ($item['id_caixa_optica'] ?? 0) === $id) {
+                return [
+                    'id_caixa_optica' => $id,
+                    'nome' => (string) ($caixa['nome'] ?? $item['nome'] ?? ''),
+                    'num_clientes' => max(0, (int) ($item['num_clientes'] ?? 0)),
+                ];
+            }
+        }
+
+        return [
+            'id_caixa_optica' => $id,
+            'nome' => (string) ($caixa['nome'] ?? ''),
+            'num_clientes' => 0,
+        ];
     }
 
     /**
@@ -913,11 +946,10 @@ class NiconWebService
                     continue;
                 }
 
-                $lista[] = [
-                    'nome' => (string) ($item['nome'] ?? $item['sigla'] ?? $chave),
-                    'sigla' => (string) ($item['sigla'] ?? $item['nome'] ?? $chave),
-                    'id_caixa_optica' => (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0),
-                ];
+                $mapeado = $this->mapearItemCaixaLista($item, is_string($chave) ? $chave : null);
+                if ($mapeado !== null) {
+                    $lista[] = $mapeado;
+                }
             }
 
             return $lista;
@@ -940,15 +972,9 @@ class NiconWebService
                 continue;
             }
 
-            $id = (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0);
-            $nome = (string) ($item['nome'] ?? $item['sigla'] ?? $item['descricao'] ?? '');
-
-            if ($id > 0 && $nome !== '') {
-                $lista[] = [
-                    'nome' => $nome,
-                    'sigla' => (string) ($item['sigla'] ?? $nome),
-                    'id_caixa_optica' => $id,
-                ];
+            $mapeado = $this->mapearItemCaixaLista($item);
+            if ($mapeado !== null) {
+                $lista[] = $mapeado;
             }
         }
 
@@ -968,19 +994,34 @@ class NiconWebService
                 continue;
             }
 
-            $id = (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0);
-            $nome = (string) ($item['nome'] ?? $item['sigla'] ?? '');
-
-            if ($id > 0 && $nome !== '') {
-                $lista[] = [
-                    'nome' => $nome,
-                    'sigla' => (string) ($item['sigla'] ?? $nome),
-                    'id_caixa_optica' => $id,
-                ];
+            $mapeado = $this->mapearItemCaixaLista($item);
+            if ($mapeado !== null) {
+                $lista[] = $mapeado;
             }
         }
 
         return $lista;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>|null
+     */
+    private function mapearItemCaixaLista(array $item, ?string $nomeFallback = null): ?array
+    {
+        $id = (int) ($item['id_caixa_optica'] ?? $item['id'] ?? 0);
+        $nome = (string) ($item['nome'] ?? $item['sigla'] ?? $nomeFallback ?? '');
+
+        if ($id <= 0 || $nome === '') {
+            return null;
+        }
+
+        return [
+            'nome' => $nome,
+            'sigla' => (string) ($item['sigla'] ?? $nome),
+            'id_caixa_optica' => $id,
+            'num_clientes' => max(0, (int) ($item['num_clientes'] ?? 0)),
+        ];
     }
 
     private function normalizarNomeCaixa(string $nome): string

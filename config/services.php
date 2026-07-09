@@ -59,6 +59,11 @@ return [
         'sinal_tentativas' => max(1, (int) env('NICON_SINAL_TENTATIVAS', 3)),
         'cidades' => [
             1659 => 'Governador Valadares',
+            1701 => 'Ipatinga',
+        ],
+        'regiao_cidade' => [
+            'Goval' => 1659,
+            'Vale do Aço' => 1701,
         ],
     ],
 

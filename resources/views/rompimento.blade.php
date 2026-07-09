@@ -363,8 +363,8 @@
       <div class="os-field">
         <label class="os-label">Elemento(s)</label>
         <input type="text" id="input-cto" placeholder="Ex: GVA1210" class="os-input"
-          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value)"/>
-        <p class="input-hint">Coordenadas preenchidas automaticamente</p>
+          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value, 'input-coords', 'endereco-box', 'input-clientes')"/>
+        <p class="input-hint">Nicon (GV/Ipatinga) com fallback no JSON — coordenadas automáticas quando disponíveis</p>
       </div>
       <div class="os-field">
         <label class="os-label">Tipo de rompimento</label>
@@ -378,7 +378,7 @@
       </div>
       <div class="os-field">
         <label class="os-label">Região</label>
-        <select id="input-regiao" class="os-input">
+        <select id="input-regiao" class="os-input" onchange="reprocessarBuscaCtoAtiva()">
           <option value="">Selecione...</option>
           <option>Goval</option>
           <option>Vale do Aço</option>
@@ -392,6 +392,7 @@
       <div class="os-field">
         <label class="os-label">Cliente(s) afetado(s)</label>
         <input type="number" id="input-clientes" placeholder="0" min="0" class="os-input"/>
+        <div id="preview-clientes-afetados" class="input-hint" style="margin-top:6px;display:none"></div>
       </div>
     </div>
 
@@ -901,11 +902,85 @@ document.addEventListener('keydown', function(e) {
   }
 
   // ─── CTOs ───
+  const CIDADES_NICON = @json($cidadesNicon ?? []);
+  const REGIAO_CIDADE_NICON = @json($regiaoCidadeNicon ?? []);
   const CTO_SOURCES = [
     '/json/cto-gv-viabilidade.json',
     '/json/cto-ipatinga-viabilidade.json',
   ];
   let CTOs = [];
+  let buscarCtoSeq = 0;
+
+  function idsCidadesNicon() {
+    return Object.keys(CIDADES_NICON).map(Number).filter(id => id > 0);
+  }
+
+  function obterRegiaoAtiva(campoClientes = null) {
+    const isEdicao = campoClientes === 'campo-clientes';
+    const regiaoEl = isEdicao
+      ? campoValorEl('campo-regiao')
+      : document.getElementById('input-regiao');
+
+    return regiaoEl?.value?.trim() || '';
+  }
+
+  function resolverIdsCidadeNicon(campoClientes = null) {
+    const regiao = obterRegiaoAtiva(campoClientes);
+    const preferida = REGIAO_CIDADE_NICON[regiao] ?? null;
+    const todas = idsCidadesNicon();
+
+    if (preferida && todas.includes(Number(preferida))) {
+      return [Number(preferida), ...todas.filter(id => id !== Number(preferida))];
+    }
+
+    return todas;
+  }
+
+  async function buscarCaixaNiconApi(termo, campoClientes = null) {
+    const token = localStorage.getItem('planner_token');
+    if (!token || !termo || termo.trim().length < 3) return null;
+
+    for (const idCidade of resolverIdsCidadeNicon(campoClientes)) {
+      try {
+        const res = await fetch(
+          `/api/nicon/caixa/resolver?id_cidade=${idCidade}&termo=${encodeURIComponent(termo.trim())}`,
+          {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Accept': 'application/json',
+            },
+          },
+        );
+
+        if (res.status === 404) continue;
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        if (data.caixa) {
+          return { ...data.caixa, id_cidade: idCidade };
+        }
+      } catch (e) {
+        console.warn(`Erro ao resolver caixa no Nicon (cidade ${idCidade}):`, e);
+      }
+    }
+
+    return null;
+  }
+
+  function reprocessarBuscaCtoAtiva() {
+    const inputCriar = document.getElementById('input-cto');
+    if (inputCriar?.value?.trim()) {
+      void buscarCTO(inputCriar.value, 'input-coords', 'endereco-box', 'input-clientes');
+      return;
+    }
+
+    const inputEditar = campoValorEl('campo-cto');
+    if (inputEditar?.value?.trim()) {
+      void buscarCTO(inputEditar.value, 'campo-coordenadas', 'campo-endereco', 'campo-clientes');
+    }
+  }
+
+  window.reprocessarBuscaCtoAtiva = reprocessarBuscaCtoAtiva;
 
   async function carregarCTOs() {
     for (const url of CTO_SOURCES) {
@@ -942,26 +1017,134 @@ document.addEventListener('keydown', function(e) {
     return el.querySelector('input, textarea, select');
   }
 
-  function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box') {
-    const termo = valor.trim().toUpperCase();
-    if (termo.length < 3) {
-      const elCoords = campoValorEl(campoCoords);
-      if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'Gerado pelas coordenadas...');
-      return;
-    }
-    const encontrada = CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo);
-    if (encontrada) {
-      const elCoords = campoValorEl(campoCoords);
-      if (elCoords) elCoords.value = `${encontrada.lat}, ${encontrada.lng}`;
-      setField(campoEndereco, 'Buscando endereço...');
-      buscarEndereco(encontrada.lat, encontrada.lng, campoEndereco);
+  function normalizarQtdClientes(valor) {
+    const n = Number(String(valor ?? '').trim());
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.trunc(n));
+  }
+
+  function atualizarPreviewClientesAfetados(valor, previewId) {
+    const qtd = normalizarQtdClientes(valor);
+    const el = document.getElementById(previewId);
+    if (!el) return;
+    if (qtd > 0) {
+      el.style.display = 'block';
+      el.textContent = `👥 ${qtd} cliente(s) afetado(s)`;
     } else {
-      const elCoords = campoValorEl(campoCoords);
-      if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
+      el.style.display = 'none';
+      el.textContent = '';
     }
   }
+
+  function atualizarBadgeClientesNoCard(rompimentoId, qtd) {
+    const card = document.querySelector(`.kcard[data-id="${rompimentoId}"]`);
+    if (!card) return;
+
+    const foot = card.querySelector('.kcard-foot');
+    if (!foot) return;
+
+    let badge = foot.querySelector('[data-preview-clientes="1"]');
+    const qtdNorm = normalizarQtdClientes(qtd);
+
+    if (qtdNorm <= 0) {
+      if (badge) badge.remove();
+      return;
+    }
+
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.setAttribute('data-preview-clientes', '1');
+      badge.style.fontSize = '10px';
+      badge.style.color = 'var(--gray-500)';
+      badge.style.marginLeft = 'auto';
+      foot.appendChild(badge);
+    }
+    badge.textContent = `👥 ${qtdNorm}`;
+  }
+
+  function aplicarClientesAfetados(campoClientes, qtd) {
+    if (!campoClientes) return;
+
+    const valor = normalizarQtdClientes(qtd);
+    const el = campoValorEl(campoClientes);
+    if (el) {
+      el.value = String(valor);
+    } else {
+      setField(campoClientes, String(valor));
+    }
+
+    if (campoClientes === 'input-clientes') {
+      atualizarPreviewClientesAfetados(valor, 'preview-clientes-afetados');
+    }
+
+    if (campoClientes === 'campo-clientes') {
+      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+      if (id) atualizarBadgeClientesNoCard(id, valor);
+    }
+  }
+
+  function buscarCtoJson(termo) {
+    return CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo) || null;
+  }
+
+  function aplicarCtoJson(encontradaCto, campoCoords, campoEndereco) {
+    const elCoords = campoValorEl(campoCoords);
+    if (elCoords) elCoords.value = `${encontradaCto.lat}, ${encontradaCto.lng}`;
+    setField(campoEndereco, 'Buscando endereço...');
+    buscarEndereco(encontradaCto.lat, encontradaCto.lng, campoEndereco);
+  }
+
+  async function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box', campoClientes = null) {
+    try {
+      const termo = valor.trim().toUpperCase();
+      const seq = ++buscarCtoSeq;
+
+      if (termo.length < 3) {
+        const elCoords = campoValorEl(campoCoords);
+        if (elCoords) elCoords.value = '';
+        setField(campoEndereco, 'Gerado pelas coordenadas...');
+        aplicarClientesAfetados(campoClientes, 0);
+        return;
+      }
+
+      const caixaNicon = await buscarCaixaNiconApi(termo, campoClientes);
+      if (seq !== buscarCtoSeq) return;
+
+      if (caixaNicon) {
+        aplicarClientesAfetados(campoClientes, caixaNicon.num_clientes ?? 0);
+
+        const encontradaCto = buscarCtoJson(termo);
+        if (encontradaCto) {
+          aplicarCtoJson(encontradaCto, campoCoords, campoEndereco);
+          return;
+        }
+
+        const elCoords = campoValorEl(campoCoords);
+        if (elCoords) elCoords.value = '';
+        setField(
+          campoEndereco,
+          `Caixa localizada no Nicon (${caixaNicon.nome}) — preencha coordenadas manualmente`,
+        );
+        return;
+      }
+
+      const encontradaCto = buscarCtoJson(termo);
+      if (encontradaCto) {
+        aplicarCtoJson(encontradaCto, campoCoords, campoEndereco);
+        aplicarClientesAfetados(campoClientes, 0);
+        return;
+      }
+
+      const elCoords = campoValorEl(campoCoords);
+      if (elCoords) elCoords.value = '';
+      setField(campoEndereco, 'Elemento não encontrado — preencha manualmente');
+      aplicarClientesAfetados(campoClientes, 0);
+    } catch (e) {
+      console.error('Erro ao buscar elemento:', e);
+    }
+  }
+
+  window.buscarCTO = buscarCTO;
 
   async function buscarEndereco(lat, lng, campoEndereco = 'endereco-box') {
     try {
@@ -1014,7 +1197,7 @@ document.addEventListener('keydown', function(e) {
         onInput: (input) => {
           input.value = input.value.toUpperCase();
           if (typeof buscarCTO === 'function') {
-            buscarCTO(input.value, 'campo-coordenadas', 'campo-endereco');
+            buscarCTO(input.value, 'campo-coordenadas', 'campo-endereco', 'campo-clientes');
           }
         },
       },
@@ -1027,6 +1210,19 @@ document.addEventListener('keydown', function(e) {
       { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
       { id: 'campo-numero-os', tipo: 'text' },
     ]);
+
+    // depois que os inputs forem criados no DOM
+    setTimeout(() => {
+      configurarPreviewClientesAfetadosEdicao();
+      configurarRegiaoEdicaoBuscaCto();
+    }, 0);
+  }
+
+  function configurarRegiaoEdicaoBuscaCto() {
+    const select = campoValorEl('campo-regiao');
+    if (!select || select.dataset.buscaCtoBind === '1') return;
+    select.dataset.buscaCtoBind = '1';
+    select.addEventListener('change', () => reprocessarBuscaCtoAtiva());
   }
 
   async function salvarEdicao() {
@@ -1066,6 +1262,36 @@ document.addEventListener('keydown', function(e) {
   window.ativarEdicao = ativarEdicao;
   window.salvarEdicao = salvarEdicao;
   window.cancelarEdicao = cancelarEdicao;
+
+  // preview imediato ao digitar clientes afetados (criar e editar)
+  function configurarPreviewClientesAfetados() {
+    const inputCriar = document.getElementById('input-clientes');
+    if (inputCriar) {
+      inputCriar.addEventListener('input', () => {
+        atualizarPreviewClientesAfetados(inputCriar.value, 'preview-clientes-afetados');
+      });
+      atualizarPreviewClientesAfetados(inputCriar.value, 'preview-clientes-afetados');
+    }
+  }
+
+  function configurarPreviewClientesAfetadosEdicao() {
+    const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
+    if (!id) return;
+    const input = campoValorEl('campo-clientes');
+    if (!input) return;
+
+    // evita duplicar listener
+    if (input.dataset.previewClientesBind === '1') return;
+    input.dataset.previewClientesBind = '1';
+
+    const aplicar = () => {
+      const qtd = normalizarQtdClientes(input.value);
+      atualizarBadgeClientesNoCard(id, qtd);
+    };
+
+    input.addEventListener('input', aplicar);
+    aplicar();
+  }
 
   async function salvarOs() {
     const rompimentoId = document.getElementById('detalhe-conteudo').dataset.id;
@@ -1316,6 +1542,7 @@ async function carregarOS(rompimentoId) {
   }
   window.trocarAba = trocarAba;
   carregarCTOs();
+  configurarPreviewClientesAfetados();
 
   // ── Status pills inline das OS ────────────────────────────────────────
   const statusBadgeMap  = { 'Aberta': 'b-aberta', 'aberta': 'b-aberta', 'Finalizada': 'b-baixa', 'Impedimento': 'b-alta' };
@@ -1608,7 +1835,7 @@ window.carregarRompimentos = carregarRompimentos;
       <div class="kcard-title">${esc(r.cto || r.titulo)}</div>
       <div class="kcard-foot" style="margin-top:6px">
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
-        ${r.clientesAfetados ? `<span style="font-size:10px;color:var(--gray-500);margin-left:auto">👥 ${r.clientesAfetados}</span>` : ''}
+        ${r.clientesAfetados ? `<span data-preview-clientes="1" style="font-size:10px;color:var(--gray-500);margin-left:auto">👥 ${r.clientesAfetados}</span>` : ''}
       </div>
     </div>`;
   }

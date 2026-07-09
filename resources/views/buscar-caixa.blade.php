@@ -304,7 +304,7 @@
       </button>
     </form>
     <div class="caixa-help">
-      Busca os clientes da caixa no Nicon e consulta o sinal RX de cada cliente individualmente. Se vier vazio ou 0 dBm, a consulta é repetida automaticamente uma vez; se ainda assim não retornar, use o botão ↻ na linha.
+      Busca os clientes da caixa no Nicon (Governador Valadares ou Ipatinga) e consulta o sinal RX de cada cliente individualmente. Se vier vazio ou 0 dBm, a consulta é repetida automaticamente uma vez; se ainda assim não retornar, use o botão ↻ na linha.
     </div>
     <div class="caixa-resumo" id="caixa-resumo" hidden></div>
     <div class="caixa-table-wrap" id="caixa-resultado-wrap">
