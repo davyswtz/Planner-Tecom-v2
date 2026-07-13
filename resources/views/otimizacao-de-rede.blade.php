@@ -1366,7 +1366,6 @@ document.addEventListener('keydown', function(e) {
     const prioridadeClass = r.prioridade?.toLowerCase() === 'alta' ? 'b-alta'
       : r.prioridade?.toLowerCase() === 'baixa' ? 'b-baixa' : 'b-media';
     const regiaoClass = r.regiao && r.regiao.toLowerCase().includes('vale') ? 'b-regiao-va' : 'b-regiao-gv';
-    const descricao = textoSemHtml(r.descricao).replace(/\s+/g, ' ').trim();
     return `
     <div class="kcard"
       data-id="${r.id}"
@@ -1374,13 +1373,12 @@ document.addEventListener('keydown', function(e) {
       draggable="true"
       ondragstart="iniciarArrasto(event, ${r.id})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span class="kcard-code" style="font-size:11px">${r.taskCode || 'S/C'}</span>
+        <span class="kcard-code" style="font-size:11px" title="${esc(r.taskCode || 'S/C')}">${r.taskCode || 'S/C'}</span>
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
       <div class="kcard-title">${esc(r.titulo)}</div>
       <div class="kcard-foot" style="margin-top:6px">
         ${r.cto ? `<span class="badge b-cat-otm">${esc(r.cto)}</span>` : ''}
-        ${descricao ? `<span class="badge b-cat-gen">${esc(descricao)}</span>` : ''}
         <span class="badge ${regiaoClass}">${r.regiao || 'Sem região'}</span>
         ${r.responsavel ? `<span style="font-size:10px;color:var(--gray-400);margin-left:auto">${esc(r.responsavel)}</span>` : ''}
       </div>

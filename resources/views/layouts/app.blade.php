@@ -493,13 +493,34 @@
     background: var(--gray-50); border: 1px solid var(--gray-200);
     border-radius: var(--radius-sm); padding: 9px 10px;
     cursor: pointer; transition: all 0.12s;
+    min-width: 0;
   }
   .kcard:hover { background: var(--white); border-color: var(--blue-200); box-shadow: 0 2px 6px rgba(22,106,196,0.1); }
   .kcard.urgent { border-left: 3px solid var(--red); padding-left: 8px; }
   .kcard.late { border-left: 3px solid var(--amber); padding-left: 8px; }
-  .kcard-title { font-size: 12px; font-weight: 500; color: var(--gray-950); line-height: 1.4; margin-bottom: 7px; }
-  .kcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; flex-wrap: wrap; }
-  .badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .kcard-title {
+    font-size: 12px; font-weight: 500; color: var(--gray-950); line-height: 1.4; margin-bottom: 7px;
+    word-break: break-word; overflow-wrap: anywhere;
+  }
+  .kcard-summary {
+    font-size: 11px;
+    color: var(--gray-500);
+    line-height: 1.35;
+    margin: -2px 0 7px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .kcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; flex-wrap: wrap; min-width: 0; }
+  .badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .b-alta { background: #fef2f2; color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.22); font-weight: 600; letter-spacing: 0.01em; }
   .b-media { background: #fffbeb; color: #b45309; border: 1px solid rgba(245, 158, 11, 0.24); font-weight: 600; letter-spacing: 0.01em; }
   .b-baixa { background: #ecfdf5; color: #047857; border: 1px solid rgba(16, 185, 129, 0.22); font-weight: 600; letter-spacing: 0.01em; }
@@ -623,7 +644,15 @@
   .b-cat-cor { background: #ecfdf5; color: #065f46; }
   .b-cat-qua { background: #f0f9ff; color: #0369a1; }
   .b-cat-gen { background: var(--gray-100); color: var(--gray-500); }
-  .kcard-code { font-size: 10px; color: var(--gray-400); font-family: 'Courier New', monospace; }
+  .kcard-code {
+    font-size: 10px;
+    color: var(--gray-400);
+    font-family: 'Courier New', monospace;
+    max-width: 65%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .kcard-meta { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
   .kcard-avatar { width: 18px; height: 18px; border-radius: 50%; background: var(--blue-50); color: var(--blue-800); font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
   .kcard-time { font-size: 10px; color: var(--gray-400); margin-left: auto; }
