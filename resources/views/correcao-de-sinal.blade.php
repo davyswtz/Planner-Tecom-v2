@@ -154,6 +154,7 @@
   .os-label { font-size: 12px; font-weight: 500; color: var(--gray-500); }
   .os-input { width: 100%; height: 38px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0 10px; font-size: 13px; font-family: inherit; outline: none; background: var(--white); color: var(--gray-950); transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box; }
   .os-input:focus { border-color: #166ac4; box-shadow: 0 0 0 3px rgba(22,106,196,0.12); }
+  .os-textarea { height: auto; min-height: 96px; resize: vertical; padding: 10px; }
   @keyframes conteudoEntrada { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
@@ -216,9 +217,19 @@
         <input type="text" id="input-coordenadas" placeholder="Ex: -18.8517, -41.9494" class="os-input"/>
       </div>
       <div class="os-field">
-        <label class="os-label">Endereço / Localização</label>
-        <input type="text" id="input-localizacao-texto" placeholder="Ex: Rua das Flores, 123 — Goval" class="os-input"/>
+        <label class="os-label">Endereço</label>
+        <input type="text" id="input-localizacao-texto" placeholder="Digite o endereço" class="os-input"/>
       </div>
+    </div>
+
+    <div class="os-field">
+      <label class="os-label">Elemento</label>
+      <input type="text" id="input-elemento" placeholder="Ex: Caixa CTO 12" class="os-input"/>
+    </div>
+
+    <div class="os-field">
+      <label class="os-label">Descrição</label>
+      <textarea id="input-descricao" placeholder="Descreva o problema" class="os-input os-textarea"></textarea>
     </div>
 
     <div class="os-field">
@@ -235,16 +246,6 @@
     <div class="os-field">
       <label class="os-label">Número da OS (Hubsoft)</label>
       <input type="text" id="input-numero-os" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
-    </div>
-
-    <div class="os-field">
-      <label class="os-label">Elemento</label>
-      <input type="text" id="input-elemento" placeholder="Ex: CTO-042, Poste, Caixa..." class="os-input"/>
-    </div>
-
-    <div class="os-field">
-      <label class="os-label">Descrição</label>
-      <textarea id="input-descricao" rows="5" placeholder="Descreva a correção de sinal..." class="os-input" style="resize:vertical;min-height:120px"></textarea>
     </div>
 
     <div class="os-field">
@@ -1128,15 +1129,15 @@ document.addEventListener('keydown', function(e) {
 
     const dados = {
       titulo:            numeroOs ? `Correção de sinal — OS ${numeroOs}` : 'Correção de sinal',
+      setor:             elemento,
       coordenadas:       document.getElementById('input-coordenadas').value.trim(),
       localizacao_texto: document.getElementById('input-localizacao-texto').value.trim(),
+      descricao:         descricao,
       regiao:            regiao,
       responsavel:       '',
       prioridade:        prioridadeSelecionada,
       numero_os:         numeroOs,
       status:            'Criada',
-      setor:             elemento,
-      descricao:         descricao,
     };
 
     const token = localStorage.getItem('planner_token');
@@ -1158,24 +1159,6 @@ document.addEventListener('keydown', function(e) {
 
   window.trocarAba = trocarAba;
 
-  async function buscarEndereco(coordenada) {
-    const coord = (coordenada ?? '').trim();
-    if (!coord) return;
-
-    const token = localStorage.getItem('planner_token');
-    const response = await fetch(
-      `/api/correcao-sinal/coordenada?coordenada=${encodeURIComponent(coord)}`,
-      { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } }
-    );
-    const data = await response.json();
-    if (response.ok) {
-      document.getElementById('input-localizacao-texto').value = data.endereco ?? '';
-    }
-  }
-
-  document.getElementById('input-coordenadas').addEventListener('blur', function () {
-    buscarEndereco(this.value);
-  });
 </script>
 
 <script type="module">
