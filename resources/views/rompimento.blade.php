@@ -363,8 +363,8 @@
       <div class="os-field">
         <label class="os-label">Elemento(s)</label>
         <input type="text" id="input-cto" placeholder="Ex: GVA1210" class="os-input"
-          oninput="this.value = this.value.toUpperCase(); buscarCTO(this.value, 'input-coords', 'endereco-box', 'input-clientes')"/>
-        <p class="input-hint">Nicon (GV/Ipatinga) com fallback no JSON — coordenadas automáticas quando disponíveis</p>
+          oninput="this.value = this.value.toUpperCase(); buscarCTODebounced(this.value, 'input-coords', 'endereco-box', 'input-clientes')"/>
+        <p class="input-hint">Coordenadas preenchidas automaticamente pelo JSON</p>
       </div>
       <div class="os-field">
         <label class="os-label">Tipo de rompimento</label>
@@ -378,7 +378,7 @@
       </div>
       <div class="os-field">
         <label class="os-label">Região</label>
-        <select id="input-regiao" class="os-input" onchange="reprocessarBuscaCtoAtiva()">
+        <select id="input-regiao" class="os-input">
           <option value="">Selecione...</option>
           <option>Goval</option>
           <option>Vale do Aço</option>
@@ -901,9 +901,10 @@ document.addEventListener('keydown', function(e) {
     window.plannerAtualizarBotoesPrioridade?.(btn.closest('.prioridade-wrap'), nivel);
   }
 
-  // ─── CTOs ───
-  const CIDADES_NICON = @json($cidadesNicon ?? []);
-  const REGIAO_CIDADE_NICON = @json($regiaoCidadeNicon ?? []);
+  // ─── CTOs (JSON) ───
+  // TODO: reativar busca Nicon (mesma rota do buscar-caixa) depois.
+  // const CIDADES_NICON = @json($cidadesNicon ?? []);
+  // const REGIAO_CIDADE_NICON = @json($regiaoCidadeNicon ?? []);
   const CTO_SOURCES = [
     '/json/cto-gv-viabilidade.json',
     '/json/cto-ipatinga-viabilidade.json',
@@ -911,6 +912,7 @@ document.addEventListener('keydown', function(e) {
   let CTOs = [];
   let buscarCtoSeq = 0;
 
+  /*
   function idsCidadesNicon() {
     return Object.keys(CIDADES_NICON).map(Number).filter(id => id > 0);
   }
@@ -981,6 +983,7 @@ document.addEventListener('keydown', function(e) {
   }
 
   window.reprocessarBuscaCtoAtiva = reprocessarBuscaCtoAtiva;
+  */
 
   async function carregarCTOs() {
     for (const url of CTO_SOURCES) {
@@ -1062,27 +1065,6 @@ document.addEventListener('keydown', function(e) {
     badge.textContent = `👥 ${qtdNorm}`;
   }
 
-  function aplicarClientesAfetados(campoClientes, qtd) {
-    if (!campoClientes) return;
-
-    const valor = normalizarQtdClientes(qtd);
-    const el = campoValorEl(campoClientes);
-    if (el) {
-      el.value = String(valor);
-    } else {
-      setField(campoClientes, String(valor));
-    }
-
-    if (campoClientes === 'input-clientes') {
-      atualizarPreviewClientesAfetados(valor, 'preview-clientes-afetados');
-    }
-
-    if (campoClientes === 'campo-clientes') {
-      const id = document.getElementById('detalhe-conteudo')?.dataset?.id;
-      if (id) atualizarBadgeClientesNoCard(id, valor);
-    }
-  }
-
   function buscarCtoJson(termo) {
     return CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo) || null;
   }
@@ -1094,6 +1076,14 @@ document.addEventListener('keydown', function(e) {
     buscarEndereco(encontradaCto.lat, encontradaCto.lng, campoEndereco);
   }
 
+  let buscarCtoDebounceTimer = null;
+  function buscarCTODebounced(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box', campoClientes = null) {
+    clearTimeout(buscarCtoDebounceTimer);
+    buscarCtoDebounceTimer = setTimeout(() => {
+      void buscarCTO(valor, campoCoords, campoEndereco, campoClientes);
+    }, 450);
+  }
+
   async function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box', campoClientes = null) {
     try {
       const termo = valor.trim().toUpperCase();
@@ -1103,57 +1093,56 @@ document.addEventListener('keydown', function(e) {
         const elCoords = campoValorEl(campoCoords);
         if (elCoords) elCoords.value = '';
         setField(campoEndereco, 'Gerado pelas coordenadas...');
-        aplicarClientesAfetados(campoClientes, 0);
         return;
       }
 
-      const caixaNicon = await buscarCaixaNiconApi(termo, campoClientes);
-      if (seq !== buscarCtoSeq) return;
-
-      if (caixaNicon) {
-        aplicarClientesAfetados(campoClientes, caixaNicon.num_clientes ?? 0);
-
-        const encontradaCto = buscarCtoJson(termo);
-        if (encontradaCto) {
-          aplicarCtoJson(encontradaCto, campoCoords, campoEndereco);
-          return;
-        }
-
-        const elCoords = campoValorEl(campoCoords);
-        if (elCoords) elCoords.value = '';
-        setField(
-          campoEndereco,
-          `Caixa localizada no Nicon (${caixaNicon.nome}) — preencha coordenadas manualmente`,
-        );
-        return;
-      }
+      // Busca apenas no JSON (Nicon comentado — reativar depois).
+      // const caixaNicon = await buscarCaixaNiconApi(termo, campoClientes);
+      // if (seq !== buscarCtoSeq) return;
+      // if (caixaNicon) { ... }
 
       const encontradaCto = buscarCtoJson(termo);
+      if (seq !== buscarCtoSeq) return;
+
       if (encontradaCto) {
         aplicarCtoJson(encontradaCto, campoCoords, campoEndereco);
-        aplicarClientesAfetados(campoClientes, 0);
         return;
       }
 
       const elCoords = campoValorEl(campoCoords);
       if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'Elemento não encontrado — preencha manualmente');
-      aplicarClientesAfetados(campoClientes, 0);
+      setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
     } catch (e) {
       console.error('Erro ao buscar elemento:', e);
     }
   }
 
   window.buscarCTO = buscarCTO;
+  window.buscarCTODebounced = buscarCTODebounced;
 
+  // Endereço via backend (proxy Nominatim) — evita 429 do browser
   async function buscarEndereco(lat, lng, campoEndereco = 'endereco-box') {
+    const token = localStorage.getItem('planner_token');
+    const coordenada = `${lat}, ${lng}`;
+
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-        { headers: { 'Accept-Language': 'pt-BR' } }
+        `/api/rompimentos/coordenada?coordenada=${encodeURIComponent(coordenada)}`,
+        {
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/json',
+          },
+        },
       );
-      const data = await res.json();
-      setField(campoEndereco, data.display_name || 'Endereço não encontrado');
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setField(campoEndereco, data.message || 'Erro ao buscar endereço');
+        return;
+      }
+
+      setField(campoEndereco, data.endereco || 'Endereço não encontrado');
     } catch (e) {
       setField(campoEndereco, 'Erro ao buscar endereço');
     }
@@ -1196,7 +1185,9 @@ document.addEventListener('keydown', function(e) {
         tipo: 'text',
         onInput: (input) => {
           input.value = input.value.toUpperCase();
-          if (typeof buscarCTO === 'function') {
+          if (typeof buscarCTODebounced === 'function') {
+            buscarCTODebounced(input.value, 'campo-coordenadas', 'campo-endereco', 'campo-clientes');
+          } else if (typeof buscarCTO === 'function') {
             buscarCTO(input.value, 'campo-coordenadas', 'campo-endereco', 'campo-clientes');
           }
         },
@@ -1214,16 +1205,18 @@ document.addEventListener('keydown', function(e) {
     // depois que os inputs forem criados no DOM
     setTimeout(() => {
       configurarPreviewClientesAfetadosEdicao();
-      configurarRegiaoEdicaoBuscaCto();
+      // configurarRegiaoEdicaoBuscaCto(); // Nicon — reativar depois
     }, 0);
   }
 
+  /*
   function configurarRegiaoEdicaoBuscaCto() {
     const select = campoValorEl('campo-regiao');
     if (!select || select.dataset.buscaCtoBind === '1') return;
     select.dataset.buscaCtoBind = '1';
     select.addEventListener('change', () => reprocessarBuscaCtoAtiva());
   }
+  */
 
   async function salvarEdicao() {
     const id = document.getElementById('detalhe-conteudo')?.dataset?.id;

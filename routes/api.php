@@ -50,6 +50,10 @@ Route::middleware(["auth:sanctum", "throttle:180,1"])->group(function () {
     Route::post("op-tasks/{opTask}/anexos", [OpTaskAnexoController::class, "store"]);
     Route::delete("op-tasks/{opTask}/anexos/{anexo}", [OpTaskAnexoController::class, "destroy"])->whereNumber("anexo");
     Route::get("op-tasks/{opTask}/anexos/{anexo}/arquivo", [OpTaskAnexoController::class, "arquivo"])->whereNumber("anexo");
+    Route::get("rompimentos/coordenada", [
+        RompimentoController::class,
+        "buscarEndereco",
+    ]);
     Route::apiResource("rompimentos", RompimentoController::class);
     Route::get("rompimentos/{id}/os", [
         RompimentoController::class,

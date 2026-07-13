@@ -1,15 +1,17 @@
 <?php
 
 namespace App\Services;
-use App\Services\GoogleChatService;
-use App\Services\OpTaskService;
-use App\Models\OpTask;
 
+use App\Models\OpTask;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class RompimentoService
 {
-public function __construct(private OpTaskService $opTaskService
-, private GoogleChatService $googleChatService){}
+    public function __construct(
+        private OpTaskService $opTaskService,
+        private GoogleChatService $googleChatService,
+    ) {}
 
     public function getRompimentos(
         string $status = null,
@@ -85,4 +87,33 @@ public function __construct(private OpTaskService $opTaskService
         $rompimento->delete();
     }
 
+    public function buscarEndereco(string $coordenada): string
+    {
+        $partes = array_map('trim', explode(',', $coordenada));
+        $lat = $partes[0] ?? '';
+        $lng = $partes[1] ?? '';
+
+        if ($lat === '' || $lng === '' || ! is_numeric($lat) || ! is_numeric($lng)) {
+            return 'Endereço não encontrado';
+        }
+
+        $cacheKey = 'nominatim_reverse_' . md5("{$lat},{$lng}");
+
+        return Cache::remember($cacheKey, now()->addDays(7), function () use ($lat, $lng) {
+            $response = Http::withHeaders([
+                'User-Agent' => 'Planner-Tecom/1.0 (contato@ibitelecom.com.br)',
+                'Accept-Language' => 'pt-BR',
+            ])->timeout(15)->get('https://nominatim.openstreetmap.org/reverse', [
+                'lat' => $lat,
+                'lon' => $lng,
+                'format' => 'json',
+            ]);
+
+            if (! $response->successful()) {
+                return 'Endereço não encontrado';
+            }
+
+            return $response->json('display_name') ?? 'Endereço não encontrado';
+        });
+    }
 }

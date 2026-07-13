@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\RompimentoService;
 use App\Services\OpTaskService;
 use App\Models\OpTask;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RompimentoController extends Controller
@@ -60,6 +61,16 @@ class RompimentoController extends Controller
 
         $this->rompimentoService->deleteRompimento($rompimento);
         return response()->json(['message' => 'Rompimento deletado com sucesso'], 200);
+    }
+
+    public function buscarEndereco(Request $request): JsonResponse
+    {
+        $endereco = $this->rompimentoService->buscarEndereco((string) $request->query('coordenada', ''));
+
+        return response()->json([
+            'message' => 'Endereço encontrado com sucesso',
+            'endereco' => $endereco,
+        ]);
     }
 
     public function listarOS($id)
