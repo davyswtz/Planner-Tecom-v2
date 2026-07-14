@@ -1344,7 +1344,7 @@ document.addEventListener('keydown', function(e) {
       draggable="true"
       ondragstart="iniciarArrasto(event, ${r.id})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span class="kcard-code" style="font-size:11px">${esc(codigo)}</span>
+        <span class="kcard-code" style="font-size:11px" title="${esc(codigo)}">${esc(codigo)}</span>
         <span class="badge ${prioridadeClass}">${r.prioridade || 'Média'}</span>
       </div>
       <div class="kcard-title">${esc(titulo)}</div>
