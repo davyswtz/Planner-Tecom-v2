@@ -165,6 +165,8 @@ class MensagemTemplateService
             'parent_titulo' => 'ROMPIMENTO - CTO-042',
             'parent_categoria' => 'rompimentos',
             'parent_categoria_label' => 'Rompimentos',
+            'numero_os' => 'OS-12345',
+            'ordem_servico' => 'OS-12345',
             'os_tipo' => 'Instalação de CTO',
             'os_sequencia' => '2',
             'os_lista' => "1. Abertura de vala\n2. Instalação de CTO\n3. Fusão de fibras\n4. Teste de sinal",
