@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Rompimentos — Planner Telecom')
 @section('page-title', 'Rompimentos')
@@ -413,14 +413,14 @@
     <div class="detail-grid-2">
       <div class="os-field">
         <label class="os-label">Coordenadas</label>
-        <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
-          class="os-input" style="background:var(--gray-50);color:var(--gray-500)"/>
+        <input id="input-coords" type="text" placeholder="Coordenadas (ex: -18.85, -41.94)"
+          class="os-input"
+          oninput="buscarEnderecoDebounced(this.value, 'endereco-box')"/>
       </div>
       <div class="os-field">
         <label class="os-label">Endereço</label>
-        <div id="endereco-box" class="detail-value" style="background:var(--gray-50);color:var(--gray-400)">
-          Gerado pelas coordenadas...
-        </div>
+        <input id="endereco-box" type="text" placeholder="Endereço do rompimento"
+          class="os-input"/>
       </div>
     </div>
 
@@ -901,89 +901,13 @@ document.addEventListener('keydown', function(e) {
     window.plannerAtualizarBotoesPrioridade?.(btn.closest('.prioridade-wrap'), nivel);
   }
 
-  // ─── CTOs (JSON) ───
-  // TODO: reativar busca Nicon (mesma rota do buscar-caixa) depois.
-  // const CIDADES_NICON = @json($cidadesNicon ?? []);
-  // const REGIAO_CIDADE_NICON = @json($regiaoCidadeNicon ?? []);
+  // ─── CTOs (JSON com preparação para API Nicnet) ───
   const CTO_SOURCES = [
     '/json/cto-gv-viabilidade.json',
     '/json/cto-ipatinga-viabilidade.json',
   ];
   let CTOs = [];
   let buscarCtoSeq = 0;
-
-  /*
-  function idsCidadesNicon() {
-    return Object.keys(CIDADES_NICON).map(Number).filter(id => id > 0);
-  }
-
-  function obterRegiaoAtiva(campoClientes = null) {
-    const isEdicao = campoClientes === 'campo-clientes';
-    const regiaoEl = isEdicao
-      ? campoValorEl('campo-regiao')
-      : document.getElementById('input-regiao');
-
-    return regiaoEl?.value?.trim() || '';
-  }
-
-  function resolverIdsCidadeNicon(campoClientes = null) {
-    const regiao = obterRegiaoAtiva(campoClientes);
-    const preferida = REGIAO_CIDADE_NICON[regiao] ?? null;
-    const todas = idsCidadesNicon();
-
-    if (preferida && todas.includes(Number(preferida))) {
-      return [Number(preferida), ...todas.filter(id => id !== Number(preferida))];
-    }
-
-    return todas;
-  }
-
-  async function buscarCaixaNiconApi(termo, campoClientes = null) {
-    const token = localStorage.getItem('planner_token');
-    if (!token || !termo || termo.trim().length < 3) return null;
-
-    for (const idCidade of resolverIdsCidadeNicon(campoClientes)) {
-      try {
-        const res = await fetch(
-          `/api/nicon/caixa/resolver?id_cidade=${idCidade}&termo=${encodeURIComponent(termo.trim())}`,
-          {
-            headers: {
-              'Authorization': 'Bearer ' + token,
-              'Accept': 'application/json',
-            },
-          },
-        );
-
-        if (res.status === 404) continue;
-        if (!res.ok) continue;
-
-        const data = await res.json();
-        if (data.caixa) {
-          return { ...data.caixa, id_cidade: idCidade };
-        }
-      } catch (e) {
-        console.warn(`Erro ao resolver caixa no Nicon (cidade ${idCidade}):`, e);
-      }
-    }
-
-    return null;
-  }
-
-  function reprocessarBuscaCtoAtiva() {
-    const inputCriar = document.getElementById('input-cto');
-    if (inputCriar?.value?.trim()) {
-      void buscarCTO(inputCriar.value, 'input-coords', 'endereco-box', 'input-clientes');
-      return;
-    }
-
-    const inputEditar = campoValorEl('campo-cto');
-    if (inputEditar?.value?.trim()) {
-      void buscarCTO(inputEditar.value, 'campo-coordenadas', 'campo-endereco', 'campo-clientes');
-    }
-  }
-
-  window.reprocessarBuscaCtoAtiva = reprocessarBuscaCtoAtiva;
-  */
 
   async function carregarCTOs() {
     for (const url of CTO_SOURCES) {
@@ -996,6 +920,50 @@ document.addEventListener('keydown', function(e) {
       }
     }
     console.log(`Total de CTOs carregadas: ${CTOs.length}`);
+  }
+
+  function buscarCtoJson(termo) {
+    return CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo) || null;
+  }
+
+  function aplicarCtoJson(encontradaCto, campoCoords, campoEndereco) {
+    const elCoords = campoValorEl(campoCoords);
+    if (elCoords) elCoords.value = `${encontradaCto.lat}, ${encontradaCto.lng}`;
+    setField(campoEndereco, 'Buscando endereço...');
+    buscarEndereco(encontradaCto.lat, encontradaCto.lng, campoEndereco);
+  }
+
+  let buscarEnderecoDebounceTimer = null;
+  function buscarEnderecoDebounced(coordenada, campoEndereco = 'endereco-box') {
+    clearTimeout(buscarEnderecoDebounceTimer);
+    buscarEnderecoDebounceTimer = setTimeout(() => {
+      const partes = coordenada.split(',').map(p => p.trim());
+      const lat = partes[0] || '';
+      const lng = partes[1] || '';
+      if (lat !== '' && lng !== '' && !isNaN(lat) && !isNaN(lng)) {
+        setField(campoEndereco, 'Buscando endereço...');
+        buscarEndereco(lat, lng, campoEndereco);
+      }
+    }, 800);
+  }
+
+  function formatarEnderecoGeogrid(endereco) {
+    if (!endereco) return '';
+    if (typeof endereco === 'string') return endereco;
+    const partes = [];
+    if (endereco.logradouro) {
+      let rua = endereco.logradouro;
+      if (endereco.numero) rua += `, ${endereco.numero}`;
+      partes.push(rua);
+    }
+    if (endereco.bairro) partes.push(endereco.bairro);
+    if (endereco.cidade) {
+      let cid = endereco.cidade;
+      if (endereco.estado) cid += ` - ${endereco.estado}`;
+      partes.push(cid);
+    }
+    if (endereco.cep) partes.push(endereco.cep);
+    return partes.join(', ');
   }
 
   function setField(id, texto) {
@@ -1065,17 +1033,6 @@ document.addEventListener('keydown', function(e) {
     badge.textContent = `👥 ${qtdNorm}`;
   }
 
-  function buscarCtoJson(termo) {
-    return CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo) || null;
-  }
-
-  function aplicarCtoJson(encontradaCto, campoCoords, campoEndereco) {
-    const elCoords = campoValorEl(campoCoords);
-    if (elCoords) elCoords.value = `${encontradaCto.lat}, ${encontradaCto.lng}`;
-    setField(campoEndereco, 'Buscando endereço...');
-    buscarEndereco(encontradaCto.lat, encontradaCto.lng, campoEndereco);
-  }
-
   let buscarCtoDebounceTimer = null;
   function buscarCTODebounced(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box', campoClientes = null) {
     clearTimeout(buscarCtoDebounceTimer);
@@ -1086,22 +1043,65 @@ document.addEventListener('keydown', function(e) {
 
   async function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box', campoClientes = null) {
     try {
-      const termo = valor.trim().toUpperCase();
+      // Divide por espaços, vírgulas, ponto e vírgulas, ou barras, e pega o primeiro elemento
+      const partes = valor.split(/[\s,;\/]+/).map(p => p.trim()).filter(Boolean);
+      const primeiraCaixa = partes[0] || '';
       const seq = ++buscarCtoSeq;
 
-      if (termo.length < 3) {
+      if (primeiraCaixa.length < 3) {
         const elCoords = campoValorEl(campoCoords);
         if (elCoords) elCoords.value = '';
-        setField(campoEndereco, 'Gerado pelas coordenadas...');
+        setField(campoEndereco, '');
         return;
       }
 
-      // Busca apenas no JSON (Nicon comentado — reativar depois).
-      // const caixaNicon = await buscarCaixaNiconApi(termo, campoClientes);
-      // if (seq !== buscarCtoSeq) return;
-      // if (caixaNicon) { ... }
+      /*
+      // ─── ESTRUTURA PREPARADA PARA A FUTURA API NICNET ───
+      // (Descomente este bloco quando a API da Nicnet estiver disponível no ambiente)
+      try {
+        const token = localStorage.getItem('planner_token');
+        const res = await fetch('/api/nicnet/caixa/buscar', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ termo: primeiraCaixa })
+        });
 
-      const encontradaCto = buscarCtoJson(termo);
+        if (seq !== buscarCtoSeq) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.caixa) {
+            const latitude = data.caixa.latitude;
+            const longitude = data.caixa.longitude;
+
+            const elCoords = campoValorEl(campoCoords);
+            if (elCoords) {
+              elCoords.value = (latitude && longitude) ? `${latitude}, ${longitude}` : '';
+            }
+
+            if (data.caixa.endereco) {
+              const enderecoFormatado = formatarEnderecoGeogrid(data.caixa.endereco);
+              setField(campoEndereco, enderecoFormatado);
+            } else if (latitude && longitude) {
+              setField(campoEndereco, 'Buscando endereço...');
+              buscarEndereco(latitude, longitude, campoEndereco);
+            } else {
+              setField(campoEndereco, '');
+            }
+            return;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Erro ao consultar API da Nicnet, tentando fallback no JSON:', apiErr);
+      }
+      */
+
+      // Fallback / API antiga: Busca no JSON local
+      const encontradaCto = buscarCtoJson(primeiraCaixa);
       if (seq !== buscarCtoSeq) return;
 
       if (encontradaCto) {
@@ -1109,9 +1109,10 @@ document.addEventListener('keydown', function(e) {
         return;
       }
 
+      // Se não encontrou, limpa coordenadas para preenchimento manual
       const elCoords = campoValorEl(campoCoords);
       if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
+      setField(campoEndereco, 'Caixa não encontrada — preencha manualmente');
     } catch (e) {
       console.error('Erro ao buscar elemento:', e);
     }
@@ -1119,6 +1120,7 @@ document.addEventListener('keydown', function(e) {
 
   window.buscarCTO = buscarCTO;
   window.buscarCTODebounced = buscarCTODebounced;
+  window.buscarEnderecoDebounced = buscarEnderecoDebounced;
 
   // Endereço via backend (proxy Nominatim) — evita 429 do browser
   async function buscarEndereco(lat, lng, campoEndereco = 'endereco-box') {
@@ -1195,7 +1197,16 @@ document.addEventListener('keydown', function(e) {
       { id: 'campo-tipo', tipo: 'select', opcoes: ['Rota ramal', 'Backbone', 'Caixa', 'Setor'] },
       { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga'] },
       { id: 'campo-clientes', tipo: 'number' },
-      { id: 'campo-coordenadas', tipo: 'text', inputId: 'campo-coordenadas-input' },
+      {
+        id: 'campo-coordenadas',
+        tipo: 'text',
+        inputId: 'campo-coordenadas-input',
+        onInput: (input) => {
+          if (typeof buscarEnderecoDebounced === 'function') {
+            buscarEnderecoDebounced(input.value, 'campo-endereco');
+          }
+        }
+      },
       { id: 'campo-endereco', tipo: 'text' },
       { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
       { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
@@ -1505,7 +1516,7 @@ async function carregarOS(rompimentoId) {
       clientesAfetados:  document.getElementById('input-clientes').value,
       prioridade:        prioridadeSelecionada,
       coordenadas:       document.getElementById('input-coords').value,
-      localizacao_texto: document.getElementById('endereco-box').textContent,
+      localizacao_texto: document.getElementById('endereco-box').value || document.getElementById('endereco-box').textContent,
       status:            'Criada',
       categoria:         'rompimentos',
       numero_os:         document.getElementById('input-numero-hubsoft').value
