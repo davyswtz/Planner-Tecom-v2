@@ -167,6 +167,7 @@ class MensagemTemplateService
             'parent_categoria_label' => 'Rompimentos',
             'os_tipo' => 'Instalação de CTO',
             'os_sequencia' => '2',
+            'os_numero' => '2°',
             'os_lista' => "1. Abertura de vala\n2. Instalação de CTO\n3. Fusão de fibras\n4. Teste de sinal",
             'is_parent_task' => false,
             'criadaEm' => '2026-07-01 09:00:00',
@@ -499,11 +500,12 @@ class MensagemTemplateService
             'os_resumo' => trim((string) ($task['os_resumo'] ?? '')) ?: '—',
             'os_sequencia' => $sequenciaOs['os_sequencia'],
             'os_lista' => $sequenciaOs['os_lista'],
+            'os_numero' => $sequenciaOs['os_numero'] ?? trim((string) ($task['os_numero'] ?? '')) ?: '—',
         ];
     }
 
     /**
-     * @return array{os_sequencia: string, os_lista: string}
+     * @return array{os_sequencia: string, os_lista: string, os_numero: string}
      */
     private function resolverSequenciaOs(array $task): array
     {
@@ -511,9 +513,14 @@ class MensagemTemplateService
         $sequenciaInformada = trim((string) ($task['os_sequencia'] ?? ''));
 
         if ($listaInformada !== '' || $sequenciaInformada !== '') {
+            $osNumero = '—';
+            if ($sequenciaInformada !== '') {
+                $osNumero = preg_match('/^[0-9]+$/', $sequenciaInformada) ? $sequenciaInformada . '°' : $sequenciaInformada;
+            }
             return [
                 'os_sequencia' => $sequenciaInformada !== '' ? $sequenciaInformada : '—',
                 'os_lista' => $listaInformada !== '' ? $listaInformada : '—',
+                'os_numero' => $osNumero,
             ];
         }
 
@@ -525,7 +532,7 @@ class MensagemTemplateService
             $osId = (int) ($task['id'] ?? 0);
 
             if ($parentId <= 0) {
-                return ['os_sequencia' => '—', 'os_lista' => '—'];
+                return ['os_sequencia' => '—', 'os_lista' => '—', 'os_numero' => '—'];
             }
 
             return $osResumo->sequenciaParaPayload($parentId, $osId > 0 ? $osId : null);
@@ -533,7 +540,7 @@ class MensagemTemplateService
 
         $parentId = (int) ($task['id'] ?? 0);
         if ($parentId <= 0) {
-            return ['os_sequencia' => '—', 'os_lista' => '—'];
+            return ['os_sequencia' => '—', 'os_lista' => '—', 'os_numero' => '—'];
         }
 
         return $osResumo->sequenciaParaPayload($parentId);

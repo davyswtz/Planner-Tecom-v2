@@ -54,6 +54,7 @@ return [
         ['key' => 'parent_categoria_label', 'label' => 'Categoria da tarefa pai (nome)'],
         ['key' => 'os_tipo', 'label' => 'Tipo da OS'],
         ['key' => 'os_sequencia', 'label' => 'Lista das OS (tarefa pai) ou posição 1, 2, 3… (mensagem da OS)'],
+        ['key' => 'os_numero', 'label' => 'Número sequencial da OS (1°, 2°, 3°...)'],
         ['key' => 'os_lista', 'label' => 'Lista numerada de todas as OS da tarefa pai'],
         ['key' => 'is_parent_task', 'label' => 'É tarefa pai'],
         ['key' => 'historico', 'label' => 'Histórico'],

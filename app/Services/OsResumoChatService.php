@@ -149,6 +149,7 @@ class OsResumoChatService
         return [
             'os_sequencia' => $sequenciaAtual ?? $listaTexto,
             'os_lista' => $listaTexto,
+            'os_numero' => $sequenciaAtual ? $sequenciaAtual . '°' : '—',
         ];
     }
 
