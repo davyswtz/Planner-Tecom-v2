@@ -331,6 +331,14 @@ class OpTaskService
             if (trim((string) ($payload['regiao'] ?? '')) === '') {
                 $payload['regiao'] = $pai->regiao;
             }
+
+            if (trim((string) ($payload['numero_os'] ?? '')) === '') {
+                $payload['numero_os'] = trim((string) ($pai->numero_os ?: $pai->ordem_servico ?: ''));
+            }
+
+            if (trim((string) ($payload['ordem_servico'] ?? '')) === '') {
+                $payload['ordem_servico'] = trim((string) ($pai->ordem_servico ?: $pai->numero_os ?: ''));
+            }
         }
 
         $titulo = trim((string) ($payload['titulo'] ?? ''));
