@@ -1269,4 +1269,90 @@ class NiconWebService
             parse_url($this->baseUrl(), PHP_URL_HOST) ?: ''
         );
     }
+
+    /**
+     * POST /api/v2/chat/conversations/{conversaId}/messages
+     * Envia uma mensagem normal na conversa (fora de qualquer tópico).
+     *
+     * Retorno útil para migração do Google Chat:
+     * - id_chat_mensagem → equivalente ao "thread root" (guardar como referência)
+     *
+     * @return array<string, mixed>
+     */
+    public function enviarMensagemChat(int $conversaId, string $mensagem): array
+    {
+        return $this->requestChat('POST', "/api/v2/chat/conversations/{$conversaId}/messages", [
+            'mensagem' => $mensagem,
+        ]);
+    }
+
+    /**
+     * POST /api/v2/chat/conversations/{conversaId}/messages/{idMensagemRaiz}/replies
+     * Responde dentro do tópico da mensagem raiz (cria o tópico se ainda não existir).
+     *
+     * Retorno útil:
+     * - thread.id_chat → id do chat do tópico (pode receber POST /messages direto depois)
+     * - thread.id_chat_mensagem_raiz → id da mensagem pai
+     * - thread.id_chat_pai → conversa original
+     * - message.id_chat_mensagem → id da resposta enviada
+     *
+     * Nota: GET .../thread lista o tópico; POST nele retorna 405.
+     *
+     * @return array<string, mixed>
+     */
+    public function enviarMensagemThread(int $conversaId, int $idMensagemRaiz, string $mensagem): array
+    {
+        return $this->requestChat(
+            'POST',
+            "/api/v2/chat/conversations/{$conversaId}/messages/{$idMensagemRaiz}/replies",
+            ['mensagem' => $mensagem]
+        );
+    }
+
+    /**
+     * GET /api/v2/chat/conversations/{conversaId}/messages/{idMensagemRaiz}/thread
+     * Lista a mensagem raiz e as respostas do tópico.
+     *
+     * @return array<string, mixed>
+     */
+    public function listarThread(int $conversaId, int $idMensagemRaiz): array
+    {
+        return $this->requestChat(
+            'GET',
+            "/api/v2/chat/conversations/{$conversaId}/messages/{$idMensagemRaiz}/thread"
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $body
+     * @return array<string, mixed>
+     */
+    private function requestChat(string $method, string $path, ?array $body = null): array
+    {
+        $enviar = function () use ($method, $path, $body) {
+            $pending = $this->httpComSessao('/v2/chat');
+            $url = $this->baseUrl() . $path;
+
+            return strtoupper($method) === 'GET'
+                ? $pending->get($url)
+                : $pending->post($url, $body ?? []);
+        };
+
+        $response = $enviar();
+
+        if (in_array($response->status(), [401, 419], true)) {
+            Cache::forget(self::SESSION_CACHE_KEY);
+            $response = $enviar();
+        }
+
+        if (! $response->successful()) {
+            throw new RuntimeException(
+                "Nicon {$path} falhou (HTTP {$response->status()}): " . $response->body()
+            );
+        }
+
+        $json = $response->json();
+
+        return is_array($json) ? $json : [];
+    }
 }

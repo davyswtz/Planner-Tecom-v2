@@ -71,6 +71,8 @@ class OpTask extends Model
         'historico',
         'active_duration_minutes',
         'chat_thread_key',
+        'nicon_mensagem_raiz_id',
+        'nicon_thread_chat_id',
         'nome_cliente',
         'protocolo',
         'ordem_servico',

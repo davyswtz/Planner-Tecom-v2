@@ -57,6 +57,14 @@ return [
         'caixa_resolve_cache_minutes' => (int) env('NICON_CAIXA_RESOLVE_CACHE_MINUTES', 1440),
         'sinal_concorrencia' => max(1, (int) env('NICON_SINAL_CONCORRENCIA', 4)),
         'sinal_tentativas' => max(1, (int) env('NICON_SINAL_TENTATIVAS', 3)),
+        /*
+         | Chat Nicon (paralelo ao webhook Google Chat).
+         | NICON_CHAT_ENABLED=true + NICON_CHAT_CONVERSA_ID=4180 para testar.
+         | Opcional: NICON_CHAT_CONVERSAS={"Goval":4180,"Vale do Aço":4180}
+         */
+        'chat_enabled' => filter_var(env('NICON_CHAT_ENABLED', false), FILTER_VALIDATE_BOOL),
+        'chat_conversa_id' => (int) env('NICON_CHAT_CONVERSA_ID', 0),
+        'chat_conversas' => json_decode(env('NICON_CHAT_CONVERSAS', '{}'), true) ?: [],
         'cidades' => [
             1659 => 'Governador Valadares',
             1701 => 'Ipatinga',

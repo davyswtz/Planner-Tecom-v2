@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OpTask;
 use App\Models\OpTaskAnexo;
+use App\Services\Nicon\NiconChatNotificacaoService;
 use Illuminate\Support\Facades\Http;
 
 class GoogleChatService
@@ -13,6 +14,7 @@ class GoogleChatService
         private MensagemTemplateService $mensagens,
         private OpTaskAnexoService $anexos,
         private OsResumoChatService $osResumo,
+        private NiconChatNotificacaoService $niconChat,
     ) {
     }
 
@@ -25,6 +27,9 @@ class GoogleChatService
         if ($statusNovo !== null && ! $this->webhooks->deveNotificarStatus($statusNovo)) {
             return;
         }
+
+        // Paralelo ao Google Chat — não remove webhooks; falhas do Nicon não bloqueiam.
+        $this->niconChat->enviarNotificacao($rompimento, $mensagem, $statusNovo);
 
         $url = $this->webhooks->resolverUrlPorRegiao($rompimento->regiao);
 
