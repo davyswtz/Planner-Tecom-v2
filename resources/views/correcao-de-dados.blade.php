@@ -163,7 +163,6 @@
         <option value="">—</option>
         <option>Goval</option>
         <option>Vale do Aço</option>
-        <option>Caratinga</option>
       </select>
     </div>
 

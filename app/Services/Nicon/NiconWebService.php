@@ -1287,6 +1287,63 @@ class NiconWebService
     }
 
     /**
+     * POST /api/v2/chat/conversations/{conversaId}/attachments (multipart field: file)
+     * Faz upload do arquivo e retorna id do anexo Nicon.
+     *
+     * @return array{id: int, url?: string, preview_url?: string}
+     */
+    public function uploadAnexoChat(
+        int $conversaId,
+        string $conteudoBinario,
+        string $nomeArquivo,
+        ?string $mimeType = null,
+    ): array {
+        $path = "/api/v2/chat/conversations/{$conversaId}/attachments";
+        $nomeArquivo = $nomeArquivo !== '' ? $nomeArquivo : 'anexo.bin';
+        $headers = $mimeType ? ['Content-Type' => $mimeType] : [];
+
+        $enviar = function () use ($path, $conteudoBinario, $nomeArquivo, $headers) {
+            return $this->httpComSessao('/v2/chat')
+                ->attach('file', $conteudoBinario, $nomeArquivo, $headers)
+                ->post($this->baseUrl() . $path);
+        };
+
+        $response = $enviar();
+
+        if (in_array($response->status(), [401, 419], true)) {
+            Cache::forget(self::SESSION_CACHE_KEY);
+            $response = $enviar();
+        }
+
+        if (! $response->successful()) {
+            throw new RuntimeException(
+                "Nicon {$path} falhou (HTTP {$response->status()}): " . $response->body()
+            );
+        }
+
+        $json = $response->json();
+        if (! is_array($json) || (int) ($json['id'] ?? 0) <= 0) {
+            throw new RuntimeException("Nicon {$path}: resposta sem id de anexo.");
+        }
+
+        return $json;
+    }
+
+    /**
+     * Envia mensagem com imagem já enviada via uploadAnexoChat.
+     *
+     * @return array<string, mixed>
+     */
+    public function enviarMensagemImagem(int $conversaId, int $idAnexo, string $mensagem = ''): array
+    {
+        return $this->requestChat('POST', "/api/v2/chat/conversations/{$conversaId}/messages", [
+            'mensagem' => $mensagem,
+            'tipo' => 'imagem',
+            'id_anexo' => $idAnexo,
+        ]);
+    }
+
+    /**
      * POST /api/v2/chat/conversations/{conversaId}/messages/{idMensagemRaiz}/replies
      * Responde dentro do tópico da mensagem raiz (cria o tópico se ainda não existir).
      *
@@ -1297,6 +1354,7 @@ class NiconWebService
      * - message.id_chat_mensagem → id da resposta enviada
      *
      * Nota: GET .../thread lista o tópico; POST nele retorna 405.
+     * Nota: replies com tipo=imagem retorna 500 — use upload + enviarMensagemImagem no thread.id_chat.
      *
      * @return array<string, mixed>
      */

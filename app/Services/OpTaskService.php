@@ -376,8 +376,8 @@ class OpTaskService
         'Vale do Aço' => 'VL',
         'vale do aço' => 'VL',
         'vale do aco' => 'VL',
-        'Caratinga' => 'CA',
-        'caratinga' => 'CA',
+        'Caratinga' => 'VL', // legado: Caratinga integra Vale do Aço
+        'caratinga' => 'VL',
     ];
 
     private array $categorias = [

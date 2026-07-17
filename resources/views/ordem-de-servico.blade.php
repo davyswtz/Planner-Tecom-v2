@@ -1169,7 +1169,6 @@
         <option value="">Todas as regiões</option>
         <option>Goval</option>
         <option>Vale do Aço</option>
-        <option>Caratinga</option>
         <option>Teste</option>
       </select>
       <select id="filtro-status" class="os-toolbar-select">

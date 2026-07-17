@@ -487,9 +487,10 @@ class MensagemTemplateService
             'os_tipo' => $osTipo,
             'is_parent_task' => $this->formatarBooleano($task['is_parent_task'] ?? null),
             'historico' => app(OpTaskHistoricoService::class)->resumoParaTemplate($task['historico'] ?? null),
-            'enviado_por' => ($operador = $historicoService->operadorInicioAtividade($task) ?? trim((string) ($enviadoPor ?? ''))) !== ''
-                ? $mencaoService->mencionar($operador)
-                : '—',
+            // 'enviado_por' temporariamente desativado nas mensagens
+            // 'enviado_por' => ($operador = $historicoService->operadorInicioAtividade($task) ?? trim((string) ($enviadoPor ?? ''))) !== ''
+            //     ? $mencaoService->mencionar($operador)
+            //     : '—',
             'etiquetas' => TrocaEtiquetaParser::formatarNomes($etiquetasItens),
             'etiquetas_localizacao' => TrocaEtiquetaParser::formatarLocalizacaoLista($etiquetasItens),
             'etiquetas_coordenadas' => TrocaEtiquetaParser::formatarCoordenadasLista($etiquetasItens),

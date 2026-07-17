@@ -10,7 +10,7 @@ const GRUPOS_VARIAVEIS = [
   { titulo: 'Operação', keys: ['responsavel', 'prioridade', 'prazo', 'clientes_afetados', 'descricao', 'sub_processo'] },
   { titulo: 'Cliente', keys: ['nome_cliente', 'protocolo'] },
   { titulo: 'Datas', keys: ['criada_em', 'atualizada_em', 'data_entrada', 'data_instalacao', 'assinada_em', 'assinada_por'] },
-  { titulo: 'Outros', keys: ['duracao_ativa', 'parent_task_id', 'parent_task_code', 'parent_titulo', 'parent_categoria', 'parent_categoria_label', 'is_parent_task', 'enviado_por'] },
+  { titulo: 'Outros', keys: ['duracao_ativa', 'parent_task_id', 'parent_task_code', 'parent_titulo', 'parent_categoria', 'parent_categoria_label', 'is_parent_task' /* , 'enviado_por' */] },
 ];
 
 const ICONES_CATEGORIA = {

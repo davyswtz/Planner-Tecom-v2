@@ -13,5 +13,7 @@ class Tecnico extends Model
         'username',
         'regiao',
         'google_chat_id',
+        'nicon_user_id',
+        'nicon_mention_name',
     ];
 }

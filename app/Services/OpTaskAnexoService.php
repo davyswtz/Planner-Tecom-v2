@@ -123,6 +123,51 @@ class OpTaskAnexoService
             ->all();
     }
 
+    /**
+     * Binários dos anexos para reenvio no Nicon (upload multipart).
+     *
+     * @return array<int, array{nome_arquivo: string, mime_type: string, conteudo: string}>
+     */
+    public function listarBinariosParaNicon(OpTask $opTask): array
+    {
+        $limite = max(1, (int) config('planner.anexos_chat.max_imagens_por_mensagem', 10));
+
+        return $this->listar($opTask)
+            ->take($limite)
+            ->map(function (OpTaskAnexo $anexo) {
+                $binario = base64_decode((string) $anexo->conteudo_base64, true);
+                if ($binario === false || $binario === '') {
+                    return null;
+                }
+
+                return [
+                    'nome_arquivo' => (string) ($anexo->nome_arquivo ?: 'anexo.jpg'),
+                    'mime_type' => (string) ($anexo->mime_type ?: 'image/jpeg'),
+                    'conteudo' => $binario,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{nome_arquivo: string, mime_type: string, conteudo: string}|null
+     */
+    public function binarioParaNicon(OpTaskAnexo $anexo): ?array
+    {
+        $binario = base64_decode((string) $anexo->conteudo_base64, true);
+        if ($binario === false || $binario === '') {
+            return null;
+        }
+
+        return [
+            'nome_arquivo' => (string) ($anexo->nome_arquivo ?: 'anexo.jpg'),
+            'mime_type' => (string) ($anexo->mime_type ?: 'image/jpeg'),
+            'conteudo' => $binario,
+        ];
+    }
+
     public function gerarUrlPublicaChat(OpTask $opTask, OpTaskAnexo $anexo, ?int $horasValidade = null): string
     {
         if ((int) $anexo->op_task_id !== (int) $opTask->id) {

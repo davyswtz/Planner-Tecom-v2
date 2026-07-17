@@ -689,7 +689,6 @@ class OrdemServicoService
                 "Goval",
                 "Vale do Aço",
                 "Sem região",
-                "Caratinga",
             ]);
 
             $porRegiaoCalculada = $osSemana

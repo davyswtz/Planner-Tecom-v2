@@ -18,7 +18,7 @@ class WebhookService
         'governador valadares' => 'GOVAL',
         'vale do aço' => 'VALE_DO_ACO',
         'vale do aco' => 'VALE_DO_ACO',
-        'caratinga' => 'CARATINGA',
+        'caratinga' => 'VALE_DO_ACO', // Caratinga passou a integrar Vale do Aço
         'teste' => 'TESTE',
         'backup' => 'TESTE',
     ];
@@ -28,7 +28,6 @@ class WebhookService
         'PADRAO' => 'Padrão',
         'GOVAL' => 'Goval',
         'VALE_DO_ACO' => 'Vale do Aço',
-        'CARATINGA' => 'Caratinga',
         'TESTE' => 'Teste',
     ];
 

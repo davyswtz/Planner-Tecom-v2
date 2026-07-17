@@ -486,11 +486,6 @@
             <div class="region-n">84</div>
           </div>
           <div class="region-row">
-            <div class="region-name">Caratinga</div>
-            <div class="region-bar-wrap"><div class="region-bar" style="width:3%"></div></div>
-            <div class="region-n">4</div>
-          </div>
-          <div class="region-row">
             <div class="region-name">N/D</div>
             <div class="region-bar-wrap"><div class="region-bar" style="width:2%"></div></div>
             <div class="region-n">3</div>

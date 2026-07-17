@@ -350,7 +350,6 @@
         <option value="">Selecione...</option>
         <option>Goval</option>
         <option>Vale do Aço</option>
-        <option>Caratinga</option>
         <option>Teste</option>
       </select>
     </div>
@@ -489,7 +488,6 @@
       <option value="">Todas as regiões</option>
       <option>Goval</option>
       <option>Vale do Aço</option>
-      <option>Caratinga</option>
       <option>Teste</option>
     </select>
 
@@ -1395,7 +1393,7 @@ document.addEventListener('keydown', function(e) {
 
     window.plannerDetalheEdicao.ativarCampos([
       { id: 'campo-titulo', tipo: 'text' },
-      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Teste'] },
       { id: 'campo-numero-os', tipo: 'text' },
       { id: 'campo-status', tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Impedimento', 'Concluída'] },
     ]);

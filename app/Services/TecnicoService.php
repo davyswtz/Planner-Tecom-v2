@@ -38,8 +38,8 @@ class TecnicoService
     {
         $mapa = [
             'Goval' => ['Goval', 'Governador Valadares'],
-            'Vale do Aço' => ['Vale do Aço'],
-            'Caratinga' => ['Caratinga'],
+            'Vale do Aço' => ['Vale do Aço', 'Caratinga'],
+            'Caratinga' => ['Vale do Aço', 'Caratinga'], // legado → Vale do Aço
         ];
 
         return $mapa[$regiao] ?? [$regiao];

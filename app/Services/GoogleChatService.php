@@ -15,6 +15,7 @@ class GoogleChatService
         private OpTaskAnexoService $anexos,
         private OsResumoChatService $osResumo,
         private NiconChatNotificacaoService $niconChat,
+        private TecnicoChatMencaoService $mencoes,
     ) {
     }
 
@@ -35,6 +36,14 @@ class GoogleChatService
 
         if (! $url) {
             return;
+        }
+
+        // Payload interno só para o Nicon — não enviar no webhook Google.
+        unset($mensagem['nicon_anexos']);
+
+        // Mensagens são montadas com menção Nicon (@Nome); webhook Google recebe <users/ID>.
+        if (isset($mensagem['text']) && is_string($mensagem['text'])) {
+            $mensagem['text'] = $this->mencoes->adaptarTextoParaGoogle($mensagem['text']);
         }
 
         if ($rompimento->chat_thread_key) {
@@ -108,6 +117,12 @@ class GoogleChatService
             $mensagem['text'] = ltrim($linhaAnexos);
         }
 
+        try {
+            $mensagem['nicon_anexos'] = $this->anexos->listarBinariosParaNicon($os);
+        } catch (\Throwable) {
+            // Google segue com cardsV2; Nicon envia só o texto.
+        }
+
         return $mensagem;
     }
 
@@ -148,6 +163,11 @@ class GoogleChatService
                 ],
             ]],
         ];
+
+        $binario = $this->anexos->binarioParaNicon($anexo);
+        if ($binario !== null) {
+            $mensagem['nicon_anexos'] = [$binario];
+        }
 
         $this->enviarNotificacao($pai, $mensagem);
     }
@@ -459,12 +479,13 @@ class GoogleChatService
     private function montarMensagemOtimizacaoRede(array $task, ?string $enviadoPor): array
     {
         $historicoService = app(OpTaskHistoricoService::class);
-        $mencaoService = app(TecnicoChatMencaoService::class);
         $titulo = trim($task['titulo'] ?? '') ?: '—';
         $localizacao = $this->formatarLocalizacao($task);
         $descricao = trim($task['descricao'] ?? '') ?: '—';
-        $operador = $historicoService->operadorInicioAtividade($task) ?? trim((string) ($enviadoPor ?? ''));
-        $enviado = $operador !== '' ? $mencaoService->mencionar($operador) : '—';
+        // Operador / enviado_por temporariamente desativado
+        // $mencaoService = app(TecnicoChatMencaoService::class);
+        // $operador = $historicoService->operadorInicioAtividade($task) ?? trim((string) ($enviadoPor ?? ''));
+        // $enviado = $operador !== '' ? $mencaoService->mencionar($operador) : '—';
         $duracao = $historicoService->formatarDuracaoAtiva(
             $historicoService->calcularDuracaoAtivaMinutos($task)
         );
@@ -477,7 +498,7 @@ class GoogleChatService
                 "📍 Localização: {$localizacao}",
                 "📝 Descrição: {$descricao}",
                 '',
-                "👤 Enviado por: {$enviado}",
+                // "👤 Enviado por: {$enviado}",
                 "⏱️ Duração ativa: {$duracao}",
                 '',
                 "🆔 {$id}",

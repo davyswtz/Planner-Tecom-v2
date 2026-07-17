@@ -3,6 +3,8 @@
 namespace App\Services\Nicon;
 
 use App\Models\OpTask;
+use App\Services\CoordenadasChatFormatter;
+use App\Services\TecnicoChatMencaoService;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +24,7 @@ class NiconChatNotificacaoService
     public function __construct(
         private NiconWebService $nicon,
         private WebhookService $webhooks,
+        private TecnicoChatMencaoService $mencoes,
     ) {
     }
 
@@ -41,8 +44,15 @@ class NiconChatNotificacaoService
         }
 
         $texto = $this->extrairTexto($mensagem);
-        if ($texto === '') {
+        $anexos = $this->extrairAnexos($mensagem);
+
+        if ($texto === '' && $anexos === []) {
             return;
+        }
+
+        if ($texto !== '') {
+            $texto = $this->mencoes->adaptarTextoParaNicon($texto);
+            $texto = CoordenadasChatFormatter::adaptarLinksParaNicon($texto);
         }
 
         $conversaId = $this->resolverConversaId($tarefa->regiao);
@@ -53,7 +63,8 @@ class NiconChatNotificacaoService
         }
 
         try {
-            $this->enviar($tarefa->fresh() ?? $tarefa, $conversaId, $texto);
+            $destinoChatId = $this->enviar($tarefa->fresh() ?? $tarefa, $conversaId, $texto !== '' ? $texto : '📎 Anexo');
+            $this->enviarAnexos($destinoChatId > 0 ? $destinoChatId : $conversaId, $anexos);
         } catch (Throwable $e) {
             Log::warning('Nicon chat: falha ao notificar', [
                 'task_id' => $tarefa->id,
@@ -70,14 +81,61 @@ class NiconChatNotificacaoService
     private function resolverConversaId(?string $regiao): int
     {
         $porRegiao = config('services.nicon.chat_conversas', []);
-        if (is_array($porRegiao) && $regiao !== null && $regiao !== '') {
-            $id = (int) ($porRegiao[$regiao] ?? 0);
-            if ($id > 0) {
-                return $id;
+        if (! is_array($porRegiao)) {
+            $porRegiao = [];
+        }
+
+        $chave = $this->normalizarChaveRegiao($regiao);
+        if ($chave !== '') {
+            foreach ($porRegiao as $nome => $id) {
+                if ($this->normalizarChaveRegiao((string) $nome) === $chave) {
+                    $id = (int) $id;
+                    if ($id > 0) {
+                        return $id;
+                    }
+                }
+            }
+
+            // Aliases de Goval → mesmo chat
+            if (in_array($chave, ['goval', 'governador valadares', 'gv'], true)) {
+                foreach (['Goval', 'GOVAL', 'goval'] as $alias) {
+                    $id = (int) ($porRegiao[$alias] ?? 0);
+                    if ($id > 0) {
+                        return $id;
+                    }
+                }
+            }
+
+            // Aliases de Vale do Aço → mesmo chat
+            if (in_array($chave, ['vale do aço', 'vale do aco', 'vale_do_aco', 'va', 'ipatinga', 'caratinga'], true)) {
+                foreach (['Vale do Aço', 'Vale do Aco', 'VALE_DO_ACO', 'vale do aço'] as $alias) {
+                    $id = (int) ($porRegiao[$alias] ?? 0);
+                    if ($id > 0) {
+                        return $id;
+                    }
+                }
+            }
+
+            // Aliases de Teste → grupo de teste
+            if (in_array($chave, ['teste', 'test', 'backup'], true)) {
+                foreach (['Teste', 'TESTE', 'teste', 'Backup'] as $alias) {
+                    $id = (int) ($porRegiao[$alias] ?? 0);
+                    if ($id > 0) {
+                        return $id;
+                    }
+                }
             }
         }
 
         return (int) config('services.nicon.chat_conversa_id', 0);
+    }
+
+    private function normalizarChaveRegiao(?string $regiao): string
+    {
+        $regiao = mb_strtolower(trim((string) $regiao));
+        $regiao = str_replace(['_', '-'], ' ', $regiao);
+
+        return preg_replace('/\s+/u', ' ', $regiao) ?? $regiao;
     }
 
     /** @param  array<string, mixed>  $mensagem */
@@ -88,7 +146,74 @@ class NiconChatNotificacaoService
         return is_string($texto) ? trim($texto) : '';
     }
 
-    private function enviar(OpTask $tarefa, int $conversaId, string $texto): void
+    /**
+     * @param  array<string, mixed>  $mensagem
+     * @return array<int, array{nome_arquivo: string, mime_type: string, conteudo: string}>
+     */
+    private function extrairAnexos(array $mensagem): array
+    {
+        $anexos = $mensagem['nicon_anexos'] ?? [];
+        if (! is_array($anexos) || $anexos === []) {
+            return [];
+        }
+
+        $validos = [];
+        foreach ($anexos as $anexo) {
+            if (! is_array($anexo)) {
+                continue;
+            }
+            $conteudo = $anexo['conteudo'] ?? '';
+            if (! is_string($conteudo) || $conteudo === '') {
+                continue;
+            }
+            $validos[] = [
+                'nome_arquivo' => (string) ($anexo['nome_arquivo'] ?? 'anexo.jpg'),
+                'mime_type' => (string) ($anexo['mime_type'] ?? 'image/jpeg'),
+                'conteudo' => $conteudo,
+            ];
+        }
+
+        return $validos;
+    }
+
+    /**
+     * @param  array<int, array{nome_arquivo: string, mime_type: string, conteudo: string}>  $anexos
+     */
+    private function enviarAnexos(int $destinoChatId, array $anexos): void
+    {
+        if ($destinoChatId <= 0 || $anexos === []) {
+            return;
+        }
+
+        foreach ($anexos as $anexo) {
+            try {
+                $upload = $this->nicon->uploadAnexoChat(
+                    $destinoChatId,
+                    $anexo['conteudo'],
+                    $anexo['nome_arquivo'],
+                    $anexo['mime_type'] !== '' ? $anexo['mime_type'] : null,
+                );
+                $idAnexo = (int) ($upload['id'] ?? 0);
+                if ($idAnexo <= 0) {
+                    continue;
+                }
+                $this->nicon->enviarMensagemImagem(
+                    $destinoChatId,
+                    $idAnexo,
+                    $anexo['nome_arquivo']
+                );
+            } catch (Throwable $e) {
+                Log::warning('Nicon chat: falha ao enviar imagem', [
+                    'destino_chat_id' => $destinoChatId,
+                    'arquivo' => $anexo['nome_arquivo'] ?? null,
+                    'erro' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /** @return int Chat de destino para anexos (thread ou conversa pai) */
+    private function enviar(OpTask $tarefa, int $conversaId, string $texto): int
     {
         $ids = $this->lerIds($tarefa);
 
@@ -99,7 +224,7 @@ class NiconChatNotificacaoService
                 'thread_chat_id' => $ids['thread'],
             ]);
 
-            return;
+            return $ids['thread'];
         }
 
         if ($ids['raiz'] > 0) {
@@ -114,7 +239,7 @@ class NiconChatNotificacaoService
                 'thread_chat_id' => $novoThreadChat,
             ]);
 
-            return;
+            return $novoThreadChat > 0 ? $novoThreadChat : $conversaId;
         }
 
         $criada = $this->nicon->enviarMensagemChat($conversaId, $texto);
@@ -127,6 +252,8 @@ class NiconChatNotificacaoService
             'mensagem_raiz_id' => $idMensagem,
             'conversa_id' => $conversaId,
         ]);
+
+        return $conversaId;
     }
 
     /** @return array{raiz: int, thread: int} */

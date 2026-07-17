@@ -261,7 +261,6 @@
         <option value="">Selecione...</option>
         <option>Goval</option>
         <option>Vale do Aço</option>
-        <option>Caratinga</option>
         <option>Teste</option>
       </select>
     </div>
@@ -414,7 +413,6 @@
       <option value="">Todas as regiões</option>
       <option>Goval</option>
       <option>Vale do Aço</option>
-      <option>Caratinga</option>
       <option>Teste</option>
     </select>
 
@@ -1259,7 +1257,7 @@ document.addEventListener('keydown', function(e) {
       { id: 'campo-titulo', tipo: 'text' },
       { id: 'campo-numero-os', tipo: 'text' },
       { id: 'campo-prazo', tipo: 'date' },
-      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga', 'Teste'] },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Teste'] },
       { id: 'campo-descricao', tipo: 'textarea' },
       { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
       { id: 'campo-status', tipo: 'select', opcoes: ['Pendente', 'Em andamento', 'Validação', 'Precisa de adequação', 'Concluído'] },

@@ -57,7 +57,7 @@ return [
         ['key' => 'os_lista', 'label' => 'Lista numerada de todas as OS da tarefa pai'],
         ['key' => 'is_parent_task', 'label' => 'É tarefa pai'],
         ['key' => 'historico', 'label' => 'Histórico'],
-        ['key' => 'enviado_por', 'label' => 'Enviado por'],
+        // ['key' => 'enviado_por', 'label' => 'Enviado por'], // temporariamente desativado
         ['key' => 'os_total', 'label' => 'Total de OS vinculadas'],
         ['key' => 'os_finalizadas', 'label' => 'Quantidade de OS finalizadas'],
         ['key' => 'os_resumo_tecnicos', 'label' => 'Resumo de OS por técnico (com atividades)'],
@@ -135,9 +135,9 @@ return [
             'Concluída' => "✅ *TROCA DE ETIQUETA — Concluída*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📌 *Região:* {regiao}\n👤 *Responsável:* {responsavel}\n🔄 *Status:* {status_anterior} → {status_novo}\n\n🏷️ *Etiquetas:*\n{etiquetas_localizacao}\n\n🔑 *Código:* {task_code}\n\n{os_resumo}",
         ],
         'otimizacao-rede' => [
-            'Em andamento' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n⏱️ Duração ativa: {duracao_ativa}\n\n🆔 {task_code}",
-            'Impedimento' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n⏱️ Duração ativa: {duracao_ativa}\n\n🆔 {task_code}",
-            'Finalizada' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n👤 Enviado por: {enviado_por}\n⏱️ Duração ativa: {duracao_ativa}\n\n🆔 {task_code}\n\n{os_resumo}",
+            'Em andamento' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n⏱️ Duração ativa: {duracao_ativa}\n\n🆔 {task_code}",
+            'Impedimento' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n⏱️ Duração ativa: {duracao_ativa}\n\n🆔 {task_code}",
+            'Finalizada' => "Otimização de Rede\n🌐 *{titulo}*\n📍 Localização: {localizacao}\n📝 Descrição: {descricao}\n\n⏱️ Duração ativa: {duracao_ativa}\n\n🆔 {task_code}\n\n{os_resumo}",
         ],
         'atendimento-cliente' => [
             'Em andamento' => "🔧 *Alerta: ATENDIMENTO*\n━━━━━━━━━━━━━━━━━━━━\n💻 *Número da OS:* {numero_os}\n📍 *Setor/CTO:* {setor}\n📌 *Região:* {regiao}\n🔄 *Status:* {status_anterior} → {status_novo}\n👤 *Cliente:* {nome_cliente}\n📅 *Data de entrada:* {data_entrada}\n🔑 *Código:* {task_code}",

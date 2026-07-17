@@ -59,12 +59,33 @@ return [
         'sinal_tentativas' => max(1, (int) env('NICON_SINAL_TENTATIVAS', 3)),
         /*
          | Chat Nicon (paralelo ao webhook Google Chat).
-         | NICON_CHAT_ENABLED=true + NICON_CHAT_CONVERSA_ID=4180 para testar.
-         | Opcional: NICON_CHAT_CONVERSAS={"Goval":4180,"Vale do Aço":4180}
+         | Goval → conversa 4143 (subtópicos por tarefa).
+         | Override via NICON_CHAT_CONVERSAS={"Vale do Aço":1234}
          */
         'chat_enabled' => filter_var(env('NICON_CHAT_ENABLED', false), FILTER_VALIDATE_BOOL),
         'chat_conversa_id' => (int) env('NICON_CHAT_CONVERSA_ID', 0),
-        'chat_conversas' => json_decode(env('NICON_CHAT_CONVERSAS', '{}'), true) ?: [],
+        'chat_conversas' => array_replace(
+            [
+                'Goval' => 4143,
+                'GOVAL' => 4143,
+                'Governador Valadares' => 4143,
+                'goval' => 4143,
+                'governador valadares' => 4143,
+                'Vale do Aço' => 4140,
+                'Vale do Aco' => 4140,
+                'VALE_DO_ACO' => 4140,
+                'vale do aço' => 4140,
+                'vale do aco' => 4140,
+                'Caratinga' => 4140,
+                'caratinga' => 4140,
+                'Teste' => 4180,
+                'TESTE' => 4180,
+                'teste' => 4180,
+                'Backup' => 4180,
+                'backup' => 4180,
+            ],
+            array_map('intval', json_decode(env('NICON_CHAT_CONVERSAS', '{}'), true) ?: [])
+        ),
         'cidades' => [
             1659 => 'Governador Valadares',
             1701 => 'Ipatinga',

@@ -382,7 +382,6 @@
           <option value="">Selecione...</option>
           <option>Goval</option>
           <option>Vale do Aço</option>
-          <option>Caratinga</option>
           <option>Teste</option>
         </select>
       </div>
@@ -546,7 +545,6 @@
       <option value="">Todas as regiões</option>
       <option>Goval</option>
       <option>Vale do Aço</option>
-      <option>Caratinga</option>
       <option>Teste</option>
     </select>
 
@@ -1193,7 +1191,7 @@ document.addEventListener('keydown', function(e) {
         },
       },
       { id: 'campo-tipo', tipo: 'select', opcoes: ['Rota ramal', 'Backbone', 'Caixa', 'Setor'] },
-      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Caratinga'] },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço'] },
       { id: 'campo-clientes', tipo: 'number' },
       { id: 'campo-coordenadas', tipo: 'text', inputId: 'campo-coordenadas-input' },
       { id: 'campo-endereco', tipo: 'text' },

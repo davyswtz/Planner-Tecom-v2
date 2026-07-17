@@ -45,6 +45,19 @@ class CoordenadasChatFormatter
         return 'https://www.google.com/maps?q=' . rawurlencode("{$lat},{$lng}");
     }
 
+    /**
+     * Converte links no formato Google Chat (&lt;url|rótulo&gt;) para Markdown [rótulo](url),
+     * usado pelo Nicon (exibe só as coordenadas, clicáveis).
+     */
+    public static function adaptarLinksParaNicon(string $texto): string
+    {
+        return (string) preg_replace_callback(
+            '/<((?:https?:\/\/)[^|>]+)\|([^>]+)>/',
+            static fn (array $m): string => '[' . $m[2] . '](' . $m[1] . ')',
+            $texto
+        );
+    }
+
     private static function formatarPar(string $texto): string
     {
         if ($texto === '' || $texto === '—') {
