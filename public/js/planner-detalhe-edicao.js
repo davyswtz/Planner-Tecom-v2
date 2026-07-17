@@ -60,6 +60,9 @@
       if (typeof campo.onInput === 'function') {
         input.addEventListener('input', () => campo.onInput(input));
       }
+      if (typeof campo.onBlur === 'function') {
+        input.addEventListener('blur', () => campo.onBlur(input));
+      }
       el.replaceChildren(input);
     });
   }

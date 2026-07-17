@@ -362,9 +362,9 @@
     <div class="detail-grid">
       <div class="os-field">
         <label class="os-label">Elemento(s)</label>
-        <input type="text" id="input-cto" placeholder="Ex: GVA1210" class="os-input"
+        <input type="text" id="input-cto" placeholder="Ex: GVA1210 ou GVA1210, GVA1211" class="os-input"
           oninput="this.value = this.value.toUpperCase(); buscarCTODebounced(this.value, 'input-coords', 'endereco-box', 'input-clientes')"/>
-        <p class="input-hint">Coordenadas preenchidas automaticamente pelo JSON</p>
+        <p class="input-hint">Com várias caixas, a localização usa sempre a primeira digitada</p>
       </div>
       <div class="os-field">
         <label class="os-label">Tipo de rompimento</label>
@@ -411,15 +411,15 @@
 
     <div class="detail-grid-2">
       <div class="os-field">
-        <label class="os-label">Coordenadas</label>
-        <input id="input-coords" type="text" placeholder="Preenchido pela CTO automaticamente" readonly
-          class="os-input" style="background:var(--gray-50);color:var(--gray-500)"/>
+        <label class="os-label">Coordenadas (opcional)</label>
+        <input id="input-coords" type="text" placeholder="Ex: -18.8517, -41.9494"
+          class="os-input"/>
+        <p class="input-hint">Pode digitar manualmente ou deixar em branco</p>
       </div>
       <div class="os-field">
-        <label class="os-label">Endereço</label>
-        <div id="endereco-box" class="detail-value" style="background:var(--gray-50);color:var(--gray-400)">
-          Gerado pelas coordenadas...
-        </div>
+        <label class="os-label">Endereço (opcional)</label>
+        <input id="endereco-box" type="text" placeholder="Gerado pelas coordenadas ou digite"
+          class="os-input"/>
       </div>
     </div>
 
@@ -721,6 +721,10 @@ const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
   // ─── MODAIS ───
   window.abrirModal = function() {
+    const coords = document.getElementById('input-coords');
+    const endereco = document.getElementById('endereco-box');
+    if (coords) coords.value = '';
+    if (endereco) endereco.value = '';
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -1064,12 +1068,32 @@ document.addEventListener('keydown', function(e) {
   }
 
   function buscarCtoJson(termo) {
-    return CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === termo) || null;
+    const chave = String(termo || '').trim().toUpperCase();
+    if (!chave) return null;
+    return CTOs.find(cto => cto.nome && cto.nome.toUpperCase() === chave) || null;
+  }
+
+  /** Com várias caixas/setores (ex.: "GVA1210, GVA1211"), usa só a primeira para localização. */
+  function extrairPrimeiraCaixa(valor) {
+    const bruto = String(valor || '').trim().toUpperCase();
+    if (!bruto) return '';
+
+    const partes = bruto
+      .split(/[,;|/]+|\s+/)
+      .map((parte) => parte.trim())
+      .filter(Boolean);
+
+    return partes[0] || '';
   }
 
   function aplicarCtoJson(encontradaCto, campoCoords, campoEndereco) {
     const elCoords = campoValorEl(campoCoords);
-    if (elCoords) elCoords.value = `${encontradaCto.lat}, ${encontradaCto.lng}`;
+    const novaCoord = `${encontradaCto.lat}, ${encontradaCto.lng}`;
+    // Evita rebuscar endereço se a 1ª caixa (e coords) não mudou ao digitar as demais.
+    if (elCoords && String(elCoords.value || '').trim() === novaCoord) {
+      return;
+    }
+    if (elCoords) elCoords.value = novaCoord;
     setField(campoEndereco, 'Buscando endereço...');
     buscarEndereco(encontradaCto.lat, encontradaCto.lng, campoEndereco);
   }
@@ -1084,13 +1108,11 @@ document.addEventListener('keydown', function(e) {
 
   async function buscarCTO(valor, campoCoords = 'input-coords', campoEndereco = 'endereco-box', campoClientes = null) {
     try {
-      const termo = valor.trim().toUpperCase();
+      const termo = extrairPrimeiraCaixa(valor);
       const seq = ++buscarCtoSeq;
 
+      // Sem termo útil: não apaga coordenadas/endereço digitados manualmente.
       if (termo.length < 3) {
-        const elCoords = campoValorEl(campoCoords);
-        if (elCoords) elCoords.value = '';
-        setField(campoEndereco, 'Gerado pelas coordenadas...');
         return;
       }
 
@@ -1107,9 +1129,7 @@ document.addEventListener('keydown', function(e) {
         return;
       }
 
-      const elCoords = campoValorEl(campoCoords);
-      if (elCoords) elCoords.value = '';
-      setField(campoEndereco, 'CTO não encontrada — preencha manualmente');
+      // CTO desconhecida: mantém o que o usuário já preencheu.
     } catch (e) {
       console.error('Erro ao buscar elemento:', e);
     }
@@ -1145,6 +1165,18 @@ document.addEventListener('keydown', function(e) {
       setField(campoEndereco, 'Erro ao buscar endereço');
     }
   }
+
+  function parseCoordsTexto(texto) {
+    const m = String(texto || '').trim().match(/^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) return null;
+    return { lat: m[1], lng: m[2] };
+  }
+
+  document.getElementById('input-coords')?.addEventListener('blur', function () {
+    const parsed = parseCoordsTexto(this.value);
+    if (!parsed) return;
+    void buscarEndereco(parsed.lat, parsed.lng, 'endereco-box');
+  });
 
   async function carregarTecnicos(regiao, destino = 'os-input-tecnico') {
     const el = document.getElementById(destino);
@@ -1191,9 +1223,18 @@ document.addEventListener('keydown', function(e) {
         },
       },
       { id: 'campo-tipo', tipo: 'select', opcoes: ['Rota ramal', 'Backbone', 'Caixa', 'Setor'] },
-      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço'] },
+      { id: 'campo-regiao', tipo: 'select', opcoes: ['Goval', 'Vale do Aço', 'Teste'] },
       { id: 'campo-clientes', tipo: 'number' },
-      { id: 'campo-coordenadas', tipo: 'text', inputId: 'campo-coordenadas-input' },
+      {
+        id: 'campo-coordenadas',
+        tipo: 'text',
+        inputId: 'campo-coordenadas-input',
+        onBlur: (input) => {
+          const parsed = parseCoordsTexto(input.value);
+          if (!parsed) return;
+          void buscarEndereco(parsed.lat, parsed.lng, 'campo-endereco');
+        },
+      },
       { id: 'campo-endereco', tipo: 'text' },
       { id: 'campo-prioridade', tipo: 'select', opcoes: ['Baixa', 'Média', 'Alta'] },
       { id: 'campo-status', tipo: 'select', opcoes: ['Criada', 'Em andamento', 'Impedimento', 'Finalizada'] },
@@ -1493,6 +1534,30 @@ async function carregarOS(rompimentoId) {
 }
 
 
+  function lerCampoTexto(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+      return String(el.value || '').trim();
+    }
+    return String(el.textContent || '').trim();
+  }
+
+  const PLACEHOLDERS_ENDERECO = new Set([
+    '',
+    'Gerado pelas coordenadas...',
+    'Gerado pelas coordenadas ou digite',
+    'Buscando endereço...',
+    'CTO não encontrada — preencha manualmente',
+    'Endereço não encontrado',
+    'Erro ao buscar endereço',
+  ]);
+
+  function normalizarEnderecoSalvar(texto) {
+    const t = String(texto || '').trim();
+    return PLACEHOLDERS_ENDERECO.has(t) ? '' : t;
+  }
+
   async function criarRompimento() {
     const dados = {
       titulo:            `Rompimento — ${document.getElementById('input-cto').value}`,
@@ -1502,8 +1567,8 @@ async function carregarOS(rompimentoId) {
       responsavel:       '',
       clientesAfetados:  document.getElementById('input-clientes').value,
       prioridade:        prioridadeSelecionada,
-      coordenadas:       document.getElementById('input-coords').value,
-      localizacao_texto: document.getElementById('endereco-box').textContent,
+      coordenadas:       lerCampoTexto('input-coords'),
+      localizacao_texto: normalizarEnderecoSalvar(lerCampoTexto('endereco-box')),
       status:            'Criada',
       categoria:         'rompimentos',
       numero_os:         document.getElementById('input-numero-hubsoft').value
