@@ -97,6 +97,79 @@ return [
     ],
 
     /*
+    | Telegram Bot (paralelo ao Google Chat / Nicon).
+    | Post no CANAL + comentários no grupo de discussão vinculado.
+    | - Teste       → Central de Projetos Dev (-1003553532320) / BACKUP (-1004478110795)
+    | - Goval       → MULTISKILL GV (-1004326360122) / Chat MULTISKILL GV backup (-1003742115644)
+    | - Vale do Aço → MULTISKILL VALE DO AÇO (-1004373600093) / BACKUP VA (-1004461293839)
+    | Override:
+    |   TELEGRAM_CHAT_IDS={"Goval":-1004326360122,"Vale do Aço":-1004373600093,"Teste":-1003553532320}
+    |   TELEGRAM_DISCUSSION_CHAT_IDS={"Goval":-1003742115644,"Vale do Aço":-1004461293839,"Teste":-1004478110795}
+    */
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'api_base' => rtrim(env('TELEGRAM_API_BASE', 'https://api.telegram.org'), '/'),
+        'timeout' => (int) env('TELEGRAM_TIMEOUT', 30),
+        'chat_enabled' => filter_var(env('TELEGRAM_CHAT_ENABLED', false), FILTER_VALIDATE_BOOL),
+        'chat_id' => env('TELEGRAM_CHAT_ID'),
+        'discussion_chat_id' => env('TELEGRAM_DISCUSSION_CHAT_ID'),
+        'chat_ids' => array_replace(
+            [
+                'Teste' => -1003553532320,
+                'TESTE' => -1003553532320,
+                'teste' => -1003553532320,
+                'Backup' => -1003553532320,
+                'backup' => -1003553532320,
+                'Goval' => -1004326360122,
+                'GOVAL' => -1004326360122,
+                'goval' => -1004326360122,
+                'Governador Valadares' => -1004326360122,
+                'Vale do Aço' => -1004373600093,
+                'Vale do Aco' => -1004373600093,
+                'VALE_DO_ACO' => -1004373600093,
+                'vale do aço' => -1004373600093,
+                'vale do aco' => -1004373600093,
+            ],
+            (static function (): array {
+                $decoded = json_decode(env('TELEGRAM_CHAT_IDS', '{}'), true) ?: [];
+                $out = [];
+                foreach ($decoded as $k => $v) {
+                    $out[$k] = is_numeric($v) ? (int) $v : $v;
+                }
+
+                return $out;
+            })()
+        ),
+        'discussion_chat_ids' => array_replace(
+            [
+                'Teste' => -1004478110795,
+                'TESTE' => -1004478110795,
+                'teste' => -1004478110795,
+                'Backup' => -1004478110795,
+                'backup' => -1004478110795,
+                'Goval' => -1003742115644,
+                'GOVAL' => -1003742115644,
+                'goval' => -1003742115644,
+                'Governador Valadares' => -1003742115644,
+                'Vale do Aço' => -1004461293839,
+                'Vale do Aco' => -1004461293839,
+                'VALE_DO_ACO' => -1004461293839,
+                'vale do aço' => -1004461293839,
+                'vale do aco' => -1004461293839,
+            ],
+            (static function (): array {
+                $decoded = json_decode(env('TELEGRAM_DISCUSSION_CHAT_IDS', '{}'), true) ?: [];
+                $out = [];
+                foreach ($decoded as $k => $v) {
+                    $out[$k] = is_numeric($v) ? (int) $v : $v;
+                }
+
+                return $out;
+            })()
+        ),
+    ],
+
+    /*
     | Verificação SSL do cliente HTTP (Google Chat, Nicon, etc.).
     | Em local no Windows, defina HTTP_VERIFY_SSL=false se aparecer cURL error 60.
     */

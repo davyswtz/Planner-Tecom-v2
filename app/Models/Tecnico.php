@@ -15,5 +15,7 @@ class Tecnico extends Model
         'google_chat_id',
         'nicon_user_id',
         'nicon_mention_name',
+        'telegram_user_id',
+        'telegram_username',
     ];
 }
