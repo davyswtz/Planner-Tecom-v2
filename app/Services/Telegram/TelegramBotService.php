@@ -36,29 +36,70 @@ class TelegramBotService
         return $resultado;
     }
 
+    /**
+     * @param  int|string|null  $replyToChatId  Chat da mensagem respondida (ex.: canal), para comentário na discussão
+     * @return array<string, mixed>  Resultado da última (ou única) mensagem enviada
+     */
     public function enviarMensagem(
         int|string $chatId,
         string $texto,
         ?int $messageThreadId = null,
         ?int $replyToMessageId = null,
+        int|string|null $replyToChatId = null,
     ): array {
-        $payload = [
-            'chat_id' => $chatId,
-            'text' => $texto,
-            'parse_mode' => 'HTML',
-            'disable_web_page_preview' => true,
-        ];
+        $partes = $this->partirTexto($texto);
+        $ultima = [];
 
-        if ($messageThreadId !== null && $messageThreadId > 0) {
-            $payload['message_thread_id'] = $messageThreadId;
+        foreach ($partes as $i => $parte) {
+            $payload = [
+                'chat_id' => $chatId,
+                'text' => $parte,
+                'parse_mode' => 'HTML',
+                'disable_web_page_preview' => true,
+            ];
+
+            if ($messageThreadId !== null && $messageThreadId > 0) {
+                $payload['message_thread_id'] = $messageThreadId;
+            }
+
+            // Só a 1ª parte responde ao post pai (comentário nativo).
+            if ($i === 0) {
+                $this->aplicarReply($payload, $replyToMessageId, $replyToChatId);
+            }
+
+            $ultima = $this->postJson('sendMessage', $payload);
         }
 
-        if ($replyToMessageId !== null && $replyToMessageId > 0) {
-            $payload['reply_to_message_id'] = $replyToMessageId;
-            $payload['allow_sending_without_reply'] = true;
+        return $ultima;
+    }
+
+    /**
+     * Telegram limita texto a 4096 chars; parte sem quebrar tags HTML simples no meio.
+     *
+     * @return array<int, string>
+     */
+    private function partirTexto(string $texto): array
+    {
+        $limite = 4096;
+        if (mb_strlen($texto) <= $limite) {
+            return [$texto];
         }
 
-        return $this->postJson('sendMessage', $payload);
+        $partes = [];
+        $restante = $texto;
+        while (mb_strlen($restante) > $limite) {
+            $corte = mb_strrpos(mb_substr($restante, 0, $limite), "\n");
+            if ($corte === false || $corte < (int) ($limite * 0.5)) {
+                $corte = $limite;
+            }
+            $partes[] = mb_substr($restante, 0, $corte);
+            $restante = ltrim(mb_substr($restante, $corte));
+        }
+        if ($restante !== '') {
+            $partes[] = $restante;
+        }
+
+        return $partes !== [] ? $partes : [$texto];
     }
 
     /**
@@ -78,6 +119,7 @@ class TelegramBotService
      * Envia foto (ou documento se não for imagem) para o chat.
      *
      * @param  array{nome_arquivo?: string, mime_type?: string, conteudo: string}  $anexo
+     * @param  int|string|null  $replyToChatId  Chat da mensagem respondida (ex.: canal)
      */
     public function enviarAnexo(
         int|string $chatId,
@@ -85,6 +127,7 @@ class TelegramBotService
         ?int $messageThreadId = null,
         ?string $caption = null,
         ?int $replyToMessageId = null,
+        int|string|null $replyToChatId = null,
     ): array {
         $binario = $anexo['conteudo'] ?? '';
         if (! is_string($binario) || $binario === '') {
@@ -105,15 +148,40 @@ class TelegramBotService
         if ($messageThreadId !== null && $messageThreadId > 0) {
             $fields['message_thread_id'] = (string) $messageThreadId;
         }
-        if ($replyToMessageId !== null && $replyToMessageId > 0) {
-            $fields['reply_to_message_id'] = (string) $replyToMessageId;
-            $fields['allow_sending_without_reply'] = 'true';
-        }
         if ($caption !== null && $caption !== '') {
             $fields['caption'] = mb_substr($caption, 0, 1024);
+            $fields['parse_mode'] = 'HTML';
         }
 
+        $this->aplicarReply($fields, $replyToMessageId, $replyToChatId, asMultipart: true);
+
         return $this->postMultipart($method, $field, $binario, $nome, $fields);
+    }
+
+    /**
+     * Reage a uma mensagem (bots: 1 emoji por mensagem).
+     * Emojis permitidos pela API: ✅ 🚀 👍 🎉 🔥 etc.
+     */
+    public function reagirMensagem(
+        int|string $chatId,
+        int $messageId,
+        string $emoji,
+        bool $isBig = true,
+    ): bool {
+        if ($messageId <= 0 || $emoji === '') {
+            return false;
+        }
+
+        $this->postJson('setMessageReaction', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'reaction' => [
+                ['type' => 'emoji', 'emoji' => $emoji],
+            ],
+            'is_big' => $isBig,
+        ]);
+
+        return true;
     }
 
     /** @return array<string, mixed> */
@@ -134,31 +202,88 @@ class TelegramBotService
     }
 
     /**
-     * Após postar no canal, espera o forward automático no grupo de discussão
-     * e devolve o message_id desse forward (raiz dos comentários).
+     * Consome updates antigos e devolve o último update_id.
+     * Chamar ANTES de postar no canal, para o poll seguinte só ver o forward novo.
      */
-    public function aguardarMensagemDiscussao(
-        int|string $channelId,
-        int $channelMessageId,
-        int|string $discussionChatId,
-        int $tentativas = 15,
-        int $esperaMs = 400,
-    ): ?int {
-        if ($channelMessageId <= 0) {
-            return null;
-        }
+    public function obterUltimoUpdateId(): int
+    {
+        $last = 0;
 
-        for ($i = 0; $i < $tentativas; $i++) {
-            $updates = $this->getJson('getUpdates', [
+        for ($i = 0; $i < 50; $i++) {
+            $params = [
                 'timeout' => 0,
                 'limit' => 100,
-                'allowed_updates' => json_encode(['message']),
-            ]);
+            ];
+            if ($last > 0) {
+                $params['offset'] = $last + 1;
+            }
+
+            $updates = $this->getJson('getUpdates', $params);
+            if ($updates === []) {
+                break;
+            }
 
             foreach ($updates as $update) {
                 if (! is_array($update)) {
                     continue;
                 }
+                $last = max($last, (int) ($update['update_id'] ?? 0));
+            }
+        }
+
+        if ($last > 0) {
+            // Confirma consumo até a ponta da fila.
+            $this->getJson('getUpdates', [
+                'offset' => $last + 1,
+                'limit' => 1,
+                'timeout' => 0,
+            ]);
+        }
+
+        return $last;
+    }
+
+    /**
+     * Após postar no canal, espera o forward automático no grupo de discussão
+     * e devolve o message_id desse forward (raiz dos comentários / OS).
+     *
+     * @param  int  $updateIdMinimo  Último update_id conhecido ANTES do post (via obterUltimoUpdateId)
+     */
+    public function aguardarMensagemDiscussao(
+        int|string $channelId,
+        int $channelMessageId,
+        int|string $discussionChatId,
+        int $tentativas = 25,
+        int $esperaMs = 400,
+        int $updateIdMinimo = 0,
+    ): ?int {
+        if ($channelMessageId <= 0) {
+            return null;
+        }
+
+        $offset = $updateIdMinimo > 0 ? $updateIdMinimo + 1 : 0;
+
+        for ($i = 0; $i < $tentativas; $i++) {
+            $params = [
+                'timeout' => 0,
+                'limit' => 100,
+            ];
+            if ($offset > 0) {
+                $params['offset'] = $offset;
+            }
+
+            $updates = $this->getJson('getUpdates', $params);
+
+            foreach ($updates as $update) {
+                if (! is_array($update)) {
+                    continue;
+                }
+
+                $uid = (int) ($update['update_id'] ?? 0);
+                if ($uid >= $offset) {
+                    $offset = $uid + 1;
+                }
+
                 $msg = $update['message'] ?? null;
                 if (! is_array($msg)) {
                     continue;
@@ -167,13 +292,13 @@ class TelegramBotService
                     continue;
                 }
 
-                $fwdMsgId = $this->extrairForwardMessageId($msg);
-                $fwdChatId = $this->extrairForwardChatId($msg);
+                if (! $this->mensagemEForwardDoCanal($msg, $channelId, $channelMessageId)) {
+                    continue;
+                }
 
-                if ($fwdMsgId === $channelMessageId && (string) $fwdChatId === (string) $channelId) {
-                    $id = (int) ($msg['message_id'] ?? 0);
-
-                    return $id > 0 ? $id : null;
+                $id = (int) ($msg['message_id'] ?? 0);
+                if ($id > 0) {
+                    return $id;
                 }
             }
 
@@ -181,6 +306,113 @@ class TelegramBotService
         }
 
         return null;
+    }
+
+    /**
+     * Tenta achar o forward de um post antigo ainda na fila de updates (recuperação).
+     */
+    public function buscarForwardDiscussaoEmUpdates(
+        int|string $channelId,
+        int $channelMessageId,
+        int|string $discussionChatId,
+    ): ?int {
+        if ($channelMessageId <= 0) {
+            return null;
+        }
+
+        $offset = 0;
+        for ($i = 0; $i < 30; $i++) {
+            $params = ['timeout' => 0, 'limit' => 100];
+            if ($offset > 0) {
+                $params['offset'] = $offset;
+            }
+
+            $updates = $this->getJson('getUpdates', $params);
+            if ($updates === []) {
+                break;
+            }
+
+            foreach ($updates as $update) {
+                if (! is_array($update)) {
+                    continue;
+                }
+                $uid = (int) ($update['update_id'] ?? 0);
+                if ($uid >= $offset) {
+                    $offset = $uid + 1;
+                }
+
+                $msg = $update['message'] ?? null;
+                if (! is_array($msg)) {
+                    continue;
+                }
+                if ((string) ($msg['chat']['id'] ?? '') !== (string) $discussionChatId) {
+                    continue;
+                }
+                if (! $this->mensagemEForwardDoCanal($msg, $channelId, $channelMessageId)) {
+                    continue;
+                }
+
+                $id = (int) ($msg['message_id'] ?? 0);
+                if ($id > 0) {
+                    return $id;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** @param  array<string, mixed>  $msg */
+    private function mensagemEForwardDoCanal(array $msg, int|string $channelId, int $channelMessageId): bool
+    {
+        $fwdMsgId = $this->extrairForwardMessageId($msg);
+        $fwdChatId = $this->extrairForwardChatId($msg);
+
+        if ($fwdMsgId === $channelMessageId && (string) $fwdChatId === (string) $channelId) {
+            return true;
+        }
+
+        // Fallback: forward automático do canal (alguns clients só marcam is_automatic_forward).
+        if (($msg['is_automatic_forward'] ?? false) === true) {
+            $fromChat = $msg['forward_from_chat']['id']
+                ?? $msg['forward_origin']['chat']['id']
+                ?? null;
+            if ((string) $fromChat === (string) $channelId) {
+                $fwdId = $this->extrairForwardMessageId($msg);
+
+                return $fwdId === 0 || $fwdId === $channelMessageId;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function aplicarReply(
+        array &$payload,
+        ?int $replyToMessageId,
+        int|string|null $replyToChatId,
+        bool $asMultipart = false,
+    ): void {
+        if ($replyToMessageId === null || $replyToMessageId <= 0) {
+            return;
+        }
+
+        // Comentário nativo no canal: reply no grupo de discussão apontando para o post do canal.
+        if ($replyToChatId !== null && $replyToChatId !== '' && $replyToChatId !== 0 && $replyToChatId !== '0') {
+            $params = [
+                'message_id' => $replyToMessageId,
+                'chat_id' => is_numeric($replyToChatId) ? (int) $replyToChatId : (string) $replyToChatId,
+            ];
+            $payload['reply_parameters'] = $asMultipart ? json_encode($params) : $params;
+
+            return;
+        }
+
+        $payload['reply_to_message_id'] = $asMultipart ? (string) $replyToMessageId : $replyToMessageId;
+        $payload['allow_sending_without_reply'] = $asMultipart ? 'true' : true;
     }
 
     /** @param  array<string, mixed>  $msg */

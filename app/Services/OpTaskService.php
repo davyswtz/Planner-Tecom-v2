@@ -304,7 +304,8 @@ class OpTaskService
                 return;
             }
 
-            if ($osTaskId) {
+            // Anexos só na OS "Em andamento" — Finalizada não reenvia fotos.
+            if ($osTaskId && $googleChatService->isOsEmAndamento($statusNovo)) {
                 $os = OpTask::find($osTaskId)?->fresh();
                 if ($os) {
                     $mensagem = $googleChatService->enriquecerMensagemComAnexosOs($os, $mensagem);

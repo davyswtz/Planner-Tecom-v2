@@ -14,9 +14,9 @@ use Throwable;
 
 /**
  * Telegram canal + comentários nativos (igual Google thread / Nicon):
- * - Tarefa pai → posta no CANAL (guarda telegram_message_id do post)
- * - Resolve o forward automático no grupo de discussão (telegram_topic_id = msg raiz dos comentários)
- * - OS / updates → comentário no grupo de discussão (reply_to_message_id)
+ * - Tarefa pai → posta no CANAL (guarda telegram_message_id)
+ * - OS / updates / anexos → comentário na discussão do post (reply_parameters no canal)
+ * - Best-effort: também guarda telegram_topic_id (= msg forward na discussão) se getUpdates achar
  */
 class TelegramChatNotificacaoService
 {
@@ -74,6 +74,11 @@ class TelegramChatNotificacaoService
                 $texto !== '' ? $texto : '📎 Anexo',
                 $anexos,
             );
+
+            // Tarefa pai finalizada → ✅ no post do canal + 🚀 no forward da discussão
+            if ($this->eTarefaPai($tarefa) && $this->statusFinalizado($statusNovo)) {
+                $this->reagirFinalizacao($tarefa->fresh() ?? $tarefa, $channelId, $regiao);
+            }
         } catch (Throwable $e) {
             Log::warning('Telegram canal: falha ao notificar', [
                 'task_id' => $tarefa->id,
@@ -81,6 +86,83 @@ class TelegramChatNotificacaoService
                 'channel_id' => $channelId,
                 'erro' => $e->getMessage(),
             ]);
+        }
+    }
+
+    private function eTarefaPai(OpTask $tarefa): bool
+    {
+        return empty($tarefa->parent_task_id);
+    }
+
+    private function statusFinalizado(?string $status): bool
+    {
+        $chave = mb_strtolower(str_replace('_', ' ', trim((string) $status)));
+
+        return in_array($chave, [
+            'finalizada',
+            'finalizar',
+            'finalizado',
+            'concluída',
+            'concluida',
+            'concluído',
+            'concluido',
+        ], true);
+    }
+
+    /**
+     * Bot só pode 1 reação por mensagem: certo no canal, foguete na discussão.
+     * Se o canal não liberar ✅/🚀, cai para 🎉/🔥 (comum em canais com reações limitadas).
+     */
+    private function reagirFinalizacao(OpTask $tarefa, int|string $channelId, ?string $regiao): void
+    {
+        $ids = $this->lerIds($tarefa);
+        if ($ids['channel'] <= 0 && $ids['discussion'] <= 0) {
+            return;
+        }
+
+        try {
+            if ($ids['channel'] > 0) {
+                $this->reagirComFallback($channelId, $ids['channel'], ['✅', '🎉', '👍']);
+            }
+
+            if ($ids['discussion'] > 0) {
+                $discussionChatId = $this->resolverDiscussionChatId($regiao, $channelId);
+                $this->reagirComFallback($discussionChatId, $ids['discussion'], ['🚀', '🔥', '🏆']);
+            }
+
+            Log::info('Telegram canal: reações de finalização', [
+                'task_id' => $tarefa->id,
+                'channel_message_id' => $ids['channel'],
+                'discussion_message_id' => $ids['discussion'],
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('Telegram canal: falha ao reagir na finalização', [
+                'task_id' => $tarefa->id,
+                'erro' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /** @param  array<int, string>  $emojis */
+    private function reagirComFallback(int|string $chatId, int $messageId, array $emojis): void
+    {
+        $ultimoErro = null;
+
+        foreach ($emojis as $emoji) {
+            try {
+                $this->telegram->reagirMensagem($chatId, $messageId, $emoji, true);
+
+                return;
+            } catch (Throwable $e) {
+                $ultimoErro = $e;
+                if (! str_contains($e->getMessage(), 'REACTION_INVALID')) {
+                    throw $e;
+                }
+            }
+        }
+
+        if ($ultimoErro !== null) {
+            throw $ultimoErro;
         }
     }
 
@@ -248,86 +330,241 @@ class TelegramChatNotificacaoService
         string $texto,
         array $anexos = [],
     ): void {
-        $discussionMsgId = $this->lerDiscussionMessageId($tarefa);
+        $ids = $this->lerIds($tarefa);
+        $discussionChatId = $this->resolverDiscussionChatId($regiao, $channelId);
 
-        if ($discussionMsgId > 0) {
-            $discussionChatId = $this->resolverDiscussionChatId($regiao, $channelId);
-            $criada = $this->telegram->enviarMensagem($discussionChatId, $texto, null, $discussionMsgId);
-            $messageId = (int) ($criada['message_id'] ?? 0);
+        // Já existe post pai → OS / update / anexo SEMPRE como comentário (nunca post novo no canal).
+        if ($ids['channel'] > 0 || $ids['discussion'] > 0) {
+            $ids = $this->garantirDiscussionId($tarefa, $channelId, $discussionChatId, $ids);
+            $this->enviarComentario($discussionChatId, $channelId, $ids, $texto);
 
-            Log::info('Telegram canal: comentário no post', [
+            Log::info('Telegram canal: comentário no post (OS/update)', [
                 'task_id' => $tarefa->id,
                 'channel_id' => $channelId,
                 'discussion_chat_id' => $discussionChatId,
-                'reply_to' => $discussionMsgId,
-                'message_id' => $messageId,
+                'channel_message_id' => $ids['channel'],
+                'discussion_message_id' => $ids['discussion'],
             ]);
 
-            $this->enviarAnexos($discussionChatId, $discussionMsgId, $anexos);
+            $this->enviarAnexos($discussionChatId, $channelId, $ids, $anexos);
 
             return;
         }
 
-        // 1) Post no canal (mensagem pai — aparece com "Deixe um comentário")
-        $criada = $this->telegram->enviarMensagem($channelId, $texto);
-        $channelMessageId = (int) ($criada['message_id'] ?? 0);
-        if ($channelMessageId <= 0) {
-            throw new RuntimeException('Telegram sendMessage no canal sem message_id.');
+        // Lock evita dois posts pai simultâneos no mesmo task (race no arraste).
+        $lock = null;
+        $lockAdquirido = false;
+        try {
+            $lock = Cache::lock($this->cacheKey((int) $tarefa->id).'_criar', 30);
+            $lockAdquirido = $lock->get();
+        } catch (Throwable) {
+            $lock = null;
+            $lockAdquirido = true; // segue sem lock se o driver não suportar
         }
 
-        $discussionChatId = $this->resolverDiscussionChatId($regiao, $channelId);
+        if ($lock !== null && ! $lockAdquirido) {
+            usleep(500_000);
+            $tarefa = $tarefa->fresh() ?? $tarefa;
+            $ids = $this->lerIds($tarefa);
+            if ($ids['channel'] > 0 || $ids['discussion'] > 0) {
+                $ids = $this->garantirDiscussionId($tarefa, $channelId, $discussionChatId, $ids);
+                $this->enviarComentario($discussionChatId, $channelId, $ids, $texto);
+                $this->enviarAnexos($discussionChatId, $channelId, $ids, $anexos);
 
-        // 2) Forward automático no grupo de discussão = raiz dos comentários
-        $discussionMsgId = $this->telegram->aguardarMensagemDiscussao(
-            $channelId,
-            $channelMessageId,
-            $discussionChatId,
-        );
+                return;
+            }
+        }
 
-        if ($discussionMsgId === null || $discussionMsgId <= 0) {
-            // Ainda grava o post do canal; comentários falharão até reprocessar.
+        try {
+            // Limpa fila de updates ANTES do post, senão o forward novo se perde no backlog.
+            $updateIdAntes = 0;
+            try {
+                $updateIdAntes = $this->telegram->obterUltimoUpdateId();
+            } catch (Throwable $e) {
+                Log::debug('Telegram canal: não drenou updates antes do post', [
+                    'task_id' => $tarefa->id,
+                    'erro' => $e->getMessage(),
+                ]);
+            }
+
+            // 1) Post no canal (mensagem pai — "Deixe um comentário")
+            $criada = $this->telegram->enviarMensagem($channelId, $texto);
+            $channelMessageId = (int) ($criada['message_id'] ?? 0);
+            if ($channelMessageId <= 0) {
+                throw new RuntimeException('Telegram sendMessage no canal sem message_id.');
+            }
+
             $this->salvarIds($tarefa, $channelMessageId, null);
-            throw new RuntimeException(
-                "Post no canal ok (message_id={$channelMessageId}), mas não achei o forward no grupo de discussão {$discussionChatId}. "
-                .'Confirme que o bot está no grupo de discussão e que comentários estão ativos no canal.'
+
+            // 2) Forward automático na discussão = raiz onde a OS/comentários devem ir
+            $discussionMsgId = $this->telegram->aguardarMensagemDiscussao(
+                $channelId,
+                $channelMessageId,
+                $discussionChatId,
+                25,
+                400,
+                $updateIdAntes,
             );
+
+            if ($discussionMsgId === null || $discussionMsgId <= 0) {
+                throw new RuntimeException(
+                    "Post no canal ok (message_id={$channelMessageId}), mas não achei o forward na discussão {$discussionChatId}. "
+                    .'Sem isso a OS não entra como comentário. Confirme bot admin no canal + membro do grupo de discussão.'
+                );
+            }
+
+            $this->salvarIds($tarefa, $channelMessageId, $discussionMsgId);
+
+            Log::info('Telegram canal: post pai criado', [
+                'task_id' => $tarefa->id,
+                'channel_id' => $channelId,
+                'channel_message_id' => $channelMessageId,
+                'discussion_chat_id' => $discussionChatId,
+                'discussion_message_id' => $discussionMsgId,
+            ]);
+
+            $ids = [
+                'channel' => $channelMessageId,
+                'discussion' => $discussionMsgId,
+            ];
+            $this->enviarAnexos($discussionChatId, $channelId, $ids, $anexos);
+        } finally {
+            if ($lock !== null && $lockAdquirido) {
+                try {
+                    $lock->release();
+                } catch (Throwable) {
+                    // ignore
+                }
+            }
         }
-
-        $this->salvarIds($tarefa, $channelMessageId, $discussionMsgId);
-
-        Log::info('Telegram canal: post criado', [
-            'task_id' => $tarefa->id,
-            'channel_id' => $channelId,
-            'channel_message_id' => $channelMessageId,
-            'discussion_chat_id' => $discussionChatId,
-            'discussion_message_id' => $discussionMsgId,
-        ]);
-
-        $this->enviarAnexos($discussionChatId, $discussionMsgId, $anexos);
     }
 
     /**
+     * Garante telegram_topic_id (msg na discussão). Sem ele a OS não vira comentário do canal.
+     *
+     * @param  array{channel: int, discussion: int}  $ids
+     * @return array{channel: int, discussion: int}
+     */
+    private function garantirDiscussionId(
+        OpTask $tarefa,
+        int|string $channelId,
+        int|string $discussionChatId,
+        array $ids,
+    ): array {
+        if ($ids['discussion'] > 0) {
+            return $ids;
+        }
+
+        if ($ids['channel'] <= 0) {
+            return $ids;
+        }
+
+        try {
+            $encontrado = $this->telegram->buscarForwardDiscussaoEmUpdates(
+                $channelId,
+                $ids['channel'],
+                $discussionChatId,
+            );
+            if ($encontrado !== null && $encontrado > 0) {
+                $this->salvarIds($tarefa, $ids['channel'], $encontrado);
+                $ids['discussion'] = $encontrado;
+
+                return $ids;
+            }
+        } catch (Throwable $e) {
+            Log::debug('Telegram canal: recuperação de discussion_id falhou', [
+                'task_id' => $tarefa->id,
+                'erro' => $e->getMessage(),
+            ]);
+        }
+
+        return $ids;
+    }
+
+    /** @param  array{channel: int, discussion: int}  $ids */
+    private function enviarComentario(
+        int|string $discussionChatId,
+        int|string $channelId,
+        array $ids,
+        string $texto,
+    ): void {
+        // Caminho correto: reply na msg forward da discussão → aparece como comentário do post pai.
+        if ($ids['discussion'] > 0) {
+            $this->telegram->enviarMensagem($discussionChatId, $texto, null, $ids['discussion']);
+
+            return;
+        }
+
+        // Fallback: reply_parameters apontando para o post do canal.
+        if ($ids['channel'] <= 0) {
+            throw new RuntimeException('Sem telegram_message_id / telegram_topic_id para comentar no post pai.');
+        }
+
+        $resposta = $this->telegram->enviarMensagem(
+            $discussionChatId,
+            $texto,
+            null,
+            $ids['channel'],
+            $channelId,
+        );
+
+        // Se a API não vinculou como reply, a OS NÃO entrou no comentário do canal.
+        $vinculou = isset($resposta['reply_to_message']) || isset($resposta['external_reply']);
+        if (! $vinculou) {
+            throw new RuntimeException(
+                'Comentário enviado sem vínculo ao post pai (reply_to ausente). '
+                .'A OS precisa de telegram_topic_id (forward na discussão).'
+            );
+        }
+    }
+
+    /**
+     * @param  array{channel: int, discussion: int}  $ids
      * @param  array<int, array{nome_arquivo: string, mime_type: string, conteudo: string}>  $anexos
      */
-    private function enviarAnexos(int|string $chatId, ?int $replyToMessageId, array $anexos): void
-    {
+    private function enviarAnexos(
+        int|string $discussionChatId,
+        int|string $channelId,
+        array $ids,
+        array $anexos,
+    ): void {
         if ($anexos === []) {
             return;
         }
 
         foreach ($anexos as $anexo) {
             try {
-                $this->telegram->enviarAnexo(
-                    $chatId,
-                    $anexo,
-                    null,
+                $caption = htmlspecialchars(
                     mb_substr((string) ($anexo['nome_arquivo'] ?? 'Anexo'), 0, 1024),
-                    $replyToMessageId,
+                    ENT_QUOTES | ENT_HTML5,
+                    'UTF-8'
                 );
+
+                if ($ids['discussion'] > 0) {
+                    $this->telegram->enviarAnexo(
+                        $discussionChatId,
+                        $anexo,
+                        null,
+                        $caption,
+                        $ids['discussion'],
+                    );
+                } elseif ($ids['channel'] > 0) {
+                    $this->telegram->enviarAnexo(
+                        $discussionChatId,
+                        $anexo,
+                        null,
+                        $caption,
+                        $ids['channel'],
+                        $channelId,
+                    );
+                } else {
+                    $this->telegram->enviarAnexo($discussionChatId, $anexo, null, $caption);
+                }
             } catch (Throwable $e) {
                 Log::warning('Telegram canal: falha ao enviar imagem', [
-                    'chat_id' => $chatId,
-                    'reply_to' => $replyToMessageId,
+                    'chat_id' => $discussionChatId,
+                    'channel_message_id' => $ids['channel'] ?? null,
+                    'discussion_message_id' => $ids['discussion'] ?? null,
                     'arquivo' => $anexo['nome_arquivo'] ?? null,
                     'erro' => $e->getMessage(),
                 ]);
@@ -335,19 +572,29 @@ class TelegramChatNotificacaoService
         }
     }
 
-    /** message_id do forward no grupo de discussão (raiz dos comentários) */
-    private function lerDiscussionMessageId(OpTask $tarefa): int
+    /** @return array{channel: int, discussion: int} */
+    private function lerIds(OpTask $tarefa): array
     {
+        $channel = 0;
+        $discussion = 0;
+
+        if ($this->temColuna('telegram_message_id')) {
+            $channel = (int) ($tarefa->telegram_message_id ?? 0);
+        }
         if ($this->temColuna('telegram_topic_id')) {
-            $id = (int) ($tarefa->telegram_topic_id ?? 0);
-            if ($id > 0) {
-                return $id;
-            }
+            $discussion = (int) ($tarefa->telegram_topic_id ?? 0);
+        }
+
+        if ($channel > 0 || $discussion > 0) {
+            return ['channel' => $channel, 'discussion' => $discussion];
         }
 
         $cached = Cache::get($this->cacheKey((int) $tarefa->id), []);
 
-        return (int) ($cached['discussion_message_id'] ?? $cached['topic_id'] ?? 0);
+        return [
+            'channel' => (int) ($cached['channel_message_id'] ?? $cached['message_id'] ?? 0),
+            'discussion' => (int) ($cached['discussion_message_id'] ?? $cached['topic_id'] ?? 0),
+        ];
     }
 
     private function salvarIds(OpTask $tarefa, int $channelMessageId, ?int $discussionMessageId): void

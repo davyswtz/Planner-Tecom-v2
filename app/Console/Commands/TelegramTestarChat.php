@@ -358,9 +358,9 @@ class TelegramTestarChat extends Command
         $this->line("   telegram_topic_id (raiz comentários) = {$discussionMsgId}");
 
         if ($channelMsgId <= 0 || $discussionMsgId <= 0) {
-            $this->error('Post no canal não foi criado. Verifique:');
-            $this->line('  1) Bot @CentralProjetosBOt é admin do canal Central de Projetos');
-            $this->line('  2) Bot está no grupo de discussão vinculado (BACKUP)');
+            $this->error('Post pai incompleto (precisa do forward na discussão para a OS comentar). Verifique:');
+            $this->line('  1) Bot @CentralProjetosBOt é admin do canal');
+            $this->line('  2) Bot está no grupo de discussão vinculado');
             $this->line('  3) Comentários/discussão estão ativos no canal');
             $this->line('  4) storage/logs/laravel.log (Telegram canal: falha)');
 
