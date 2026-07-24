@@ -1929,6 +1929,7 @@
       <div class="nav-section-label">Principal</div>
       <a href="/dashboard" class="nav-item {{ request()->is('dashboard') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></div></a>
       <a href="/tarefas" id="nav-item-tarefas" data-permissao="visualizar_aba_tarefas" class="nav-item {{ request()->is('tarefas*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-checklist"></i><span>Tarefas</span></div></a>
+      <a href="/agenda" class="nav-item {{ request()->is('agenda*') ? 'active' : '' }}"><div class="nav-left"><i class="ti ti-calendar-time"></i><span>Agenda</span></div></a>
     </div>
 
     <div class="nav-section" id="tutorial-nav-categorias">

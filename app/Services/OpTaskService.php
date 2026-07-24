@@ -18,6 +18,7 @@ class OpTaskService
     public function __construct(
         private GoogleChatService $googleChatService,
         private OsTecnicoService $osTecnicoService,
+        private AgendaService $agendaService,
     ) {}
 
     public function getOpTasks(int $limit = 40, string $orderBy = 'updated_at', string $order = 'desc', ?string $categoria = null, ?string $responsavel = null, bool $excluirFinalizadas = false)
@@ -67,6 +68,15 @@ class OpTaskService
 
         if (($task->categoria ?? '') === 'ordem-servico') {
             $this->osTecnicoService->sincronizarParaOs($task->fresh());
+
+            try {
+                $this->agendaService->programarAutomaticamente($task->fresh());
+            } catch (Throwable $e) {
+                Log::warning('A OS foi criada, mas permaneceu pendente de programação na agenda.', [
+                    'task_id' => $task->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $status = trim((string) ($task->status ?? ''));
@@ -257,17 +267,22 @@ class OpTaskService
             );
         }
 
-        $opTask->update($dados);
+        $opTask = DB::transaction(function () use ($opTask, $dados) {
+            $opTask = OpTask::query()->lockForUpdate()->findOrFail($opTask->id);
+            $opTask->update($dados);
+
+            if (($opTask->categoria ?? '') === 'ordem-servico') {
+                $this->osTecnicoService->sincronizarParaOs($opTask->fresh());
+            }
+
+            return $opTask->fresh();
+        });
 
         if (isset($dados['status']) && $dados['status'] !== $statusAnterior && ($opTask->categoria ?? '') !== 'tarefas') {
-            $this->dispararWebhookMudancaStatus($opTask->fresh(), $statusAnterior, $dados['status']);
+            $this->dispararWebhookMudancaStatus($opTask, $statusAnterior, $dados['status']);
         }
 
-        if (($opTask->categoria ?? '') === 'ordem-servico') {
-            $this->osTecnicoService->sincronizarParaOs($opTask->fresh());
-        }
-
-        return $opTask->fresh();
+        return $opTask;
     }
 
     private function dispararWebhookMudancaStatus(OpTask $task, string $statusAnterior, string $statusNovo): void
@@ -304,8 +319,7 @@ class OpTaskService
                 return;
             }
 
-            // Anexos só na OS "Em andamento" — Finalizada não reenvia fotos.
-            if ($osTaskId && $googleChatService->isOsEmAndamento($statusNovo)) {
+            if ($osTaskId) {
                 $os = OpTask::find($osTaskId)?->fresh();
                 if ($os) {
                     $mensagem = $googleChatService->enriquecerMensagemComAnexosOs($os, $mensagem);

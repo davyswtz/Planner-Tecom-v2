@@ -13,6 +13,10 @@ return new class extends Migration
             return;
         }
 
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         $column = DB::selectOne("SHOW COLUMNS FROM personal_access_tokens WHERE Field = 'tokenable_id'");
         if (! $column || ! str_contains((string) $column->Type, 'bigint')) {
             return;
@@ -32,6 +36,10 @@ return new class extends Migration
     public function down(): void
     {
         if (! Schema::hasTable('personal_access_tokens')) {
+            return;
+        }
+
+        if (DB::getDriverName() !== 'mysql') {
             return;
         }
 

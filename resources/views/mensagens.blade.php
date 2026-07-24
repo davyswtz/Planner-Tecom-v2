@@ -339,7 +339,6 @@
   .msg-var-item:hover { background: var(--gray-50); }
   .msg-var-item-key { font-size: 12px; font-family: ui-monospace, monospace; color: #1d4ed8; font-weight: 600; }
   .msg-var-item-label { font-size: 11px; color: var(--gray-500); }
-  .msg-var-item-hint { font-size: 10px; color: var(--gray-400); line-height: 1.35; margin-top: 1px; }
   .msg-var-vazio { padding: 16px; text-align: center; color: var(--gray-400); font-size: 13px; }
 
   @media (max-width: 1024px) {
@@ -394,7 +393,6 @@
   [data-theme="dark"] .mensagens-preview { background: #0a0c10; border-color: #1e2228; color: #c9d1d9; }
   [data-theme="dark"] .mensagens-preview a { color: #58a6ff; }
   [data-theme="dark"] .mensagens-preview .msg-chat-mention { color: #58a6ff; background: #0d2340; }
-  [data-theme="dark"] .msg-var-item-hint { color: #6e7681; }
   [data-theme="dark"] .emoji-popover,
   [data-theme="dark"] .variaveis-popover { background: #0a0c10; border-color: #1e2228; }
   [data-theme="dark"] .msg-save-mobile { background: #050608; border-color: #1e2228; }
@@ -425,7 +423,7 @@
       <div class="msg-panel-head">
         <div class="msg-panel-head-left">
           <h2 class="msg-panel-title" id="mensagens-editor-titulo">Mensagens</h2>
-          <p class="msg-panel-sub" id="mensagens-editor-sub">Templates enviados ao canal do Telegram</p>
+          <p class="msg-panel-sub" id="mensagens-editor-sub">Templates enviados ao Google Chat via webhook</p>
         </div>
         <div class="msg-panel-actions">
           <button type="button" class="mensagens-btn primary" id="btn-salvar-mensagens" onclick="salvarMensagens()" disabled>
@@ -440,7 +438,6 @@
         <span class="msg-format-chip"><code>~texto~</code> tachado</span>
         <span class="msg-format-chip"><code>`código`</code> mono</span>
         <span class="msg-format-chip"><code>{task_code}</code> variáveis</span>
-        <span class="msg-format-chip">Telegram HTML no envio</span>
       </div>
 
       <div class="msg-context-banner" id="msg-context-banner"></div>

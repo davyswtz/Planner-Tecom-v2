@@ -73,8 +73,6 @@ class OpTask extends Model
         'chat_thread_key',
         'nicon_mensagem_raiz_id',
         'nicon_thread_chat_id',
-        'telegram_message_id',
-        'telegram_topic_id',
         'nome_cliente',
         'protocolo',
         'ordem_servico',
@@ -126,6 +124,13 @@ class OpTask extends Model
     public function osTecnicos(): HasMany
     {
         return $this->hasMany(OsTecnico::class, 'parent_task_id');
+    }
+
+    public function agendaConfigurada(): bool
+    {
+        return AgendaOs::query()
+            ->whereIn('os_tecnico_id', OsTecnico::query()->where('task_id', $this->id)->select('id'))
+            ->exists();
     }
 
     public function anexos(): HasMany

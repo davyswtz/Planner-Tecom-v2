@@ -3,18 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\CoordenadasChatFormatter;
 use App\Services\MensagemTemplateService;
-use App\Services\TecnicoChatMencaoService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MensagemTemplateController extends Controller
 {
-    public function __construct(
-        private MensagemTemplateService $mensagens,
-        private TecnicoChatMencaoService $mencoes,
-    ) {
+    public function __construct(private MensagemTemplateService $mensagens)
+    {
     }
 
     public function show()
@@ -91,16 +87,8 @@ class MensagemTemplateController extends Controller
             'usuario.exemplo'
         );
 
-        // Mesma adaptação do envio ao Telegram (menções + HTML).
-        $textoTelegram = CoordenadasChatFormatter::adaptarTextoParaTelegram(
-            $this->mencoes->adaptarTextoParaTelegram(
-                $this->mencoes->adaptarTextoParaNicon($texto)
-            )
-        );
-
         return response()->json([
             'texto' => $texto,
-            'texto_telegram' => $textoTelegram,
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OsTecnico extends Model
 {
@@ -43,5 +44,10 @@ class OsTecnico extends Model
     public function parentTask(): BelongsTo
     {
         return $this->belongsTo(OpTask::class, 'parent_task_id');
+    }
+
+    public function agenda(): HasMany
+    {
+        return $this->hasMany(AgendaOs::class);
     }
 }
