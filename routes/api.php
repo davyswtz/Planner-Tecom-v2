@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AtendimentoController;
+use App\Http\Controllers\Api\AgendaController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CertificacaoCemigController;
 use App\Http\Controllers\Api\CorrecaoDadosController;
@@ -32,6 +33,14 @@ Route::post("login", [AuthController::class, "login"])
     ->middleware("throttle:10,1");
 
 Route::middleware(["auth:sanctum", "throttle:180,1"])->group(function () {
+    Route::get('agenda', [AgendaController::class, 'index']);
+    Route::get('agenda-ordens-disponiveis', [AgendaController::class, 'ordensDisponiveis']);
+    Route::post('agenda', [AgendaController::class, 'store']);
+    Route::put('agenda/{agendaOs}/mover', [AgendaController::class, 'mover'])->whereNumber('agendaOs');
+    Route::put('agenda/{agendaOs}/duracao', [AgendaController::class, 'atualizarDuracao'])->whereNumber('agendaOs');
+    Route::post('agenda-indisponibilidades', [AgendaController::class, 'registrarIndisponibilidade']);
+    Route::delete('agenda-indisponibilidades/{indisponibilidade}', [AgendaController::class, 'removerIndisponibilidade'])
+        ->whereNumber('indisponibilidade');
     Route::post("logout", [AuthController::class, "logout"]);
     Route::get("me", [AuthController::class, "me"]);
     Route::get("notificacoes", [NotificacaoController::class, "index"]);

@@ -14,7 +14,7 @@ return new class extends Migration
 
         Schema::create('op_task_anexos', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('op_task_id');
+            $table->unsignedBigInteger('op_task_id');
             $table->string('nome_arquivo', 255);
             $table->string('mime_type', 100);
             $table->unsignedInteger('tamanho_bytes')->default(0);

@@ -31,6 +31,7 @@ docker/mysql/init.sql
 
 # Dependências
 /node_modules
+/.npm-cache
 
 # Sistema operacional
 .DS_Store

@@ -23,6 +23,10 @@ Route::get('/tarefas', function () {
     return view('tarefas');
 });
 
+Route::get('/agenda', function () {
+    return view('agenda');
+});
+
 Route::get('/rompimento', function () {
     return view('rompimento', [
         'cidadesNicon' => config('services.nicon.cidades', []),

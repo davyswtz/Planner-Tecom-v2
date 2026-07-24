@@ -4,13 +4,13 @@ const GRUPOS_VARIAVEIS = [
   { titulo: 'Resumo de OS (finalização)', keys: ['os_total', 'os_finalizadas', 'os_resumo_tecnicos', 'os_resumo'] },
   { titulo: 'Tarefa pai', keys: ['parent_titulo', 'parent_task_code', 'parent_categoria_label', 'parent_categoria', 'parent_task_id'], osOnly: true },
   { titulo: 'Identificação', keys: ['task_code', 'titulo', 'id', 'categoria', 'categoria_label', 'os_tipo', 'numero_os', 'ordem_servico', 'etiquetas'] },
-  { titulo: 'Etiquetas', keys: ['etiquetas', 'etiquetas_localizacao', 'etiquetas_coordenadas'] },
+  { titulo: 'Etiquetas', keys: ['etiquetas_localizacao', 'etiquetas_coordenadas'] },
   { titulo: 'Status', keys: ['status', 'status_anterior', 'status_novo', 'historico'] },
-  { titulo: 'Localização (Telegram: coords clicáveis)', keys: ['regiao', 'setor', 'elemento', 'cto', 'coordenadas', 'localizacao', 'localizacao_texto'] },
+  { titulo: 'Localização', keys: ['regiao', 'setor', 'elemento', 'cto', 'coordenadas', 'localizacao', 'localizacao_texto'] },
   { titulo: 'Operação', keys: ['responsavel', 'prioridade', 'prazo', 'clientes_afetados', 'descricao', 'sub_processo'] },
   { titulo: 'Cliente', keys: ['nome_cliente', 'protocolo'] },
   { titulo: 'Datas', keys: ['criada_em', 'atualizada_em', 'data_entrada', 'data_instalacao', 'assinada_em', 'assinada_por'] },
-  { titulo: 'Outros', keys: ['duracao_ativa', 'parent_task_id', 'parent_task_code', 'parent_titulo', 'parent_categoria', 'parent_categoria_label', 'is_parent_task'] },
+  { titulo: 'Outros', keys: ['duracao_ativa', 'parent_task_id', 'parent_task_code', 'parent_titulo', 'parent_categoria', 'parent_categoria_label', 'is_parent_task' /* , 'enviado_por' */] },
 ];
 
 const ICONES_CATEGORIA = {
@@ -26,8 +26,6 @@ const ICONES_CATEGORIA = {
 };
 
 const VARS_RAPIDAS_OS = ['parent_titulo', 'parent_task_code', 'os_tipo', 'responsavel', 'descricao', 'task_code', 'regiao'];
-const VARS_RAPIDAS_OPERACIONAL = ['task_code', 'titulo', 'numero_os', 'setor', 'regiao', 'responsavel', 'coordenadas', 'localizacao', 'status_anterior', 'status_novo', 'os_resumo'];
-const VARS_RAPIDAS_ETIQUETA = ['task_code', 'numero_os', 'regiao', 'responsavel', 'etiquetas_localizacao', 'etiquetas_coordenadas', 'status_novo'];
 
 const STATUS_WEBHOOK = {
   'ordem-servico': { Aberta: false },
@@ -103,7 +101,7 @@ function atualizarContextoCategoria(cat) {
       <i class="ti ${isOs ? 'ti-clipboard-list' : 'ti-info-circle'}"></i>
       <div>
         <strong>${esc(isOs ? 'Mensagens de Ordem de Serviço' : cat.label)}</strong>
-        ${esc(descricao || 'Templates enviados ao canal do Telegram quando o status muda. Use {variaveis} — o sistema adapta negrito, coords e menções.')}
+        ${esc(descricao || 'Templates enviados ao Google Chat quando o status muda.')}
       </div>
     `;
   } else {
@@ -111,23 +109,21 @@ function atualizarContextoCategoria(cat) {
     banner.innerHTML = '';
   }
 
-  const rapidas = isOs
-    ? VARS_RAPIDAS_OS
-    : (cat.key === 'troca-etiqueta' ? VARS_RAPIDAS_ETIQUETA : VARS_RAPIDAS_OPERACIONAL);
-  const tituloRapidas = isOs
-    ? 'Variáveis mais usadas na OS'
-    : 'Variáveis mais usadas (Telegram)';
-
   if (varsDestaque) {
-    varsDestaque.classList.add('visible');
-    varsDestaque.innerHTML = `
-      <div class="msg-vars-destaque-titulo">${tituloRapidas}</div>
-      <div class="msg-vars-chips">
-        ${rapidas.map((key) => `
-          <button type="button" class="msg-var-chip" data-var-rapida="${esc(key)}" title="${esc(placeholdersPorChave[key]?.hint || placeholdersPorChave[key]?.label || key)}">{${esc(key)}}</button>
-        `).join('')}
-      </div>
-    `;
+    if (isOs) {
+      varsDestaque.classList.add('visible');
+      varsDestaque.innerHTML = `
+        <div class="msg-vars-destaque-titulo">Variáveis mais usadas na OS</div>
+        <div class="msg-vars-chips">
+          ${VARS_RAPIDAS_OS.map((key) => `
+            <button type="button" class="msg-var-chip" data-var-rapida="${esc(key)}">{${esc(key)}}</button>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      varsDestaque.classList.remove('visible');
+      varsDestaque.innerHTML = '';
+    }
   }
 }
 
@@ -205,7 +201,7 @@ function atualizarCabecalhoEditor(cat) {
   const sub = document.getElementById('mensagens-editor-sub');
   if (!cat) {
     if (titulo) titulo.textContent = 'Mensagens';
-    if (sub) sub.textContent = 'Templates enviados ao canal do Telegram';
+    if (sub) sub.textContent = 'Templates enviados ao Google Chat via webhook';
     return;
   }
   if (titulo) titulo.textContent = cat.label;
@@ -214,12 +210,12 @@ function atualizarCabecalhoEditor(cat) {
   if (sub) {
     if (isOsCategoria(cat.key)) {
       sub.textContent = customQtd > 0
-        ? `${qtd} status · ${customQtd} personalizada${customQtd === 1 ? '' : 's'} · comentário no post pai (Telegram)`
-        : `${qtd} status · comentário no post da tarefa pai no Telegram`;
+        ? `${qtd} status · ${customQtd} personalizada${customQtd === 1 ? '' : 's'} · resposta no tópico do pai`
+        : `${qtd} status · enviadas no tópico da tarefa pai no Google Chat`;
     } else {
       sub.textContent = customQtd > 0
-        ? `${qtd} status · ${customQtd} personalizada${customQtd === 1 ? '' : 's'} · post no canal Telegram`
-        : `${qtd} status · post no canal Telegram`;
+        ? `${qtd} status · ${customQtd} personalizada${customQtd === 1 ? '' : 's'}`
+        : `${qtd} status configuráve${qtd === 1 ? 'l' : 'is'}`;
     }
   }
 }
@@ -294,16 +290,10 @@ function atualizarContador(el) {
   contador.classList.toggle('warn', len > 3500);
 }
 
-/** Prévia visual igual ao Telegram (HTML: negrito, links, menções). */
-function renderizarFormatoTelegram(textoHtml, textoBruto) {
-  if (textoHtml) {
-    return String(textoHtml).replace(/\n/g, '<br>');
-  }
-
-  const safe = esc(textoBruto);
+function renderizarFormatoGoogleChat(texto) {
+  const safe = esc(texto);
   return safe
     .replace(/&lt;users\/([0-9]+)&gt;/g, '<span class="msg-chat-mention">@usuário</span>')
-    .replace(/@([^\s&<,]+(?:\s+[^\s&<,]+){0,3})/g, '<span class="msg-chat-mention">@$1</span>')
     .replace(/&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>')
     .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
     .replace(/_([^_\n]+)_/g, '<em>$1</em>')
@@ -321,22 +311,16 @@ function renderVariaveisPopover() {
   gruposVariaveisAtivos().forEach((grupo) => {
     const itens = grupo.keys
       .map((key) => placeholdersPorChave[key])
-      .filter((ph) => ph && (!filtro
-        || ph.key.includes(filtro)
-        || ph.label.toLowerCase().includes(filtro)
-        || (ph.hint || '').toLowerCase().includes(filtro)
-        || (ph.exemplo || '').toLowerCase().includes(filtro)));
+      .filter((ph) => ph && (!filtro || ph.key.includes(filtro) || ph.label.toLowerCase().includes(filtro)));
 
     if (!itens.length) return;
 
     chips.push(`<div class="msg-var-grupo-titulo">${esc(grupo.titulo)}</div><div class="msg-var-grupo-lista">`);
     itens.forEach((ph) => {
-      const hint = ph.hint || ph.exemplo || '';
       chips.push(`
-        <button type="button" class="msg-var-item" data-var-key="${esc(ph.key)}" title="${esc(hint)}">
+        <button type="button" class="msg-var-item" data-var-key="${esc(ph.key)}">
           <span class="msg-var-item-key">{${esc(ph.key)}}</span>
           <span class="msg-var-item-label">${esc(ph.label)}</span>
-          ${hint ? `<span class="msg-var-item-hint">${esc(hint)}</span>` : ''}
         </button>
       `);
     });
@@ -417,7 +401,7 @@ function toolbarHtml(campoId, catLabel, status) {
         <i class="ti ti-braces"></i>
       </button>
       <span class="msg-tool-spacer"></span>
-      <span class="msg-tool-hint">Telegram: *negrito* · _itálico_ · \`código\` · {variáveis}</span>
+      <span class="msg-tool-hint">Google Chat: *negrito* · _itálico_ · \`código\`</span>
     </div>
   `;
 }
@@ -482,7 +466,7 @@ function renderEditor() {
                   </div>
                 </div>
                 <div class="mensagens-preview-wrap" id="wrap-preview-${campoId}">
-                  <div class="mensagens-preview-label">Pré-visualização Telegram (dados de exemplo)</div>
+                  <div class="mensagens-preview-label">Pré-visualização (dados de exemplo)</div>
                   <div class="mensagens-preview" id="preview-${campoId}"></div>
                 </div>
               </div>
@@ -628,7 +612,7 @@ function registrarGlobais() {
         method: 'POST',
         body: JSON.stringify({ categoria, status, template }),
       });
-      preview.innerHTML = renderizarFormatoTelegram(data.texto_telegram, data.texto || '—');
+      preview.innerHTML = renderizarFormatoGoogleChat(data.texto || '—');
     } catch (error) {
       preview.textContent = error.message || 'Falha na pré-visualização.';
     }

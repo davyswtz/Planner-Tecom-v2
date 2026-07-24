@@ -58,63 +58,6 @@ class CoordenadasChatFormatter
         );
     }
 
-    /**
-     * Adapta texto dos templates (estilo Google/markdown leve) para Telegram HTML:
-     * - &lt;url|rótulo&gt; → &lt;a href="url"&gt;rótulo&lt;/a&gt; (coords clicáveis)
-     * - §§TGUSER{id}|{nome}§§ → menção por ID (tg://user?id=)
-     * - *negrito* → &lt;b&gt; · _itálico_ → &lt;i&gt; · ~tachado~ → &lt;s&gt; · `código` → &lt;code&gt;
-     * - @username Telegram permanece intacto (notifica)
-     */
-    public static function adaptarTextoParaTelegram(string $texto): string
-    {
-        $links = [];
-
-        // Menções por ID (vindas do TecnicoChatMencaoService).
-        $texto = (string) preg_replace_callback(
-            '/§§TGUSER(\d+)\|([^§]+)§§/',
-            static function (array $m) use (&$links): string {
-                $chave = '§§TG'.count($links).'§§';
-                $links[$chave] = TecnicoChatMencaoService::htmlMencaoPorId((int) $m[1], $m[2]);
-
-                return $chave;
-            },
-            $texto
-        );
-
-        // Protege @username do Telegram (evita _itálico_ quebrar e garante entity "mention").
-        $texto = (string) preg_replace_callback(
-            '/(^|[^\\w])@([A-Za-z][A-Za-z0-9_]{3,31})\\b/',
-            static function (array $m) use (&$links): string {
-                $chave = '§§TG'.count($links).'§§';
-                $links[$chave] = '@'.$m[2];
-
-                return $m[1].$chave;
-            },
-            $texto
-        );
-
-        $texto = (string) preg_replace_callback(
-            '/<((?:https?:\/\/)[^|>]+)\|([^>]+)>/',
-            static function (array $m) use (&$links): string {
-                $chave = '§§TG'.count($links).'§§';
-                $url = htmlspecialchars($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $rotulo = htmlspecialchars($m[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $links[$chave] = '<a href="'.$url.'">'.$rotulo.'</a>';
-
-                return $chave;
-            },
-            $texto
-        );
-
-        $texto = htmlspecialchars($texto, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $texto = (string) preg_replace('/\*([^*\n]+)\*/u', '<b>$1</b>', $texto);
-        $texto = (string) preg_replace('/_([^_\n]+)_/u', '<i>$1</i>', $texto);
-        $texto = (string) preg_replace('/~([^~\n]+)~/u', '<s>$1</s>', $texto);
-        $texto = (string) preg_replace('/`([^`\n]+)`/u', '<code>$1</code>', $texto);
-
-        return str_replace(array_keys($links), array_values($links), $texto);
-    }
-
     private static function formatarPar(string $texto): string
     {
         if ($texto === '' || $texto === '—') {

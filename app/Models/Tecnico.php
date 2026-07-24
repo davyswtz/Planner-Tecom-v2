@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tecnico extends Model
 {
@@ -15,7 +16,15 @@ class Tecnico extends Model
         'google_chat_id',
         'nicon_user_id',
         'nicon_mention_name',
-        'telegram_user_id',
-        'telegram_username',
     ];
+
+    public function agenda(): HasMany
+    {
+        return $this->hasMany(AgendaOs::class);
+    }
+
+    public function indisponibilidades(): HasMany
+    {
+        return $this->hasMany(TecnicoIndisponibilidade::class);
+    }
 }
