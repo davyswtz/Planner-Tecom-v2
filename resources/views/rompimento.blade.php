@@ -405,7 +405,7 @@
     </div>
 
     <div class="os-field">
-      <label class="os-label">Número da OS (Hubsoft)</label>
+      <label class="os-label">Número da OS (Hubsoft) — opcional</label>
       <input type="text" id="input-numero-hubsoft" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
     </div>
 
@@ -1758,23 +1758,19 @@ window.toggleColuna = toggleColuna;
     return r.is_parent_task === true || r.is_parent_task === 1 || r.is_parent_task === '1';
   }
 
-  function rompimentoTemNumeroOs(r) {
-    return String(r?.numero_os ?? '').trim() !== '';
-  }
-
-  /** Só exige OS vinculada + número ao entrar em "Em andamento". */
+  /** Só exige pelo menos uma OS vinculada ao entrar em "Em andamento". */
   function podeMoverParaStatus(id, novoStatus) {
     if (novoStatus !== 'Em andamento') return true;
     const r = rompimentosMap[id];
-    return rompimentoTemOsVinculada(r) && rompimentoTemNumeroOs(r);
+    return rompimentoTemOsVinculada(r);
   }
 
   function mensagemBloqueioEmAndamento(id) {
     const r = rompimentosMap[id];
-    const faltas = [];
-    if (!rompimentoTemOsVinculada(r)) faltas.push('pelo menos uma OS vinculada');
-    if (!rompimentoTemNumeroOs(r)) faltas.push('número da OS (Hubsoft) no rompimento');
-    return 'Para mover para Em andamento: ' + faltas.join(' e ') + '.';
+    if (!rompimentoTemOsVinculada(r)) {
+      return 'Para mover para Em andamento: vincule pelo menos uma OS.';
+    }
+    return 'Não é possível mover para Em andamento.';
   }
 
   // ─── HELPERS ───

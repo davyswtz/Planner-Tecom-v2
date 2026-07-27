@@ -8,29 +8,46 @@ use App\Models\OsTecnico;
 use App\Models\Tecnico;
 use App\Models\TecnicoIndisponibilidade;
 use App\Services\AgendaService;
+use App\Services\TecnicoService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class AgendaController extends Controller
 {
-    public function __construct(private AgendaService $agendaService) {}
+    public function __construct(
+        private AgendaService $agendaService,
+        private TecnicoService $tecnicoService,
+    ) {}
 
     public function ordensDisponiveis(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('os_tecnicos')) {
+            return response()->json(['ordens' => []]);
+        }
+
         $dados = $request->validate([
             'busca' => ['nullable', 'string', 'max:120'],
             'regiao' => ['nullable', 'string', 'max:64'],
+            'ordem' => ['nullable', 'in:recentes,antigas'],
         ]);
 
         $busca = trim((string) ($dados['busca'] ?? ''));
+        $ordem = $dados['ordem'] ?? 'recentes';
+        $regioes = isset($dados['regiao']) && $dados['regiao'] !== ''
+            ? $this->tecnicoService->regioesEquivalentes($dados['regiao'])
+            : null;
 
         $ordens = OsTecnico::query()
             ->with('task:id,taskCode,titulo,parent_task_id,ordem_servico,numero_os,regiao,status')
-            ->whereDoesntHave('agenda')
-            ->when($dados['regiao'] ?? null, fn ($query, $regiao) => $query->where('regiao', $regiao))
+            ->when(
+                Schema::hasTable('agenda_os'),
+                fn ($query) => $query->whereDoesntHave('agenda'),
+            )
+            ->when($regioes, fn ($query) => $query->whereIn('regiao', $regioes))
             ->when($busca !== '', function ($query) use ($busca) {
                 $like = '%'.addcslashes($busca, '%_\\').'%';
                 $query->where(fn ($sub) => $sub
@@ -38,7 +55,11 @@ class AgendaController extends Controller
                     ->orWhere('task_code', 'like', $like)
                     ->orWhere('titulo', 'like', $like));
             })
-            ->latest('id')
+            ->when(
+                $ordem === 'antigas',
+                fn ($query) => $query->orderBy('id'),
+                fn ($query) => $query->orderByDesc('id'),
+            )
             ->limit(50)
             ->get(['id', 'task_id', 'ordem_servico', 'task_code', 'titulo', 'regiao', 'status']);
 
@@ -47,6 +68,12 @@ class AgendaController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('agenda_os')) {
+            throw ValidationException::withMessages([
+                'os_tecnico_id' => 'Tabela da agenda ainda não foi criada. Rode as migrations no servidor.',
+            ]);
+        }
+
         $dados = $request->validate([
             'os_tecnico_id' => ['required', 'integer', 'exists:os_tecnicos,id'],
             'tecnico_id' => ['required', 'integer', 'exists:tecnicos,id'],
@@ -109,7 +136,7 @@ class AgendaController extends Controller
             'data' => ['nullable', 'date_format:Y-m-d'],
             'regiao' => ['nullable', 'in:Vale do Aço,Goval'],
             'visao' => ['nullable', 'in:diaria,semanal'],
-            'tecnico_id' => ['nullable', 'integer', 'exists:tecnicos,id'],
+            'tecnico_id' => ['nullable', 'integer'],
         ]);
 
         $data = Carbon::createFromFormat('Y-m-d', $dados['data'] ?? now()->toDateString())->startOfDay();
@@ -117,37 +144,34 @@ class AgendaController extends Controller
         $visao = $dados['visao'] ?? 'diaria';
         $inicio = $visao === 'semanal' ? $data->copy()->startOfWeek() : $data;
         $fim = $visao === 'semanal' ? $inicio->copy()->addDays(6) : $data;
-        $tecnicosRegiao = Tecnico::query()
-            ->where('regiao', $regiao)
-            ->with(['indisponibilidades' => fn ($query) => $query
-                ->whereDate('data_inicio', '<=', $fim->toDateString())
-                ->whereDate('data_fim', '>=', $inicio->toDateString())
-                ->orderBy('data_inicio')])
+
+        $tecnicosRegiao = $this->tecnicoService->queryCadastrados($regiao)
+            ->when(
+                Schema::hasTable('tecnico_indisponibilidades'),
+                fn ($query) => $query->with(['indisponibilidades' => fn ($sub) => $sub
+                    ->whereDate('data_inicio', '<=', $fim->toDateString())
+                    ->whereDate('data_fim', '>=', $inicio->toDateString())
+                    ->orderBy('data_inicio')]),
+            )
             ->orderBy('nome')
-            ->get(['id', 'nome', 'regiao']);
+            ->get(['id', 'nome', 'regiao', 'username']);
 
         $tecnicoId = $visao === 'semanal'
             ? ($tecnicosRegiao->firstWhere('id', (int) ($dados['tecnico_id'] ?? 0))?->id ?? $tecnicosRegiao->first()?->id)
             : null;
 
-        $agenda = AgendaOs::query()
-            ->with(['osTecnico:id,ordem_servico,titulo,status,regiao', 'tecnico:id,nome,regiao'])
-            ->whereDate('data', '>=', $inicio->toDateString())
-            ->whereDate('data', '<=', $fim->toDateString())
-            ->when($tecnicoId, fn ($query) => $query->where('tecnico_id', $tecnicoId))
-            ->when(! $tecnicoId, fn ($query) => $query->whereIn('tecnico_id', $tecnicosRegiao->pluck('id')))
-            ->orderBy('data')->orderBy('hora_inicio')->get();
+        $agenda = collect();
+        if (Schema::hasTable('agenda_os')) {
+            $agenda = AgendaOs::query()
+                ->with(['osTecnico:id,ordem_servico,titulo,status,regiao', 'tecnico:id,nome,regiao'])
+                ->whereDate('data', '>=', $inicio->toDateString())
+                ->whereDate('data', '<=', $fim->toDateString())
+                ->when($tecnicoId, fn ($query) => $query->where('tecnico_id', $tecnicoId))
+                ->when(! $tecnicoId, fn ($query) => $query->whereIn('tecnico_id', $tecnicosRegiao->pluck('id')->pad(1, 0)))
+                ->orderBy('data')->orderBy('hora_inicio')->get();
+        }
 
-        $tecnicos = $visao === 'semanal'
-            ? $tecnicosRegiao
-            : $tecnicosRegiao->filter(function (Tecnico $tecnico) use ($data, $agenda) {
-                $temAgenda = $agenda->contains('tecnico_id', $tecnico->id);
-                $indisponivel = $tecnico->indisponibilidades->contains(
-                    fn (TecnicoIndisponibilidade $periodo) => $data->betweenIncluded($periodo->data_inicio, $periodo->data_fim)
-                );
-
-                return ! $indisponivel || $temAgenda;
-            })->values();
+        $tecnicos = $tecnicosRegiao;
 
         return response()->json(compact('agenda', 'tecnicos', 'regiao', 'visao', 'tecnicoId') + [
             'tecnicos_regiao' => $tecnicosRegiao,
@@ -220,6 +244,12 @@ class AgendaController extends Controller
 
     public function registrarIndisponibilidade(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('tecnico_indisponibilidades')) {
+            throw ValidationException::withMessages([
+                'tecnico_id' => 'Tabela de indisponibilidades ainda não foi criada. Rode as migrations.',
+            ]);
+        }
+
         $dados = $request->validate([
             'tecnico_id' => ['required', 'integer', 'exists:tecnicos,id'],
             'motivo' => ['required', 'in:ferias,atestado,folga,outro'],
@@ -240,10 +270,12 @@ class AgendaController extends Controller
         }
 
         $indisponibilidade = TecnicoIndisponibilidade::create($dados);
-        $conflitos = AgendaOs::query()
-            ->where('tecnico_id', $dados['tecnico_id'])
-            ->whereBetween('data', [$dados['data_inicio'], $dados['data_fim']])
-            ->count();
+        $conflitos = Schema::hasTable('agenda_os')
+            ? AgendaOs::query()
+                ->where('tecnico_id', $dados['tecnico_id'])
+                ->whereBetween('data', [$dados['data_inicio'], $dados['data_fim']])
+                ->count()
+            : 0;
 
         return response()->json([
             'indisponibilidade' => $indisponibilidade,
@@ -318,6 +350,10 @@ class AgendaController extends Controller
 
     private function tecnicoIndisponivel(int $tecnicoId, string $data): bool
     {
+        if (! Schema::hasTable('tecnico_indisponibilidades')) {
+            return false;
+        }
+
         return TecnicoIndisponibilidade::query()
             ->where('tecnico_id', $tecnicoId)
             ->whereDate('data_inicio', '<=', $data)

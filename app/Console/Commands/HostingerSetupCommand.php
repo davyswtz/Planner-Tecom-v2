@@ -4,12 +4,21 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 
 class HostingerSetupCommand extends Command
 {
     protected $signature = 'hostinger:setup {--force : Executa migrate mesmo em production}';
 
     protected $description = 'Configuração inicial na Hostinger (após upload + .env)';
+
+    /** @var list<class-string> */
+    private array $classesCriticas = [
+        \App\Http\Controllers\Api\AgendaController::class,
+        \App\Services\AgendaService::class,
+        \App\Services\TecnicoService::class,
+        \App\Models\AgendaOs::class,
+    ];
 
     public function handle(): int
     {
@@ -43,6 +52,17 @@ class HostingerSetupCommand extends Command
         if (str_contains(config('app.url'), 'seudominio')) {
             $this->error('Ajuste APP_URL no .env para a URL real do subdomínio (ex.: https://planner.tecom.com.br).');
 
+            return self::FAILURE;
+        }
+
+        $this->info('Limpando caches antigos...');
+        Artisan::call('optimize:clear');
+        $this->line(trim(Artisan::output()));
+
+        $this->info('Regenerando autoload...');
+        $this->dumpAutoload();
+
+        if (! $this->verificarClassesCriticas()) {
             return self::FAILURE;
         }
 
@@ -81,5 +101,47 @@ class HostingerSetupCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function dumpAutoload(): void
+    {
+        $composer = trim((string) shell_exec('command -v composer 2>/dev/null'));
+        if ($composer !== '') {
+            passthru(escapeshellarg($composer).' dump-autoload -o --no-interaction', $code);
+            if ($code === 0) {
+                return;
+            }
+        }
+
+        $phar = base_path('composer.phar');
+        if (File::exists($phar)) {
+            passthru(escapeshellarg(PHP_BINARY).' '.escapeshellarg($phar).' dump-autoload -o --no-interaction', $code);
+            if ($code === 0) {
+                return;
+            }
+        }
+
+        $this->warn('composer dump-autoload não executado (composer não encontrado).');
+    }
+
+    private function verificarClassesCriticas(): bool
+    {
+        $ok = true;
+        foreach ($this->classesCriticas as $classe) {
+            if (class_exists($classe)) {
+                $this->line("OK — {$classe}");
+
+                continue;
+            }
+
+            $relativo = str_replace(['App\\', '\\'], ['app/', '/'], $classe).'.php';
+            $caminho = base_path($relativo);
+            $this->error("Classe ausente: {$classe}");
+            $this->line('  Esperado em: '.$caminho);
+            $this->line('  Arquivo '. (File::exists($caminho) ? 'existe (autoload desatualizado)' : 'NÃO existe no servidor'));
+            $ok = false;
+        }
+
+        return $ok;
     }
 }

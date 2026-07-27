@@ -246,7 +246,7 @@
 
     <div class="detail-grid-2">
       <div class="os-field">
-        <label class="os-label">Número da OS (Hubsoft)</label>
+        <label class="os-label">Número da OS (Hubsoft) — opcional</label>
         <input type="text" id="input-numero-hubsoft" inputmode="numeric" placeholder="Ex: 123456" class="os-input"/>
       </div>
       <div class="os-field">

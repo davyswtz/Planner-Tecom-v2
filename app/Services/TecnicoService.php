@@ -28,16 +28,47 @@ class TecnicoService
             ->values();
     }
 
+    /**
+     * Técnicos ativos no cadastro de usuários: linha em `tecnicos` com username
+     * existente em `usuario` (mesma regra da tela Usuários → Téc).
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<\App\Models\Tecnico>
+     */
+    public function queryCadastrados(?string $regiao = null)
+    {
+        if (! Schema::hasTable('tecnicos')) {
+            return Tecnico::query()->whereRaw('0 = 1');
+        }
+
+        $query = Tecnico::query()
+            ->whereNotNull('username')
+            ->where('username', '!=', '');
+
+        if (Schema::hasTable('usuario')) {
+            $query->whereExists(function ($sub) {
+                $sub->selectRaw('1')
+                    ->from('usuario')
+                    ->whereColumn('usuario.username', 'tecnicos.username');
+            });
+        }
+
+        return $query->when(
+            $regiao,
+            fn ($q) => $q->whereIn('regiao', $this->regioesEquivalentes($regiao))
+        );
+    }
+
     public function showTecnico(OsTecnico $tecnico): OsTecnico
     {
         return $tecnico;
     }
 
     /** @return list<string> */
-    private function regioesEquivalentes(string $regiao): array
+    public function regioesEquivalentes(string $regiao): array
     {
         $mapa = [
             'Goval' => ['Goval', 'Governador Valadares'],
+            'Governador Valadares' => ['Goval', 'Governador Valadares'],
             'Vale do Aço' => ['Vale do Aço', 'Caratinga'],
             'Caratinga' => ['Vale do Aço', 'Caratinga'], // legado → Vale do Aço
         ];

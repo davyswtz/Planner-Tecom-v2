@@ -245,6 +245,18 @@ class AgendaControllerTest extends TestCase
             ->assertOk()
             ->assertJsonFragment(['task_code' => 'XX-OS-006']);
 
+        $this->getJson('/api/agenda-ordens-disponiveis?regiao=Vale%20do%20A%C3%A7o&busca=PENDURADA')
+            ->assertOk()
+            ->assertJsonFragment(['task_code' => 'XX-OS-006']);
+
+        $this->getJson('/api/agenda-ordens-disponiveis?regiao=Vale%20do%20A%C3%A7o&busca=inexistente-xyz')
+            ->assertOk()
+            ->assertJsonCount(0, 'ordens');
+
+        $this->getJson('/api/agenda-ordens-disponiveis?regiao=Vale%20do%20A%C3%A7o&ordem=antigas')
+            ->assertOk()
+            ->assertJsonFragment(['task_code' => 'XX-OS-006']);
+
         $tecnico = Tecnico::create(['nome' => 'Carlos Agenda', 'regiao' => 'Vale do Aço']);
         $this->postJson('/api/agenda', [
             'os_tecnico_id' => $espelho->id,
@@ -341,27 +353,44 @@ class AgendaControllerTest extends TestCase
         $this->assertDatabaseCount('agenda_os', 1);
     }
 
-    public function test_tecnico_indisponivel_sem_agenda_nao_aparece_na_visao_diaria(): void
+    public function test_lista_apenas_tecnicos_com_usuario_cadastrado(): void
     {
-        $tecnico = Tecnico::create(['nome' => 'Técnico de férias', 'regiao' => 'Vale do Aço']);
+        $this->criarTecnicoCadastrado('Tec Goval', 'Goval');
+        $this->criarTecnicoCadastrado('Tec GV', 'Governador Valadares');
+        $this->criarTecnicoCadastrado('Tec Vale', 'Vale do Aço');
+        Tecnico::create(['nome' => 'Orfao Sem User', 'regiao' => 'Goval']); // sem username / usuario
+        Sanctum::actingAs(new User(['username' => 'teste']));
+
+        $resposta = $this->getJson('/api/agenda?data=2026-07-27&regiao=Goval&visao=diaria')
+            ->assertOk();
+
+        $nomes = collect($resposta->json('tecnicos'))->pluck('nome');
+        $this->assertContains('Tec Goval', $nomes);
+        $this->assertContains('Tec GV', $nomes);
+        $this->assertNotContains('Tec Vale', $nomes);
+        $this->assertNotContains('Orfao Sem User', $nomes);
+        $this->assertEqualsCanonicalizing(
+            $nomes->all(),
+            collect($resposta->json('tecnicos_regiao'))->pluck('nome')->all()
+        );
+    }
+
+    public function test_tecnico_indisponivel_aparece_bloqueado_na_visao_diaria(): void
+    {
+        $tecnico = $this->criarTecnicoCadastrado('Técnico de férias', 'Vale do Aço');
         TecnicoIndisponibilidade::create([
             'tecnico_id' => $tecnico->id,
             'motivo' => 'ferias',
             'data_inicio' => '2026-07-24',
             'data_fim' => '2026-07-31',
         ]);
-        $this->assertTrue(TecnicoIndisponibilidade::query()
-            ->where('tecnico_id', $tecnico->id)
-            ->whereDate('data_inicio', '<=', '2026-07-24')
-            ->whereDate('data_fim', '>=', '2026-07-24')
-            ->exists());
         Sanctum::actingAs(new User(['username' => 'teste']));
 
         $resposta = $this->getJson('/api/agenda?data=2026-07-24&regiao=Vale%20do%20A%C3%A7o&visao=diaria')
             ->assertOk();
 
-        $this->assertNotContains('Técnico de férias', collect($resposta->json('tecnicos'))->pluck('nome'));
-        $tecnicoNoPainel = collect($resposta->json('tecnicos_regiao'))->firstWhere('nome', 'Técnico de férias');
+        $tecnicoNoPainel = collect($resposta->json('tecnicos'))->firstWhere('nome', 'Técnico de férias');
+        $this->assertNotNull($tecnicoNoPainel);
         $this->assertSame('ferias', $tecnicoNoPainel['indisponibilidades'][0]['motivo']);
     }
 
@@ -407,7 +436,7 @@ class AgendaControllerTest extends TestCase
 
     private function criarAgenda(string $regiao, string $data, string $inicio, string $fim, ?Tecnico $tecnico = null): array
     {
-        $tecnico ??= Tecnico::create(['nome' => 'Eduardo', 'regiao' => $regiao]);
+        $tecnico ??= $this->criarTecnicoCadastrado('Eduardo', $regiao);
         $taskId = DB::table('op_tasks')->insertGetId([
             'taskCode' => 'VL-ATD-'.random_int(1000, 9999),
             'titulo' => 'Atendimento de teste',
@@ -420,9 +449,29 @@ class AgendaControllerTest extends TestCase
         return [$agenda, $tecnico];
     }
 
+    private function criarTecnicoCadastrado(string $nome, string $regiao): Tecnico
+    {
+        $username = preg_replace('/\s+/', '', $nome) ?: 'tec'.random_int(100, 999);
+
+        DB::table('usuario')->updateOrInsert(
+            ['username' => $username],
+            [
+                'pass_salt' => str_repeat('a', 64),
+                'pass_hash' => str_repeat('b', 64),
+                'pass_iterations' => 200000,
+                'created_at' => now(),
+            ]
+        );
+
+        return Tecnico::query()->updateOrCreate(
+            ['username' => $username],
+            ['nome' => $nome, 'regiao' => $regiao]
+        );
+    }
+
     private function criarOsPendente(string $nomeTecnico): array
     {
-        $tecnico = Tecnico::create(['nome' => $nomeTecnico, 'regiao' => 'Vale do Aço']);
+        $tecnico = $this->criarTecnicoCadastrado($nomeTecnico, 'Vale do Aço');
         $taskId = DB::table('op_tasks')->insertGetId([
             'taskCode' => 'VL-OS-'.random_int(1000, 9999),
             'titulo' => 'OS automática',
