@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\OpTask;
 use App\Models\OpTaskAnexo;
 use App\Services\Nicon\NiconChatNotificacaoService;
+use App\Services\Telegram\TelegramChatNotificacaoService;
 use Illuminate\Support\Facades\Http;
 
 class GoogleChatService
@@ -15,6 +16,7 @@ class GoogleChatService
         private OpTaskAnexoService $anexos,
         private OsResumoChatService $osResumo,
         private NiconChatNotificacaoService $niconChat,
+        private TelegramChatNotificacaoService $telegramChat,
         private TecnicoChatMencaoService $mencoes,
     ) {
     }
@@ -29,8 +31,9 @@ class GoogleChatService
             return;
         }
 
-        // Paralelo ao Google Chat — não remove webhooks; falhas do Nicon não bloqueiam.
+        // Paralelo ao Google Chat — não remove webhooks; falhas do Nicon/Telegram não bloqueiam.
         $this->niconChat->enviarNotificacao($rompimento, $mensagem, $statusNovo);
+        $this->telegramChat->enviarNotificacao($rompimento, $mensagem, $statusNovo);
 
         $url = $this->webhooks->resolverUrlPorRegiao($rompimento->regiao);
 

@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Schema;
  *
  * Canal principal: Nicon (@nicon_mention_name via nicon_user_id).
  * Fallback: Google Chat (<users/google_chat_id>) quando não há mapeamento Nicon.
- * No envio, cada canal adapta o texto (Nicon ↔ Google).
+ * Telegram: @telegram_username (notifica) ou <a href="tg://user?id=…"> (text_mention).
+ * No envio, cada canal adapta o texto.
  */
 class TecnicoChatMencaoService
 {
@@ -32,6 +33,15 @@ class TecnicoChatMencaoService
 
     /** @var array<int, string> google_chat_id por nicon_user_id */
     private array $googlePorNiconId = [];
+
+    /** @var array<string, array{id: int, username: ?string, nome: string}> telegram por chave */
+    private array $telegramPorChave = [];
+
+    /** @var array<string, array{id: int, username: ?string, nome: string}> telegram por @nicon_mention_name */
+    private array $telegramPorMencaoNicon = [];
+
+    /** @var array<string, array{id: int, username: ?string, nome: string}> telegram por google_chat_id */
+    private array $telegramPorGoogleId = [];
 
     /** @var array<string, string> */
     private const ALIASES_PARA_ID = [
@@ -129,6 +139,71 @@ class TecnicoChatMencaoService
             },
             $texto
         );
+    }
+
+    /**
+     * Converte menções do template (@Nome Nicon / &lt;users/…&gt;) para Telegram.
+     * Prefere @username (notifica de verdade); senão link tg://user?id=.
+     */
+    public function adaptarTextoParaTelegram(string $texto): string
+    {
+        $texto = (string) preg_replace_callback(
+            '/<users\/([^>]+)>/',
+            function (array $m): string {
+                $info = $this->telegramPorGoogleId[$m[1]] ?? null;
+                if ($info !== null) {
+                    return $this->formatarMencaoTelegram($info);
+                }
+
+                $nome = $this->nomePorGoogleId[$m[1]] ?? null;
+
+                return $nome !== null ? $nome : $m[0];
+            },
+            $texto
+        );
+
+        // Troca @NomeNicon → menção Telegram (mais longos primeiro).
+        $pares = [];
+        foreach ($this->telegramPorMencaoNicon as $mencao => $info) {
+            $pares['@' . $mencao] = $this->formatarMencaoTelegram($info);
+        }
+        uksort($pares, fn (string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
+        foreach ($pares as $de => $para) {
+            $texto = str_replace($de, $para, $texto);
+        }
+
+        return $texto;
+    }
+
+    /**
+     * @param  array{id: int, username: ?string, nome: string}  $info
+     */
+    public function formatarMencaoTelegram(array $info): string
+    {
+        $username = trim((string) ($info['username'] ?? ''));
+        if ($username !== '') {
+            return '@' . ltrim($username, '@');
+        }
+
+        $id = (int) ($info['id'] ?? 0);
+        $nome = trim((string) ($info['nome'] ?? ''));
+        if ($id <= 0) {
+            return $nome !== '' ? $nome : '—';
+        }
+        if ($nome === '') {
+            $nome = (string) $id;
+        }
+
+        // Placeholder protegido depois por CoordenadasChatFormatter (antes do htmlspecialchars).
+        return '§§TGUSER' . $id . '|' . str_replace(['§', '|'], '', $nome) . '§§';
+    }
+
+    /** Monta HTML final da menção por ID (usado no formatter). */
+    public static function htmlMencaoPorId(int $userId, string $nome): string
+    {
+        $rotulo = htmlspecialchars($nome !== '' ? $nome : (string) $userId, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return '<a href="tg://user?id=' . $userId . '">' . $rotulo . '</a>';
     }
 
     /**
@@ -238,8 +313,10 @@ class TecnicoChatMencaoService
 
         $temGoogle = Schema::hasColumn('tecnicos', 'google_chat_id');
         $temNicon = Schema::hasColumn('tecnicos', 'nicon_user_id');
+        $temTelegramId = Schema::hasColumn('tecnicos', 'telegram_user_id');
+        $temTelegramUser = Schema::hasColumn('tecnicos', 'telegram_username');
 
-        if (! $temGoogle && ! $temNicon) {
+        if (! $temGoogle && ! $temNicon && ! $temTelegramId) {
             return;
         }
 
@@ -254,6 +331,12 @@ class TecnicoChatMencaoService
         if ($temMentionName) {
             $cols[] = 'nicon_mention_name';
         }
+        if ($temTelegramId) {
+            $cols[] = 'telegram_user_id';
+        }
+        if ($temTelegramUser) {
+            $cols[] = 'telegram_username';
+        }
 
         foreach (Tecnico::query()->get($cols) as $tecnico) {
             $nome = trim((string) ($tecnico->nome ?? ''));
@@ -265,6 +348,10 @@ class TecnicoChatMencaoService
             }
             $googleId = $temGoogle ? trim((string) ($tecnico->google_chat_id ?? '')) : '';
             $niconId = $temNicon ? (int) ($tecnico->nicon_user_id ?? 0) : 0;
+            $telegramId = $temTelegramId ? (int) ($tecnico->telegram_user_id ?? 0) : 0;
+            $telegramUsername = $temTelegramUser
+                ? ltrim(trim((string) ($tecnico->telegram_username ?? '')), '@')
+                : '';
 
             if ($googleId !== '') {
                 $this->nomePorGoogleId[$googleId] = $mentionName !== '' ? $mentionName : ($nome !== '' ? $nome : $googleId);
@@ -278,6 +365,15 @@ class TecnicoChatMencaoService
                 }
             }
 
+            $telegramInfo = null;
+            if ($telegramId > 0 || $telegramUsername !== '') {
+                $telegramInfo = [
+                    'id' => $telegramId,
+                    'username' => $telegramUsername !== '' ? $telegramUsername : null,
+                    'nome' => $mentionName !== '' ? $mentionName : ($nome !== '' ? $nome : (string) $telegramId),
+                ];
+            }
+
             foreach ([$tecnico->nome, $tecnico->username, $mentionName] as $alias) {
                 $chave = $this->chave((string) $alias);
                 if ($chave === '') {
@@ -288,6 +384,21 @@ class TecnicoChatMencaoService
                 }
                 if ($niconId > 0) {
                     $this->niconIdsPorChave[$chave] = $niconId;
+                }
+                if ($telegramInfo !== null) {
+                    $this->telegramPorChave[$chave] = $telegramInfo;
+                }
+            }
+
+            if ($telegramInfo !== null) {
+                if ($mentionName !== '') {
+                    $this->telegramPorMencaoNicon[$mentionName] = $telegramInfo;
+                }
+                if ($nome !== '' && $nome !== $mentionName) {
+                    $this->telegramPorMencaoNicon[$nome] = $telegramInfo;
+                }
+                if ($googleId !== '') {
+                    $this->telegramPorGoogleId[$googleId] = $telegramInfo;
                 }
             }
         }
@@ -303,6 +414,9 @@ class TecnicoChatMencaoService
             }
             if (isset($this->niconIdsPorChave[$chaveCanonico])) {
                 $this->niconIdsPorChave[$chaveAlias] = $this->niconIdsPorChave[$chaveCanonico];
+            }
+            if (isset($this->telegramPorChave[$chaveCanonico])) {
+                $this->telegramPorChave[$chaveAlias] = $this->telegramPorChave[$chaveCanonico];
             }
         }
     }
